@@ -25,7 +25,7 @@ Or press **Guided run** at the top of the page: it injects the disturbance, wait
 
 ## Connect your own LLM (MCP)
 
-One local Node process (Node.js 22.18 or later) holds one engine and exposes it twice: as an **MCP server over stdio**, and as a **viewer at `http://127.0.0.1:8787/`** that shows the same engine live, so you can watch what your LLM does. Pin a commit so you know what you run; `e165b73` below is an example, use the latest commit of `main`.
+One local Node process (Node.js 22.18 or later) holds one engine and exposes it twice: as an **MCP server over stdio**, and as a **viewer at `http://127.0.0.1:8787/`** that shows the same engine live, so you can watch what your LLM does. Pin a commit so you know what you run; `ef6f14f` below is an example, use the latest commit of `main`.
 
 **Claude Desktop** (`claude_desktop_config.json`, then restart):
 
@@ -34,21 +34,21 @@ One local Node process (Node.js 22.18 or later) holds one engine and exposes it 
   "mcpServers": {
     "plant-context-lab": {
       "command": "npx",
-      "args": ["-y", "github:shaun0457/plant-context-lab#e165b73", "--scenario", "idv4-step5"]
+      "args": ["-y", "github:shaun0457/plant-context-lab#ef6f14f", "--scenario", "idv4-step5"]
     }
   }
 }
 ```
 
-On Windows, if `npx` is not found, use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "github:shaun0457/plant-context-lab#e165b73"]`.
+On Windows, if `npx` is not found, use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "github:shaun0457/plant-context-lab#ef6f14f"]`.
 
 **Claude Code:**
 
 ```bash
-claude mcp add plant-context-lab -- npx -y github:shaun0457/plant-context-lab#e165b73
+claude mcp add plant-context-lab -- npx -y github:shaun0457/plant-context-lab#ef6f14f
 ```
 
-**Any other MCP client (stdio):** command `npx`, args `-y github:shaun0457/plant-context-lab#e165b73`. From a clone: `npm install`, then command `node`, args `dist/server.js`. Streamable HTTP is optional: start with `--http-mcp` and connect to `http://127.0.0.1:8787/mcp`.
+**Any other MCP client (stdio):** command `npx`, args `-y github:shaun0457/plant-context-lab#ef6f14f`. From a clone: `npm install`, then command `node`, args `dist/server.js`. Streamable HTTP is optional: start with `--http-mcp` and connect to `http://127.0.0.1:8787/mcp`.
 
 Then open `http://127.0.0.1:8787/` to watch, and ask for example:
 
