@@ -1,7 +1,9 @@
 // Local viewer server: connected-mode page, SSE, host/origin/token checks.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { request } from 'node:http';
 import { after, before, test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { createSimulation } from '../src/engine/index.ts';
 import { createWebApp, type WebApp } from '../src/server/web.ts';
 
@@ -73,4 +75,32 @@ test('page proposals go through the gate', async () => {
   assert.equal(j.verdict, 'REJECT');
   assert.equal(j.applied, false);
   assert.equal((sim.gateLog.at(-1) as { source: string }).source, 'page');
+});
+
+test('connected mode fails closed when the page has no plain <html lang> tag', () => {
+  const s2 = createSimulation({ seed: 12 });
+  for (const html of ['<!doctype html><html lang="zh-Hant" class="x"><body>page</body></html>', '<!doctype html><body>no html tag</body>', '<!doctype html><html><body>no lang</body></html>']) {
+    assert.throws(() => createWebApp({ sim: s2, html, controls: { running: false, speed: 1 } }), /cannot enable connected mode/, html);
+  }
+});
+
+test('the real built index.html gets the connected-mode marker and keeps its zh-Hant default', async () => {
+  const html = readFileSync(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8');
+  const app2 = createWebApp({ sim: createSimulation({ seed: 13 }), html, controls: { running: false, speed: 1 } });
+  const p2 = await app2.listen(0);
+  try {
+    const text = await new Promise<string>((resolve, reject) => {
+      const r = request({ host: '127.0.0.1', port: p2, method: 'GET', path: '/', headers: { host: '127.0.0.1:' + p2 } }, (res) => {
+        let t = '';
+        res.on('data', (c) => { t += c; });
+        res.on('end', () => resolve(t));
+      });
+      r.on('error', reject);
+      r.end();
+    });
+    assert.match(text, /<html lang="zh-Hant" data-mode="connected" data-token="[0-9a-f]{32}">/);
+    assert.equal(text.match(/data-token="/g)?.length, 1);
+  } finally {
+    await app2.close();
+  }
 });

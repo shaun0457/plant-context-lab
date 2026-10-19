@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plant Context Lab</title>
 <link rel="icon" href="data:,">
-<meta name="description" content="Tennessee Eastman 製程的 P&amp;ID、拓撲影響傳播與瀏覽器內即時趨勢概念示範。">
+<meta name="description" content="以 Tennessee Eastman 製程示範工業工廠的 context layer：P&amp;ID、即時模擬趨勢、以已審核限值建立的規則、PCA 異常監測與先模擬再執行的調整 gate。">
 <style>
 :root{
   color-scheme:dark;
@@ -254,6 +254,7 @@ svg.hlon .tag.dim{opacity:.35}
 .foot .hon{border:1px solid var(--line2);border-radius:6px;padding:9px 12px;background:var(--panel);color:var(--text2)}
 .foot .hon b{color:var(--text)}
 .caps{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.caps .badge{white-space:normal;max-width:100%;line-height:1.45}
 
 /* ---------- safety bar ---------- */
 .safety{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,1.25fr) minmax(0,.9fr);gap:0}
@@ -305,6 +306,31 @@ svg.hlon .tag.dim{opacity:.35}
 .gl .m{color:var(--text2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
 .gl .c{grid-column:2;font-family:var(--mono);font-size:10.5px;color:var(--muted);overflow-wrap:anywhere}
 
+/* ---------- orientation strip, language toggle, guided run ---------- */
+.panel{scroll-margin-top:64px}
+.langseg button{padding:3px 9px;font-size:11.5px}
+.orient{display:grid;gap:9px;padding:12px 14px}
+.or-what{margin:0;font-size:13.5px;color:var(--text2);line-height:1.55}
+.or-what b{color:var(--text);font-weight:600}
+.or-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.or-k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--acc2);font-weight:600;white-space:nowrap}
+.or-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1 1 560px;min-width:0}
+.or-steps li{display:flex;min-width:0}
+.or-step{all:unset;box-sizing:border-box;display:flex;gap:8px;align-items:flex-start;width:100%;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--bg2);cursor:pointer;font-size:12.5px;color:var(--text2);line-height:1.45;overflow-wrap:anywhere}
+.or-step:hover{border-color:var(--acc-bd)}
+.or-step:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.or-step .n{flex:none;width:18px;height:18px;border-radius:50%;background:var(--acc-bg);border:1px solid var(--acc-bd);color:var(--acc2);font-family:var(--mono);font-size:11px;font-weight:700;text-align:center;line-height:16px;margin-top:1px}
+.or-step b{color:var(--text);font-weight:600}
+.or-mcp{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
+.or-mcp code{font-family:var(--mono);font-size:11.5px;color:var(--acc2);background:var(--bg2);border:1px solid var(--line2);border-radius:4px;padding:1px 6px;overflow-wrap:anywhere;user-select:all;min-width:0}
+@media (max-width:900px){.or-steps{grid-template-columns:minmax(0,1fr);flex-basis:100%}}
+.gbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;width:min(680px,calc(100% - 24px));display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--acc-bd);border-radius:8px;background:rgba(14,21,28,.97);box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:12.5px;color:var(--text2)}
+.gbar[hidden]{display:none}
+.gbar .gt{flex:1;min-width:0;overflow-wrap:anywhere}
+.gbar .gk{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--acc2);font-weight:600;margin-bottom:2px}
+.flash{animation:flash 1.6s ease-out 1}
+@keyframes flash{0%{box-shadow:0 0 0 3px rgba(43,195,200,.9)}100%{box-shadow:0 0 0 3px rgba(43,195,200,0)}}
+
 @media (max-width:640px){
   .top{padding:8px 12px;position:static}
   .chip.rev{display:none}
@@ -325,42 +351,60 @@ svg.hlon .tag.dim{opacity:.35}
   </div>
   <div class="sp"></div>
   <div class="chips">
-    <span class="chip" id="cLive"><span class="dot" id="cDot"></span><span id="cLiveT">暫停</span></span>
+    <span class="chip" id="cLive"><span class="dot" id="cDot"></span><span id="cLiveT" data-i18n="live.paused">暫停</span></span>
     <span class="chip mono num" id="cT">t = 0.00 h</span>
     <span class="chip mono num" id="cK">K = 0</span>
-    <span class="chip" id="cMode" title="離線：引擎在瀏覽器內執行；連線：顯示本機伺服器上的同一個引擎">離線 · 瀏覽器內引擎</span>
+    <span class="chip" id="cMode" data-i18n-title="mode.title" title="離線：引擎在瀏覽器內執行；連線：顯示本機伺服器上的同一個引擎" data-i18n="mode.offline">離線 · 瀏覽器內引擎</span>
     <span class="chip mono rev">plant rev 0.2.0</span>
+  </div>
+  <div class="seg langseg" role="group" data-i18n-aria="lang.label" aria-label="語言">
+    <button type="button" data-lang="en" lang="en" aria-pressed="false">EN</button>
+    <button type="button" data-lang="zh" lang="zh-Hant" aria-pressed="true">中文</button>
   </div>
 </header>
 
 <main class="wrap">
-  <section class="panel safety" id="safety" aria-label="安全狀態" aria-live="polite">
-    <div><div class="k">規則 · Rules <span class="badge built" title="限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs &amp; Vogel (1993)">已審核限值</span></div><div class="v" id="sfRule"></div><div class="d" id="sfRuleD"></div></div>
-    <div><div class="k">PCA 異常分數 · monitor <span class="badge sim" title="離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型">不輸出故障標籤</span></div><div class="v" id="sfPca"></div><div class="d" id="sfPcaD"></div></div>
-    <div><div class="k">主要貢獻變數 · contributors</div><div class="v" id="sfTop"></div><div class="d">貢獻變數 ≠ 原因；只說明哪些訊號偏離正常相關結構</div></div>
-    <div><div class="k">XMV(10) 迴路 · loop</div><div class="v" id="sfLoop"></div><div class="d" id="sfLoopD"></div></div>
+  <section class="panel orient" id="orient" aria-label="Plant Context Lab">
+    <p class="or-what" data-i18n-html="or.what"><b>工業工廠的 context layer。</b>P&amp;ID 拓撲、訊號綁定與已審核的工程知識，全部釘在確切的 snapshot 上；由規則、PCA 異常監測與「先模擬再執行」的 gate 決定提議的調整能不能執行。</p>
+    <div class="or-row">
+      <div class="or-k" data-i18n="or.try">30 秒上手</div>
+      <ol class="or-steps">
+        <li><button type="button" class="or-step" data-goto="inject"><span class="n" aria-hidden="true">1</span><span data-i18n-html="or.s1">注入 <b>IDV(4)</b> 擾動：反應器冷卻水入口溫度 step。</span></button></li>
+        <li><button type="button" class="or-step" data-goto="watch"><span class="n" aria-hidden="true">2</span><span data-i18n-html="or.s2">觀察規則、PCA 分數與冷卻迴路的反應：<b>XMV(10)</b> 開大以維持反應器溫度。</span></button></li>
+        <li><button type="button" class="or-step" data-goto="propose"><span class="n" aria-hidden="true">3</span><span data-i18n-html="or.s3">對 <b>XMV(10)</b> 提出目標值並按<b>試算</b>：gate 會接受或拒絕，並說明原因。</span></button></li>
+      </ol>
+      <button type="button" class="btn pri" id="bGuide" data-i18n="guide.start">▶ 導覽執行</button>
+    </div>
+    <div class="or-mcp"><span data-i18n="or.mcp">用本機 MCP server 接上你自己的 LLM：</span><code>npx -y github:shaun0457/plant-context-lab</code><span data-i18n="or.mcp2">再開 127.0.0.1:8787 觀看</span></div>
+  </section>
+
+  <section class="panel safety" id="safety" data-i18n-aria="sf.aria" aria-label="安全狀態" aria-live="polite">
+    <div><div class="k"><span data-i18n="sf.rules">規則 · Rules</span> <span class="badge built" data-i18n="sf.rulesBadge" data-i18n-title="sf.rulesTip" title="限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs &amp; Vogel (1993)">已審核限值</span></div><div class="v" id="sfRule"></div><div class="d" id="sfRuleD"></div></div>
+    <div><div class="k"><span data-i18n="sf.pca">PCA 異常分數 · monitor</span> <span class="badge sim" data-i18n="sf.pcaBadge" data-i18n-title="sf.pcaTip" title="離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型">不輸出故障標籤</span></div><div class="v" id="sfPca"></div><div class="d" id="sfPcaD"></div></div>
+    <div><div class="k" data-i18n="sf.top">主要貢獻變數 · contributors</div><div class="v" id="sfTop"></div><div class="d" data-i18n="sf.topNote">貢獻變數 ≠ 原因；只說明哪些訊號偏離正常相關結構</div></div>
+    <div><div class="k" data-i18n="sf.loop">XMV(10) 迴路 · loop</div><div class="v" id="sfLoop"></div><div class="d" id="sfLoopD"></div></div>
   </section>
 
   <section class="row1">
     <div class="panel" id="plantPanel">
       <div class="ph">
-        <h2>製程畫面 · Plant view</h2>
-        <div class="seg" role="group" aria-label="切換視圖">
+        <h2 data-i18n="pv.title">製程畫面 · Plant view</h2>
+        <div class="seg" role="group" data-i18n-aria="pv.switch" aria-label="切換視圖">
           <button type="button" data-view="pid" aria-pressed="true">P&amp;ID</button>
           <button type="button" data-view="graph" aria-pressed="false">Graph</button>
         </div>
         <span class="sp"></span>
-        <span class="badge built" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
+        <span class="badge built" data-i18n="pv.topo" data-i18n-title="pv.topoTip" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
       </div>
       <div class="hlbar" id="hlbar"></div>
-      <div class="swipe">← 左右滑動看完整圖面 →</div>
+      <div class="swipe" data-i18n="pv.swipe">← 左右滑動看完整圖面 →</div>
       <div class="svgwrap" id="wrapPid"><svg id="pid" viewBox="0 0 1180 650" role="group" aria-label="Tennessee Eastman P&amp;ID"></svg></div>
       <div class="svgwrap" id="wrapGraph" hidden><svg id="gsvg" viewBox="0 0 1180 600" role="group" aria-label="Process graph node-link view"></svg></div>
       <div class="pb legend">
-        <span><span class="ln"></span>製程物流 material</span>
-        <span><span class="ln cw"></span>公用流體 utility</span>
-        <span>影響 hop <span class="hops" id="lgHops"></span></span>
-        <span>點選設備或管線查看訊號、工程知識與影響範圍</span>
+        <span><span class="ln"></span><span data-i18n="pv.material">製程物流 material</span></span>
+        <span><span class="ln cw"></span><span data-i18n="pv.utility">公用流體 utility</span></span>
+        <span><span data-i18n="pv.hop">影響 hop</span> <span class="hops" id="lgHops"></span></span>
+        <span data-i18n="pv.hint">點選設備或管線查看訊號、工程知識與影響範圍</span>
       </div>
     </div>
     <aside class="panel side" id="side" aria-live="polite"></aside>
@@ -369,25 +413,25 @@ svg.hlon .tag.dim{opacity:.35}
   <section class="row2">
     <div class="panel" id="trendPanel">
       <div class="ph">
-        <h2>即時趨勢 · Live trends</h2>
+        <h2 data-i18n="tr.title">即時趨勢 · Live trends</h2>
         <span class="sp"></span>
-        <span class="badge sim">瀏覽器內模擬</span>
+        <span class="badge sim" data-i18n="tr.badge">瀏覽器內模擬</span>
       </div>
-      <div class="simnote"><b>瀏覽器內模擬資料（示意，非實際模擬器輸出）</b></div>
+      <div class="simnote"><b id="simNote" data-i18n="tr.note">瀏覽器內模擬資料（示意，非實際模擬器輸出）</b></div>
       <div class="ctrl">
         <div class="grp">
-          <button type="button" class="btn pri" id="bRun">▶ 開始</button>
-          <div class="seg" role="group" aria-label="速度"><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="4" aria-pressed="false">4×</button></div>
-          <div class="seg" role="group" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled title="注入擾動後可用">擾動事件</button></div>
+          <button type="button" class="btn pri" id="bRun" data-i18n="run.start">▶ 開始</button>
+          <div class="seg" role="group" data-i18n-aria="tr.speed" aria-label="速度"><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="4" aria-pressed="false">4×</button></div>
+          <div class="seg" role="group" data-i18n-aria="tr.window" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled data-i18n="tr.evt" data-i18n-title="tr.evtTip" title="注入擾動後可用">擾動事件</button></div>
         </div>
         <div class="grp">
-          <label class="lbl" for="selDist">擾動</label>
+          <label class="lbl" for="selDist" data-i18n="tr.dist">擾動</label>
           <select id="selDist">
-            <option value="5">IDV(4) 反應器冷卻水入口溫度 step +5 °C</option>
-            <option value="10">IDV(4) 反應器冷卻水入口溫度 step +10 °C</option>
+            <option value="5" data-i18n="tr.opt5">IDV(4) 反應器冷卻水入口溫度 step +5 °C</option>
+            <option value="10" data-i18n="tr.opt10">IDV(4) 反應器冷卻水入口溫度 step +10 °C</option>
           </select>
-          <button type="button" class="btn warnb" id="bInject">⚡ 注入擾動</button>
-          <button type="button" class="btn" id="bClear" disabled>移除擾動</button>
+          <button type="button" class="btn warnb" id="bInject" data-i18n="tr.inject">⚡ 注入擾動</button>
+          <button type="button" class="btn" id="bClear" disabled data-i18n="tr.remove">移除擾動</button>
         </div>
       </div>
       <div class="tgrid" id="tgrid"></div>
@@ -395,34 +439,34 @@ svg.hlon .tag.dim{opacity:.35}
     </div>
 
     <div class="panel" id="nowPanel">
-      <div class="ph"><h2>現在發生什麼 · reactor cooling</h2><span class="sp"></span><span class="badge wip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
+      <div class="ph"><h2 data-i18n="now.title">現在發生什麼 · reactor cooling</h2><span class="sp"></span><span class="badge wip" data-i18n="now.badge" data-i18n-title="now.badgeTip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
       <div id="now"></div>
     </div>
   </section>
 
   <section class="row3">
     <div class="panel" id="propPanel">
-      <div class="ph"><h2>調整提案 · Adjustment proposal</h2><span class="sp"></span><span class="badge built" title="每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用">gate 決定，提案者只提議</span></div>
+      <div class="ph"><h2 data-i18n="pp.title">調整提案 · Adjustment proposal</h2><span class="sp"></span><span class="badge built" data-i18n="pp.badge" data-i18n-title="pp.badgeTip" title="每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用">gate 決定，提案者只提議</span></div>
       <div class="pb">
         <div class="form">
-          <label for="pXmv">操作變數</label>
+          <label for="pXmv" data-i18n="pp.xmv">操作變數</label>
           <select id="pXmv"></select>
-          <label for="pTarget">目標值 %</label>
-          <div class="inl"><input type="number" id="pTarget" min="0" max="100" step="0.1"><button type="button" class="btn" id="pCur" style="padding:3px 8px;font-size:11px">帶入目前值</button><span class="mono dim" id="pCurV"></span></div>
-          <label for="pWhy">理由</label>
-          <input type="text" id="pWhy" maxlength="500" value="操作員手動試算" placeholder="理由（必填）">
+          <label for="pTarget" data-i18n="pp.target">目標值 %</label>
+          <div class="inl"><input type="number" id="pTarget" min="0" max="100" step="0.1"><button type="button" class="btn" id="pCur" style="padding:3px 8px;font-size:11px" data-i18n="pp.useCur">帶入目前值</button><span class="mono dim" id="pCurV"></span></div>
+          <label for="pWhy" data-i18n="pp.why">理由</label>
+          <input type="text" id="pWhy" maxlength="500" value="操作員手動試算" data-i18n-ph="pp.whyPh" placeholder="理由（必填）">
         </div>
         <div class="btnrow">
-          <button type="button" class="btn" id="pTry">試算</button>
-          <button type="button" class="btn pri" id="pApply" disabled title="先試算並取得 ACCEPT">套用</button>
-          <span class="note" style="margin-top:0">套用時以當下狀態重新評估，只有 ACCEPT 才會執行</span>
+          <button type="button" class="btn" id="pTry" data-i18n="pp.try">試算</button>
+          <button type="button" class="btn pri" id="pApply" disabled data-i18n="pp.apply" data-i18n-title="pp.applyTip" title="先試算並取得 ACCEPT">套用</button>
+          <span class="note" style="margin-top:0" data-i18n="pp.applyNote">套用時以當下狀態重新評估，只有 ACCEPT 才會執行</span>
         </div>
         <div id="pRes"></div>
-        <div class="note">gate：步幅 ≤ <b class="mono" id="gStep">10</b> %、每 <span class="mono" id="gWin">10</span> 模擬分鐘累計 ≤ <span class="mono" id="gRate">15</span> %、TRIP 時禁止調整、只能調整模型內有模擬的 XMV；套用前先在分支上模擬 <span class="mono" id="gHor">30</span> 分鐘，若任何規則到 ALARM / TRIP、明顯吃掉限值餘裕或 PCA SPE 明顯變差即 REJECT。擾動注入仍由人操作。</div>
+        <div class="note" id="gNoteP"></div>
       </div>
     </div>
     <div class="panel" id="logPanel">
-      <div class="ph"><h2>Gate 紀錄 · Gate log</h2><span class="sp"></span><span class="badge sim" id="logCount">0 筆</span></div>
+      <div class="ph"><h2 data-i18n="log.title">Gate 紀錄 · Gate log</h2><span class="sp"></span><span class="badge sim" id="logCount" data-i18n="log.count0">0 筆</span></div>
       <div class="glog" id="glog"></div>
     </div>
   </section>
@@ -431,18 +475,24 @@ svg.hlon .tag.dim{opacity:.35}
 </main>
 
 <footer class="foot">
-  <div class="hon"><b>概念示範。</b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。
+  <div class="hon"><span data-i18n-html="ft.hon"><b>概念示範。</b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。</span>
     <div class="caps">
-      <span class="badge built">已實作 · 製程拓撲與訊號綁定（人工核對）</span>
-      <span class="badge built">已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）</span>
-      <span class="badge built">已實作 · 工程知識擷取與人工審查（staged revision）</span>
-      <span class="badge wip">開發中 · plant context composition</span>
-      <span class="badge wip">開發中 · UI 讀取 pinned snapshot</span>
-      <span class="badge sim">示範 · 規則、PCA 與 gate 僅供教學，不可用於實際工廠操作</span>
+      <span class="badge built" data-i18n="ft.c1">已實作 · 製程拓撲與訊號綁定（人工核對）</span>
+      <span class="badge built" data-i18n="ft.c2">已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）</span>
+      <span class="badge built" data-i18n="ft.c3">已實作 · 工程知識擷取與人工審查（staged revision）</span>
+      <span class="badge wip" data-i18n="ft.c4">開發中 · plant context composition</span>
+      <span class="badge wip" data-i18n="ft.c5">開發中 · UI 讀取 pinned snapshot</span>
+      <span class="badge sim" data-i18n="ft.c6">示範 · 規則、PCA 與 gate 僅供教學，不可用於實際工廠操作</span>
     </div>
   </div>
 </footer>
 
+<div class="gbar" id="gbar" role="status" aria-live="polite" hidden>
+  <div class="gt"><div class="gk" id="gbarK"></div><div id="gbarT"></div></div>
+  <button type="button" class="btn" id="gbarStop"></button>
+</div>
+
+<script>/*__PCL_I18N__*/</script>
 <script>/*__PCL_ENGINE__*/</script>
 <script>
 (function(){
@@ -451,6 +501,34 @@ var $=function(s,r){return (r||document).querySelector(s)};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 var RM=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* =====================================================================
+   0. Language: ?lang=zh|en, then the remembered choice, then Traditional Chinese.
+      Strings live in src/page/strings.ts (global PCL_I18N).
+   ===================================================================== */
+var STR=window.PCL_I18N||{en:{},zh:{}},LKEY='pcl-lang';
+function okLang(l){return l==='en'||l==='zh'}
+function pickLang(){
+  var q=null;try{q=new URLSearchParams(location.search).get('lang')}catch(e){}
+  if(okLang(q))return q;
+  var s=null;try{s=window.localStorage.getItem(LKEY)}catch(e){}
+  return okLang(s)?s:'zh';
+}
+var LANG=pickLang();
+/* t(key, params): params replace {name}; values are trusted constants, params are escaped by the caller where needed */
+function t(k,p){var s=STR[LANG]&&STR[LANG][k];if(s===undefined||s===null)s=STR.en[k];if(s===undefined||s===null)return k;
+  return p?s.replace(/\{(\w+)\}/g,function(m,n){return p[n]!==undefined?String(p[n]):m}):s;}
+/* Traditional Chinese engine fields (ZH, txtZh, rvZh, nameZh) are read only through zhv() */
+function zhv(z,en){return LANG==='zh'&&z?z:en}
+function applyStatic(root){
+  $$('[data-i18n]',root).forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'))});
+  $$('[data-i18n-html]',root).forEach(function(el){el.innerHTML=t(el.getAttribute('data-i18n-html'))});
+  $$('[data-i18n-title]',root).forEach(function(el){el.title=t(el.getAttribute('data-i18n-title'))});
+  $$('[data-i18n-aria]',root).forEach(function(el){el.setAttribute('aria-label',t(el.getAttribute('data-i18n-aria')))});
+  $$('[data-i18n-ph]',root).forEach(function(el){el.placeholder=t(el.getAttribute('data-i18n-ph'))});
+  document.documentElement.lang=LANG==='zh'?'zh-Hant':'en';
+  $$('[data-lang]').forEach(function(b){var on=b.getAttribute('data-lang')===LANG;b.setAttribute('aria-pressed',String(on));b.classList.toggle('on',on)});
+}
 
 /* =====================================================================
    1. Topology (tep-sim ProcessGraph 0.2.0, HUMAN_VERIFIED) - verbatim
@@ -556,7 +634,7 @@ function renderPID(){
        '<text class="t1" x="'+x+'" y="'+(y-3)+'" text-anchor="middle">'+t[2]+'</text><text class="t2" x="'+x+'" y="'+(y+9)+'" text-anchor="middle">'+(id.indexOf('XMV')===0?'V':'')+num+'</text>'+
        '<rect class="vb" x="'+vbx+'" y="'+(y-9)+'" width="80" height="18" rx="3"/><text class="vv" x="'+(vbx+6)+'" y="'+(y+4)+'"><tspan data-sv="'+id+'">–</tspan> '+esc(SIG[id][1].replace(' gauge','').replace(' command',''))+'</text></g>';
   });
-  s+='<text x="16" y="26" class="mono" style="font-size:10.5px;fill:#5d6e7d">TEP flowsheet · 版面為自繪示意（拓撲依 ProcessGraph 0.2.0）</text>';
+  s+='<text x="16" y="26" class="mono" id="pidNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.pidNote'))+'</text>';
   s+='<g class="badges" id="pidBadges"></g>';
   svg.innerHTML=s;
 }
@@ -616,7 +694,7 @@ function renderGraph(){
        (ic?'<text class="ic" x="'+p[0]+'" y="'+(p[1]+3.5)+'" text-anchor="middle">'+ic+'</text>':'')+
        '<text class="nm" x="'+p[0]+'" y="'+ly+'" text-anchor="middle">'+SHORT[n.id]+'</text>'+(sub?'<text class="sm" x="'+p[0]+'" y="'+(ly+12)+'" text-anchor="middle">'+sub+'</text>':'')+'</g>';
   });
-  s+='<text x="16" y="590" class="mono" style="font-size:10.5px;fill:#5d6e7d">node-link view · 同一組 node / edge ids · 抽象版面</text>';
+  s+='<text x="16" y="590" class="mono" id="gNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.graphNote'))+'</text>';
   s+='<g class="badges" id="gBadges"></g>';
   $('#gsvg').innerHTML=s;
 }
@@ -654,17 +732,17 @@ function applyHL(){
 }
 function renderHLBar(hv){
   var b=$('#hlbar');
-  if(!HL.src){b.innerHTML='<span class="k">選取</span><b>'+esc(elLabel(SEL))+'</b><span class="mono dim">'+esc(SEL.slice(2))+'</span><span class="k">· 未顯示影響範圍</span>';return;}
+  if(!HL.src){b.innerHTML='<span class="k">'+esc(t('hl.sel'))+'</span><b>'+esc(elLabel(SEL))+'</b><span class="mono dim">'+esc(SEL.slice(2))+'</span><span class="k">'+esc(t('hl.none'))+'</span>';return;}
   var n=Object.keys(hv.hop).length,closed=hv.loops.filter(function(s){return s.closed});
-  var src=HL.src==='dist'?'<span class="flag warn">IDV(4) 擾動</span> 起點 <b>Reactor CW inlet</b>':'<span class="flag acc">影響分析</span> 起點 <b>'+esc(elLabel(HL.start))+'</b>';
-  b.innerHTML=src+'<span class="k">· 下游 hop ≤ '+HL.shown+(HL.shown<HL.depth?' / '+HL.depth:'')+' · '+n+' 個元素</span>'+
-    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(s.L.name.split(' · ')[1])}).join(', ')+' 閉合</span>':'')+
-    '<span class="k">· 結構上可達 = 假設空間，不是證據</span>'+(HL.src?'<button type="button" class="btn" id="hlClear" style="padding:2px 8px;font-size:11px">清除高亮</button>':'');
+  var src=HL.src==='dist'?'<span class="flag warn">'+esc(t('hl.dist'))+'</span> '+esc(t('hl.from'))+' <b>Reactor CW inlet</b>':'<span class="flag acc">'+esc(t('hl.impact'))+'</span> '+esc(t('hl.from'))+' <b>'+esc(elLabel(HL.start))+'</b>';
+  b.innerHTML=src+'<span class="k">'+esc(t('hl.range',{n:HL.shown+(HL.shown<HL.depth?' / '+HL.depth:''),count:n}))+'</span>'+
+    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(s.L.name)}).join(', ')+' '+esc(t('hl.closed'))+'</span>':'')+
+    '<span class="k">'+esc(t('hl.caveat'))+'</span>'+(HL.src?'<button type="button" class="btn" id="hlClear" style="padding:2px 8px;font-size:11px">'+esc(t('hl.clear'))+'</button>':'');
 }
-function stopPlay(){if(HL.timer){clearInterval(HL.timer);HL.timer=null}var b=$('#impPlay');if(b)b.textContent='▶ 逐層播放';}
+function stopPlay(){if(HL.timer){clearInterval(HL.timer);HL.timer=null}var b=$('#impPlay');if(b)b.textContent=t('imp.play');}
 function runImpact(play){
   stopPlay();HL.src='impact';HL.start=SEL;
-  if(play&&!RM){HL.shown=0;applyHL();var b=$('#impPlay');if(b)b.textContent='■ 停止';
+  if(play&&!RM){HL.shown=0;applyHL();var b=$('#impPlay');if(b)b.textContent=t('imp.stop');
     HL.timer=setInterval(function(){HL.shown++;applyHL();if(HL.shown>=HL.depth)stopPlay();},750);}
   else{HL.shown=HL.depth;applyHL();}
 }
@@ -674,59 +752,60 @@ function clearHL(){stopPlay();HL.src=null;applyHL();}
    5. Side panel (selection details)
    ===================================================================== */
 function fmt(id,v){if(v===undefined||v===null||isNaN(v))return '–';var b=Math.abs(SIG[id][2]);var d=b>=1000?1:b>=100?2:b>=10?2:b>=1?3:4;return (+v).toFixed(d)}
-function sigFlag(id){return ANCHOR[id]?'<span class="flag ok" title="tep-agent-lab 實際模擬分支比對（reactor cooling incident, 0.1 h）'+esc(ANCHOR[id])+'">實測錨點 '+esc(ANCHOR[id])+'</span>':'<span class="flag plan" title="綁定已人工核對；傳播尚未實測">待驗證</span>';}
-function refChip(key){var r=KR[key];var rej=/REJECT/.test(r.rv);return '<span class="ref">'+esc(r.id)+'</span><span class="ref rv'+(rej?' rej':'')+'">'+esc(r.rv)+'</span>';}
+function sigFlag(id){return ANCHOR[id]?'<span class="flag ok" title="'+esc(t('sd.anchorTip',{a:ANCHOR[id]}))+'">'+esc(t('sd.anchor',{a:ANCHOR[id]}))+'</span>':'<span class="flag plan" title="'+esc(t('sd.unverifiedTip'))+'">'+esc(t('sd.unverified'))+'</span>';}
+function refChip(key){var r=KR[key];var rej=/REJECT/.test(r.rv);return '<span class="ref">'+esc(r.id)+'</span><span class="ref rv'+(rej?' rej':'')+'">'+esc(zhv(r.rvZh,r.rv))+'</span>';}
 function renderSide(){
   var k=SEL,id=k.slice(2),isN=k[0]==='n',el=isN?TN[id]:TE[id],h='<div class="pb">';
   h+='<div class="kindrow"><span class="kind">'+(isN?'NODE':'EDGE')+' · '+esc(el.kind)+'</span>'+(SN[id]?'<span class="kind">stream '+SN[id]+'</span>':'')+'</div>';
-  h+='<h2>'+esc(isN?SHORT[id]:el.name)+'<span class="zh">'+esc(ZH[id]||'')+'</span></h2>';
+  h+='<h2>'+esc(isN?SHORT[id]:el.name)+(LANG==='zh'?'<span class="zh">'+esc(zhv(ZH[id],''))+'</span>':'')+'</h2>';
   h+='<div class="mono dim" style="font-size:11px">'+esc(id)+(isN?'':' · '+esc(SHORT[el.s])+' → '+esc(SHORT[el.t]))+'</div>';
   /* signals */
   var list=BIND[id]||[];
-  h+='<h3>訊號 · Signals <span class="cnt">'+list.length+'</span></h3>';
-  if(!list.length)h+='<div class="empty">TEP 在此元素沒有 XMEAS / XMV 儀表（fixture 列為 unbound entity），不推測量測。</div>';
+  h+='<h3>'+esc(t('sd.signals'))+' <span class="cnt">'+list.length+'</span></h3>';
+  if(!list.length)h+='<div class="empty">'+esc(t('sd.noSignals'))+'</div>';
   else{
     var comp=list.filter(function(b){return b.q==='composition'});
     list.forEach(function(b){if(b.q==='composition')return;var m=SIG[b.v];
       h+='<div class="sig" data-sig="'+b.v+'"><span class="sid">'+b.v+'</span><span class="snm">'+esc(m[0])+' · '+(b.rel==='ACTUATES'?'ACTUATES':'MEASURES')+'</span><span class="sv"><b data-sv="'+b.v+'">–</b> <i>'+esc(m[1])+'</i></span>'+
-         '<span class="sf">'+(b.rel==='ACTUATES'?'<span class="flag acc">操作變數 XMV</span>':sigFlag(b.v))+'</span></div>';});
+         '<span class="sf">'+(b.rel==='ACTUATES'?'<span class="flag acc">'+esc(t('sd.xmv'))+'</span>':sigFlag(b.v))+'</span></div>';});
     if(comp.length){var ns=comp.map(function(b){return +b.v.match(/\d+/)[0]});
       h+='<div class="sig"><span class="sid">XMEAS('+Math.min.apply(null,ns)+'–'+Math.max.apply(null,ns)+')</span><span class="snm">composition ×'+comp.length+' · mol%</span><span class="sv"></span>'+
          '<div class="cv">'+comp.map(function(b){return SIG[b.v][3]+' <b data-sv="'+b.v+'">–</b>'}).join(' · ')+'</div><span class="sf">'+sigFlag(comp[0].v)+'</span></div>';}
-    h+='<div class="note">綁定 provenance：HUMAN_VERIFIED_MAPPING · '+esc(REFNAME.bathelt_ricker_jelali_2015)+' · '+esc(REFNAME.downs_vogel_1993)+'。數值為瀏覽器內模擬（示意）。</div>';
+    h+='<div class="note">'+esc(t('sd.prov',{a:REFNAME.bathelt_ricker_jelali_2015,b:REFNAME.downs_vogel_1993}))+'</div>';
   }
   /* knowledge */
   var kn=KNOW[k]||[];
-  h+='<h3>工程知識 · Engineering knowledge <span class="cnt">'+kn.length+'</span></h3>';
-  if(!kn.length)h+='<div class="empty">知識庫目前只涵蓋 reactor cooling 子系統；此元素沒有已擷取的限值、SOP 或控制描述。</div>';
-  kn.forEach(function(x){var st={APPROVED:'<span class="flag ok">已審核</span>',REJECTED:'<span class="flag alarm">已駁回</span>',SOURCE:'<span class="flag plan">原文引用</span>'}[x.s];
-    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+x.t+'</span>'+st+'</div><div class="kt">'+esc(x.txt)+'</div><div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
+  h+='<h3>'+esc(t('sd.knowledge'))+' <span class="cnt">'+kn.length+'</span></h3>';
+  if(!kn.length)h+='<div class="empty">'+esc(t('sd.noKnowledge'))+'</div>';
+  kn.forEach(function(x){var st={APPROVED:'<span class="flag ok">'+esc(t('sd.approved'))+'</span>',REJECTED:'<span class="flag alarm">'+esc(t('sd.rejected'))+'</span>',SOURCE:'<span class="flag plan">'+esc(t('sd.source'))+'</span>'}[x.s];
+    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+x.t+'</span>'+st+'</div><div class="kt">'+esc(zhv(x.txtZh,x.txt))+'</div><div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
   /* impact */
-  h+='<h3>影響 · Downstream impact</h3><div class="imp">'+
-     '<div class="r"><label for="impDepth" class="muted" style="font-size:12px">深度 hop ≤ <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
-     '<div class="r"><button type="button" class="btn pri" id="impShow">顯示下游影響</button><button type="button" class="btn" id="impPlay">▶ 逐層播放</button></div>'+
+  h+='<h3>'+esc(t('sd.impact'))+'</h3><div class="imp">'+
+     '<div class="r"><label for="impDepth" class="muted" style="font-size:12px">'+esc(t('sd.depth'))+' <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
+     '<div class="r"><button type="button" class="btn pri" id="impShow">'+esc(t('sd.show'))+'</button><button type="button" class="btn" id="impPlay">'+esc(t(HL.timer?'imp.stop':'imp.play'))+'</button></div>'+
      '<div id="impRes"></div></div>';
   /* topology refs */
   var refs=isN?(['downs_vogel_1993'].concat(NODE_FORTRAN[id]?['sim_fortran']:[])):['downs_vogel_1993','sim_fortran'];
-  h+='<h3>拓撲來源 · Topology refs</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div>';
+  h+='<h3>'+esc(t('sd.topoRefs'))+'</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div>';
   h+='</div>';
   $('#side').innerHTML=h;
   cacheSV();updateLive();
 }
+function loopName(L){var z=zhv(L.nameZh,'');return z?z+' · '+L.name:L.name}
 function renderImpactResult(hv){
   var box=$('#impRes');if(!box)return;
-  if(HL.src!=='impact'||HL.start!==SEL){box.innerHTML='<div class="note" style="margin-top:0">以此元素為起點，沿物流 / 公用流體方向做 BFS，在兩個視圖上依 hop 上色並標出回路。</div>';return;}
+  if(HL.src!=='impact'||HL.start!==SEL){box.innerHTML='<div class="note" style="margin-top:0">'+esc(t('imp.intro'))+'</div>';return;}
   var byHop={};Object.keys(hv.hop).forEach(function(k){var v=hv.hop[k];if(v===0)return;(byHop[v]=byHop[v]||[]).push(k)});
   var o='';
   Object.keys(byHop).map(Number).sort(function(a,b){return a-b}).forEach(function(v){
     var ks=byHop[v],ms='';
     ks.forEach(function(k){(BIND[k.slice(2)]||[]).forEach(function(b){if(b.rel!=='MEASURES')return;if(b.q==='composition'){return}
-      ms+='<span class="ref'+(ANCHOR[b.v]?' rv':'')+'" title="'+esc(SIG[b.v][0])+'">'+b.v+(ANCHOR[b.v]?' · 實測':'')+'</span>';});
+      ms+='<span class="ref'+(ANCHOR[b.v]?' rv':'')+'" title="'+esc(SIG[b.v][0])+'">'+b.v+(ANCHOR[b.v]?esc(t('imp.measured')):'')+'</span>';});
       var nc=(BIND[k.slice(2)]||[]).filter(function(b){return b.q==='composition'}).length;if(nc)ms+='<span class="ref">composition ×'+nc+'</span>';});
-    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elLabel(k))}).join('、')+'</div>'+(ms?'<div class="ms">'+ms+'</div>':'')+'</div></div>';});
-  if(!o)o='<div class="note">此深度內沒有下游元素。</div>';
-  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(s.L.name)+'</b> <span class="mono">'+s.got+'/'+s.L.e.length+'</span><div>'+(s.closed?'回路閉合：擾動會再次回到起點附近':'傳播已進入回路（加深 hop 可看到閉合）')+'</div><div class="mono dim" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
-  o+='<div class="note">圖遍歷只說明擾動在結構上「可能」傳到哪裡；TEP 以閉迴路運轉，控制器可能遮蔽下游偏差。</div>';
+    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elLabel(k))}).join(esc(t('imp.sep')))+'</div>'+(ms?'<div class="ms">'+ms+'</div>':'')+'</div></div>';});
+  if(!o)o='<div class="note">'+esc(t('imp.none'))+'</div>';
+  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(loopName(s.L))+'</b> <span class="mono">'+s.got+'/'+s.L.e.length+'</span><div>'+esc(t(s.closed?'imp.loopClosed':'imp.loopPartial'))+'</div><div class="mono dim" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
+  o+='<div class="note">'+esc(t('imp.caveat'))+'</div>';
   box.innerHTML=o;
 }
 function select(k){SEL=k;renderSide();applyHL();}
@@ -791,7 +870,7 @@ var CH=[
 /* views: 1 h live / 4.8 h live / event-anchored (-0.5 h .. +2.5 h around the injection, separately capped) */
 var VIEW='h1',WIN={h1:100,h48:CAP},PRE=50,POST=250,SHADE=80,EVT=null;
 function buildTrends(){
-  $('#tgrid').innerHTML=CH.map(function(c){return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n"><b>'+c.id+'</b>'+esc(c.nm)+(c.k==='u10'?'<span class="prim" id="prim" hidden>首要反應</span>':'')+'</div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>基準 '+c.base+' · 虛線</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
+  $('#tgrid').innerHTML=CH.map(function(c){return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n"><b>'+c.id+'</b>'+esc(c.nm)+(c.k==='u10'?'<span class="prim" id="prim" hidden>'+esc(t('tr.primary'))+'</span>':'')+'</div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>'+esc(t('tr.base',{b:c.base}))+'</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
   CH.forEach(function(c){c.cv=document.getElementById('cv-'+c.k);c.ctx=c.cv.getContext('2d');});
 }
 var dirty=true;
@@ -814,32 +893,32 @@ function drawChart(c){
   for(var g=0;g<=3;g++){var v=lo+(hi-lo)*g/3,yy=Math.round(Y(v))+.5;x.strokeStyle='#1b2733';x.lineWidth=1;x.beginPath();x.moveTo(pl,yy);x.lineTo(W-pr,yy);x.stroke();x.fillStyle='#6f8090';x.fillText(v.toFixed(c.dp),pl-5,yy);}
   x.setLineDash([4,4]);x.strokeStyle='#5d6e7d';x.beginPath();var by=Y(c.base);x.moveTo(pl,by);x.lineTo(W-pr,by);x.stroke();x.setLineDash([]);
   /* injection / removal markers: line in plot, label in the reserved top margin (never on the curve or axis labels) */
-  var lastEnd=-1e9;
+  var lastEnd=-1e9,lab=function(m){return m.lk?t(m.lk):m.l};
   var offL=MARKS.filter(function(m){var i=S.idx(m.K)+0.5;return i<0&&!S.left&&SIM.K-m.K<BUF[c.k].length;});
-  if(offL.length){var mo=offL[offL.length-1];x.font='600 10px Consolas, monospace';x.fillStyle=mo.c;x.textAlign='left';x.fillText('◀ '+mo.l.replace(/^[▼▲] /,'')+' · −'+((SIM.K-mo.K)*STEP_H).toFixed(1)+' h',pl,8);lastEnd=pl+x.measureText('◀ '+mo.l+' · −0.0 h').width;}
+  if(offL.length){var mo=offL[offL.length-1];x.font='600 10px Consolas, monospace';x.fillStyle=mo.c;x.textAlign='left';x.fillText('◀ '+lab(mo).replace(/^[▼▲] /,'')+' · −'+((SIM.K-mo.K)*STEP_H).toFixed(1)+' h',pl,8);lastEnd=pl+x.measureText('◀ '+lab(mo)+' · −0.0 h').width;}
   MARKS.forEach(function(m){var i=S.idx(m.K)+0.5;if(i<0||i>n-1)return;var mx=Math.round(X(i))+.5;
     if(m.inj){var i2=Math.min(S.idx(m.K+SHADE)+0.5,n-1);if(i2>i){x.fillStyle='rgba(226,167,60,.10)';x.fillRect(mx,pt,X(i2)-mx,ih);}}
     x.strokeStyle=m.c;x.lineWidth=1.2;x.setLineDash([3,3]);x.beginPath();x.moveTo(mx,pt-6);x.lineTo(mx,H-pb);x.stroke();x.setLineDash([]);
-    x.font='600 10px Consolas, monospace';var tw=x.measureText(m.l).width,lx=mx+4;
+    x.font='600 10px Consolas, monospace';var ml=lab(m),tw=x.measureText(ml).width,lx=mx+4;
     if(lx+tw>W-pr)lx=mx-4-tw;if(lx<lastEnd+6)lx=lastEnd+6;if(lx+tw>W-pr)lx=W-pr-tw;if(lx<pl)lx=pl;
-    x.fillStyle=m.c;x.textAlign='left';x.fillText(m.l,lx,8);lastEnd=lx+tw;});
+    x.fillStyle=m.c;x.textAlign='left';x.fillText(ml,lx,8);lastEnd=lx+tw;});
   x.textAlign='right';x.font='10px Consolas, monospace';
   if(n>1){x.strokeStyle=c.c;x.lineWidth=1.6;x.lineJoin='round';x.beginPath();for(var j=0;j<n;j++){var px=X(j),py=Y(a[j]);if(j)x.lineTo(px,py);else x.moveTo(px,py);}x.stroke();
     x.fillStyle=c.c;x.beginPath();x.arc(X(n-1),Y(a[n-1]),2.8,0,Math.PI*2);x.fill();}
 }
 function primaryOn(){return !!(EVT&&DET&&!DET.removedT&&SIM.mode==='AUTO'&&DET.first['XMV(10)']!==undefined)}
 function trendCaption(){
-  if(!EVT)return '尚未注入擾動。入口溫度沒有儀表，注入 IDV(4) 後只能從下游訊號看到反應。';
-  if(DET&&DET.removedT)return '擾動已於 t = '+DET.removedT.toFixed(2)+' h 移除；控制器正把 XMV(10) 拉回原位。';
+  if(!EVT)return esc(t('tr.capNone'));
+  if(DET&&DET.removedT)return esc(t('tr.capRemoved',{t:DET.removedT.toFixed(2)}));
   if(primaryOn()){var du=DET.cur['XMV(10)'],p9=DET.peak['XMEAS(9)']||0,p21=DET.peak['XMEAS(21)']||0;
-    return '<b>首要反應：XMV(10) '+(du>=0?'+':'')+du.toFixed(1)+' %</b>：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值 '+(p9>=0?'+':'')+p9.toFixed(2)+' degC，XMEAS(21) 峰值 '+(p21>=0?'+':'')+p21.toFixed(2)+' degC，離 normal upper 150 仍有約 '+Math.max(0,150-VAL['XMEAS(9)']).toFixed(0)+' degC）。';}
-  if(!DET)return 'IDV(4) 事件已結束，訊號回到基準。切換「擾動事件」可回看當時的反應。';
-  return 'IDV(4) +'+EVT.mag+' °C 已於 t = '+EVT.t0.toFixed(2)+' h 注入，等待訊號反應。';
+    return t('tr.capPrimary',{du:(du>=0?'+':'')+du.toFixed(1),p9:(p9>=0?'+':'')+p9.toFixed(2),p21:(p21>=0?'+':'')+p21.toFixed(2),hd:Math.max(0,150-VAL['XMEAS(9)']).toFixed(0)});}
+  if(!DET)return esc(t('tr.capOver'));
+  return esc(t('tr.capWait',{m:EVT.mag,t:EVT.t0.toFixed(2)}));
 }
 var lastCap='';
 function drawAll(){CH.forEach(drawChart);
   CH.forEach(function(c){var el=document.getElementById('td-'+c.k);var a=BUF[c.k];if(!a.length)return;var dv=a[a.length-1]-c.base;
-    var big=DET&&DET.dev[c.id];el.textContent=(dv>=0?'+':'')+dv.toFixed(c.dp)+' vs 基準';el.classList.toggle('up',!!big);
+    var big=DET&&DET.dev[c.id];el.textContent=t('tr.vsBase',{dv:(dv>=0?'+':'')+dv.toFixed(c.dp)});el.classList.toggle('up',!!big);
     var L,R;if(VIEW==='evt'&&EVT){L='−0.5 h';R=EVT.post.x9.length>=POST?'+2.5 h ✓':'+2.5 h';}else{L='−'+((WIN[VIEW]||100)*STEP_H).toFixed(1)+' h';R='now';}
     document.getElementById('tkl-'+c.k).textContent=L;document.getElementById('tkr-'+c.k).textContent=R;});
   var pr=primaryOn();$('#prim').hidden=!pr;$('#tc-u10').classList.toggle('primary',pr);
@@ -862,7 +941,7 @@ function updateLive(){
 }
 
 /* =====================================================================
-   9. "現在發生什麼" structured summary + evidence strip
+   9. "What is happening now" structured summary + evidence strip
    ===================================================================== */
 function snapId(){return 'snap@T'+SIM.t.toFixed(2)+'h/K'+SIM.K}
 var USED={};
@@ -871,64 +950,65 @@ function line(txt,sigs,kr,rules){var sn=snapId();(kr||[]).forEach(function(k){US
 function sgn(v,d){return (v>=0?'+':'')+v.toFixed(d)}
 function ruleOf(sig){if(!SAFE)return null;for(var i=0;i<SAFE.rules.signals.length;i++)if(SAFE.rules.signals[i].signal===sig)return SAFE.rules.signals[i];return null;}
 function stSpan(st){return '<span class="'+(st==='NORMAL'?'g':'w')+'">'+st+'</span>'}
-function limitText(sig,nu,sd,unit){
+function limitText(sig,nu,sd){
   var r=ruleOf(sig),v=VAL[sig],st=r?r.state:'NORMAL',hd=(nu-v).toFixed(1);
-  var t=st==='TRIP'?'達到 shutdown '+sd+' → ':st==='ALARM'?'超過 normal upper '+nu+'，低於 shutdown '+sd+' → ':st==='ATTENTION'?'接近 normal upper '+nu+'（餘裕 '+hd+'，進入注意帶）→ ':'低於 normal upper '+nu+'（餘裕 '+hd+'）與 shutdown '+sd+' → ';
+  var k=st==='TRIP'?'now.limTrip':st==='ALARM'?'now.limAlarm':st==='ATTENTION'?'now.limAtt':'now.limNormal';
   var ids=PCL.RULES.filter(function(x){return x.signal===sig&&x.kind!=='ATTENTION_BAND'}).map(function(x){return x.id});
   if(r&&r.ruleId&&ids.indexOf(r.ruleId)<0)ids.unshift(r.ruleId);
-  return {txt:t+stSpan(st),ids:ids};
+  return {txt:esc(t(k,{nu:nu,sd:sd,hd:hd}))+stSpan(st),ids:ids};
 }
 function renderNow(){
   if(!SAFE)return;
   USED={};
   var t9=VAL['XMEAS(9)'],t21=VAL['XMEAS(21)'],u=VAL['XMV(10)'],p=VAL['XMEAS(7)'];
-  var state='normal',title='reactor cooling 子系統在基準附近運轉，沒有超過門檻的偏差',stl='正常 · NORMAL';
+  var state='normal',title=t('now.tNormal'),stl=t('now.stNormal');
   if(DET){
-    var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'],uDev=DET.dev['XMV(10)'],el=SIM.t-DET.t0;
-    if(DET.removedT){state='dist';stl='擾動已移除 · RECOVERING';title='入口溫度回到基準，控制器正把 XMV(10) 拉回原位';}
-    else if(anyT){state='dist';stl='擾動中 · DISTURBED';
-      title=(DET.first['XMEAS(21)']!==undefined&&(DET.first['XMEAS(9)']===undefined||DET.first['XMEAS(21)']<DET.first['XMEAS(9)']))?
-        '冷卻水出口溫度先上升，反應器溫度延遲跟上；控制器正在加大 XMV(10)':'反應器溫度偏離基準；控制器正在調整 XMV(10)';}
-    else if(uDev){state='comp';stl='已補償 · COMPENSATED';title='溫度已回到基準；XMV(10) 停在新的操作點（'+u.toFixed(1)+' %，基準 '+DET.base['XMV(10)'].toFixed(1)+' %）';}
-    else if(el<0.08){state='dist';stl='已注入 · WAITING';title='IDV(4) 已注入，等待訊號反應（入口溫度無儀表，無法直接看到擾動）';}
-    else{state='comp';stl='擾動中 · MASKED';title='擾動存在，但主要訊號未超過門檻（閉迴路控制可能遮蔽）';}
-    if(SIM.mode==='MANUAL'&&!DET.removedT)title=title.replace(/；控制器正在(加大|調整) XMV\(10\)/,'')+'；XMV(10) 為 MANUAL，控制器不再修正';
+    var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'],uDev=DET.dev['XMV(10)'],el=SIM.t-DET.t0,man=SIM.mode==='MANUAL'&&!DET.removedT;
+    if(DET.removedT){state='dist';stl=t('now.stRecovering');title=t('now.tRecovering');}
+    else if(anyT){state='dist';stl=t('now.stDisturbed');
+      var cwFirst=DET.first['XMEAS(21)']!==undefined&&(DET.first['XMEAS(9)']===undefined||DET.first['XMEAS(21)']<DET.first['XMEAS(9)']);
+      title=cwFirst?t('now.tCwFirst')+(man?'':t('now.tCtrlOpen')):t('now.tReactorDev')+(man?'':t('now.tCtrlAdjust'));}
+    else if(uDev){state='comp';stl=t('now.stCompensated');title=t('now.tCompensated',{u:u.toFixed(1),b:DET.base['XMV(10)'].toFixed(1)});}
+    else if(el<0.08){state='dist';stl=t('now.stWaiting');title=t('now.tWaiting');}
+    else{state='comp';stl=t('now.stMasked');title=t('now.tMasked');}
+    if(man)title+=t('now.tManual');
   }
-  var o='<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+stl+'</div><div class="tt">'+esc(title)+'</div><div class="refs"><span class="ref snap">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>';
+  var o='<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+esc(stl)+'</div><div class="tt">'+esc(title)+'</div><div class="refs"><span class="ref snap">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>';
+  var C=t('now.colon');
   /* current condition */
-  o+='<div class="nowsec"><h3>目前狀態 · Current condition</h3><ul>';
+  o+='<div class="nowsec"><h3>'+esc(t('now.current'))+'</h3><ul>';
   var l9=limitText('XMEAS(9)',150,175),l7=limitText('XMEAS(7)',2895,3000);
-  o+=line('<b>XMEAS(9)</b> 反應器溫度 <b class="num">'+t9.toFixed(2)+' degC</b>：'+l9.txt,['XMEAS(9)'],['row2'],l9.ids);
-  o+=line('<b>XMEAS(7)</b> 反應器壓力 <b class="num">'+p.toFixed(1)+' kPa gauge</b>：'+l7.txt,['XMEAS(7)'],['row1'],l7.ids);
-  o+=line('<b>XMEAS(21)</b> 冷卻水出口溫度 <b class="num">'+t21.toFixed(2)+' degC</b>：沒有核准的 alarm / shutdown 限值，不推測',['XMEAS(21)'],['row3']);
-  o+=line('<b>XMV(10)</b> 冷卻水流量指令 <b class="num">'+u.toFixed(2)+' %</b>（0–100，指令值，不是製程限值）',['XMV(10)'],['row4']);
-  if(SIM.mode==='MANUAL')o+=line('<b>XMV(10)</b> 迴路為 <span class="w">MANUAL</span>（操作員輸出 '+u.toFixed(1)+' %）：反應器溫度不再由控制器維持；恢復自動須由人員操作',['XMV(10)','XMEAS(9)'],['ctrl']);
+  o+=line('<b>XMEAS(9)</b> '+esc(t('now.n.x9'))+' <b class="num">'+t9.toFixed(2)+' degC</b>'+C+l9.txt,['XMEAS(9)'],['row2'],l9.ids);
+  o+=line('<b>XMEAS(7)</b> '+esc(t('now.n.x7'))+' <b class="num">'+p.toFixed(1)+' kPa gauge</b>'+C+l7.txt,['XMEAS(7)'],['row1'],l7.ids);
+  o+=line('<b>XMEAS(21)</b> '+esc(t('now.n.x21'))+' <b class="num">'+t21.toFixed(2)+' degC</b>'+C+esc(t('now.x21NoLimit')),['XMEAS(21)'],['row3']);
+  o+=line('<b>XMV(10)</b> '+esc(t('now.n.u10'))+' <b class="num">'+u.toFixed(2)+' %</b>'+esc(t('now.u10Range')),['XMV(10)'],['row4']);
+  if(SIM.mode==='MANUAL')o+=line(t('now.manual',{u:u.toFixed(1)}),['XMV(10)','XMEAS(9)'],['ctrl']);
   o+='</ul></div>';
   /* observed changes */
-  o+='<div class="nowsec"><h3>觀察到的變化 · Observed changes</h3><ul>';
-  if(!DET){o+=line('相對於基準，四個訊號都沒有超過門檻（門檻 = 4σ 或最小變化量）',['XMEAS(9)','XMEAS(21)','XMV(10)','XMEAS(7)'],[]);}
+  o+='<div class="nowsec"><h3>'+esc(t('now.observed'))+'</h3><ul>';
+  if(!DET){o+=line(esc(t('now.noDev')),['XMEAS(9)','XMEAS(21)','XMV(10)','XMEAS(7)'],[]);}
   else{
     var order=KEYS.map(function(k){return k[1]}).filter(function(id){return DET.first[id]!==undefined}).sort(function(a,b){return DET.first[a]-DET.first[b]});
-    var nm={'XMEAS(9)':'反應器溫度','XMEAS(21)':'冷卻水出口溫度','XMV(10)':'冷卻水流量指令','XMEAS(7)':'反應器壓力'};
+    var nm={'XMEAS(9)':t('now.n.x9'),'XMEAS(21)':t('now.n.x21'),'XMV(10)':t('now.n.u10'),'XMEAS(7)':t('now.n.x7')};
     var un={'XMEAS(9)':'degC','XMEAS(21)':'degC','XMV(10)':'%','XMEAS(7)':'kPa'};
-    o+=line('<b>IDV(4)</b> 入口溫度 step '+(SIM.d>0?'+'+SIM.d+' °C':'已移除')+'，於 t = '+DET.t0.toFixed(2)+' h 注入（模擬事件；入口溫度本身沒有量測）',[],['rcw']);
-    if(!order.length)o+=line('尚未有訊號超過門檻（已過 '+((SIM.t-DET.t0)*60).toFixed(0)+' min）',['XMEAS(21)','XMEAS(9)','XMV(10)'],[]);
+    o+=line(t('now.idv',{s:SIM.d>0?'+'+SIM.d+' °C':esc(t('now.removed')),t:DET.t0.toFixed(2)}),[],['rcw']);
+    if(!order.length)o+=line(esc(t('now.noneYet',{m:((SIM.t-DET.t0)*60).toFixed(0)})),['XMEAS(21)','XMEAS(9)','XMV(10)'],[]);
     order.forEach(function(id,i){var d=id==='XMEAS(7)'?1:2,cur=DET.cur[id],pk=DET.peak[id];
-      o+=line((i+1)+'. <b>'+id+'</b> '+nm[id]+' 在 t = '+DET.first[id].toFixed(2)+' h 超過門檻（延遲 '+((DET.first[id]-DET.t0)*60).toFixed(0)+' min）；目前 <span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>，峰值 '+sgn(pk,d)+' '+un[id],[id],[]);});
-    if(DET.first['XMV(10)']!==undefined&&!DET.removedT&&SIM.mode==='AUTO')o+=line('首要反應是 <b>XMV(10)</b>（目前 '+sgn(DET.cur['XMV(10)'],1)+' %）：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值只有 '+sgn(DET.peak['XMEAS(9)']||0,2)+' degC）',['XMV(10)','XMEAS(9)'],['ctrl']);
-    if(order.length>1)o+=line('偵測順序 '+order.join(' → ')+'。時間順序與拓撲 hop 不必相同：圖可達只代表可能路徑，不是因果證據',order,['topo']);
+      o+=line(t('now.crossed',{i:i+1,id:id,nm:esc(nm[id]),t:DET.first[id].toFixed(2),lag:((DET.first[id]-DET.t0)*60).toFixed(0),cur:'<span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>',pk:sgn(pk,d)+' '+un[id]}),[id],[]);});
+    if(DET.first['XMV(10)']!==undefined&&!DET.removedT&&SIM.mode==='AUTO')o+=line(t('now.primary',{c:sgn(DET.cur['XMV(10)'],1),p:sgn(DET.peak['XMEAS(9)']||0,2)}),['XMV(10)','XMEAS(9)'],['ctrl']);
+    if(order.length>1)o+=line(esc(t('now.order',{o:order.join(' → ')})),order,['topo']);
   }
   o+='</ul></div>';
   /* engineering context */
-  o+='<div class="nowsec"><h3>相關工程脈絡 · Engineering context</h3><ul>';
-  o+=line('XMV(10) 調節反應器冷卻水流量；加大流量可增加移熱，但受熱狀態與公用流體條件限制',['XMV(10)'],['ctrl']);
+  o+='<div class="nowsec"><h3>'+esc(t('now.context'))+'</h3><ul>';
+  o+=line(esc(t('now.ctxCtrl')),['XMV(10)'],['ctrl']);
   if(DET){
-    o+=line('入口溫度沒有已知儀表（RCW-IN-TT 已駁回）：擾動來源只能由 XMEAS(21)、XMEAS(9) 與 XMV(10) 的反應推論',['XMEAS(21)','XMEAS(9)','XMV(10)'],['rcw']);
-    o+=line('SOP 原文：溫度上升時比對製程溫度與冷卻水出口讀值',['XMEAS(9)','XMEAS(21)'],['tsrev']);
+    o+=line(esc(t('now.ctxRcw')),['XMEAS(21)','XMEAS(9)','XMV(10)'],['rcw']);
+    o+=line(esc(t('now.ctxSop')),['XMEAS(9)','XMEAS(21)'],['tsrev']);
     var hv=bfs('e:reactor_cooling_water_in',6),nEl=Object.keys(hv).length;
-    o+=line('拓撲：自 reactor cooling water inlet 起，6 hop 內結構上可達 '+nEl+' 個元素，含 recycle loop 回流到反應器',[],['topo']);
+    o+=line(esc(t('now.ctxTopo',{n:nEl})),[],['topo']);
   }else{
-    o+=line('reactor temperature 的 normal upper 以 150 degC 為準；競爭的 145 degC 已駁回，引用保留',['XMEAS(9)'],['c145']);
+    o+=line(esc(t('now.ctx150')),['XMEAS(9)'],['c145']);
   }
   o+='</ul></div>';
   $('#now').innerHTML=o;
@@ -937,10 +1017,10 @@ function renderNow(){
 function renderStrip(){
   var used=Object.keys(USED);
   $('#strip').innerHTML=
-   '<div><div class="k">Context Layer · plant context revision <span class="badge built">已實作</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
-   '<div><div class="k">Knowledge revision <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">人工審查 12 筆：10 approve / remap，2 reject</div></div>'+
-   '<div><div class="k">Snapshot <span class="badge sim">'+(CONNECTED?'本機伺服器引擎產生':'本頁於瀏覽器內產生')+'</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
-   '<div><div class="k">Knowledge refs used · '+used.length+'</div><div class="refs" style="margin-top:0">'+used.map(function(k){return '<span class="ref">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">每一條陳述都釘在一個確切的 snapshot（T、K 與 revision）上，所以能被重現與追溯。</div></div>';
+   '<div><div class="k">Context Layer · plant context revision <span class="badge built">'+esc(t('st.built'))+'</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
+   '<div><div class="k">Knowledge revision <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">'+esc(t('st.reviews'))+'</div></div>'+
+   '<div><div class="k">Snapshot <span class="badge sim">'+esc(t(CONNECTED?'st.snapServer':'st.snapPage'))+'</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
+   '<div><div class="k">Knowledge refs used · '+used.length+'</div><div class="refs" style="margin-top:0">'+used.map(function(k){return '<span class="ref">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">'+esc(t('st.pinned'))+'</div></div>';
 }
 
 /* =====================================================================
@@ -960,8 +1040,8 @@ function tick(){
 }
 function showRunning(on){
   SIM.running=on;
-  $('#bRun').textContent=on?'❚❚ 暫停':'▶ 開始';
-  $('#cDot').className='dot '+(on?'live':'pause');$('#cLiveT').textContent=on?'LIVE · 串流中':'暫停';
+  $('#bRun').textContent=t(on?'run.pause':'run.start');
+  $('#cDot').className='dot '+(on?'live':'pause');$('#cLiveT').textContent=t(on?'live.on':'live.paused');
 }
 function setRunning(on){
   if(CONNECTED){ctl({action:'run',on:on});showRunning(on);return;}
@@ -984,7 +1064,7 @@ function onInjected(mag,K0,t0){
 }
 function onRemoved(){
   SIM.d=0;if(DET)DET.removedT=SIM.t;
-  MARKS.push({K:SIM.K,l:'▲ 移除 IDV(4)',c:'#8da1b5'});
+  MARKS.push({K:SIM.K,l:'',lk:'tr.removedMark',c:'#8da1b5'});
   if(HL.src==='dist')clearHL();
   $('#bClear').disabled=true;renderNow();dirty=true;
 }
@@ -1008,80 +1088,95 @@ function restoreAuto(){
 /* =====================================================================
    11. Safety bar (rules + PCA), adjustment proposal, gate log
    ===================================================================== */
-var STZ={NORMAL:'正常',ATTENTION:'注意',ALARM:'警報',TRIP:'跳車 · 交由人員處理'};
-var RZH={XMV_UNKNOWN:'不是 TEP 的操作變數',XMV_NOT_MODELLED:'模型未模擬此 XMV，無法驗證效果',TARGET_INVALID:'目標值不是數字',TARGET_OUT_OF_RANGE:'超出 0–100 %',RATIONALE_MISSING:'缺少理由',TRIP_ACTIVE:'TRIP 中禁止調整，請交由人員處理',STEP_TOO_LARGE:'單次步幅過大',RATE_LIMIT:'超過變化率上限',SIM_RULE_TRIP:'分支模擬會達 TRIP',SIM_RULE_ALARM:'分支模擬會達 ALARM',SIM_HEADROOM_LOSS:'分支模擬明顯吃掉限值餘裕',PCA_SPE_WORSENS:'分支模擬 PCA SPE 明顯變差'};
 var GATE=PCL.GATE_PARAMS;
 function setHTML(el,h){if(el._h!==h){el.innerHTML=h;el._h=h;}}
 function renderSafety(){
   if(!SAFE)return;
   var r=SAFE.rules,w=r.worst,p=SAFE.pca;
-  setHTML($('#sfRule'),'<span class="rst '+w.state+'">'+w.state+'</span><b>'+STZ[w.state]+'</b>'+(w.ruleId?'<span class="ref rule">'+esc(w.ruleId)+'</span>':''));
-  setHTML($('#sfRuleD'),r.signals.map(function(s){return esc(s.signal)+' '+fmt(s.signal,s.value)+' '+esc(s.unit.replace(' gauge',''))+' → '+s.state}).join(' · ')+' · 其餘 '+r.noReviewedLimit.length+' 個 XMEAS 無已審核限值（不推測）');
+  setHTML($('#sfRule'),'<span class="rst '+w.state+'">'+w.state+'</span><b>'+esc(t('stz.'+w.state))+'</b>'+(w.ruleId?'<span class="ref rule">'+esc(w.ruleId)+'</span>':''));
+  setHTML($('#sfRuleD'),r.signals.map(function(s){return esc(s.signal)+' '+fmt(s.signal,s.value)+' '+esc(s.unit.replace(' gauge',''))+' → '+s.state}).join(' · ')+esc(t('sf.others',{n:r.noReviewedLimit.length})));
   if(p){
     var ex=p.exceeded.any;
-    setHTML($('#sfPca'),'<span class="rst '+(ex?'EXC':'NORMAL')+'">'+(ex?'超出門檻':'門檻內')+'</span><span class="meter'+(ex?' hot':'')+'" title="1.0× = 99% 門檻（中線）"><i style="width:'+Math.min(100,p.score*50).toFixed(1)+'%"></i><b></b></span><span class="mono">'+p.score.toFixed(2)+'×</span>');
-    setHTML($('#sfPcaD'),'T² '+p.t2.toFixed(2)+' / '+p.t2Limit.toFixed(2)+' · SPE '+p.spe.toFixed(2)+' / '+p.speLimit.toFixed(2)+'（99% 門檻）');
-    setHTML($('#sfTop'),p.contributors.map(function(c){return '<span class="ctb" title="'+esc(SIG[c.signal][0])+'">'+esc(c.signal)+' '+Math.round(c.share*100)+'% '+(c.direction==='high'?'↑':'↓')+'</span>'}).join('')+(ex?'':'<span class="muted" style="font-size:11px">未超限，僅供參考</span>'));
+    setHTML($('#sfPca'),'<span class="rst '+(ex?'EXC':'NORMAL')+'">'+esc(t(ex?'sf.pcaExc':'sf.pcaOk'))+'</span><span class="meter'+(ex?' hot':'')+'" title="'+esc(t('sf.meterTip'))+'"><i style="width:'+Math.min(100,p.score*50).toFixed(1)+'%"></i><b></b></span><span class="mono">'+p.score.toFixed(2)+'×</span>');
+    setHTML($('#sfPcaD'),esc(t('sf.pcaD',{t2:p.t2.toFixed(2),t2l:p.t2Limit.toFixed(2),spe:p.spe.toFixed(2),spel:p.speLimit.toFixed(2)})));
+    setHTML($('#sfTop'),p.contributors.map(function(c){return '<span class="ctb" title="'+esc(SIG[c.signal][0])+'">'+esc(c.signal)+' '+Math.round(c.share*100)+'% '+(c.direction==='high'?'↑':'↓')+'</span>'}).join('')+(ex?'':'<span class="muted" style="font-size:11px">'+esc(t('sf.topRef'))+'</span>'));
   }
   var man=SAFE.loop.mode==='MANUAL';
-  setHTML($('#sfLoop'),'<span class="rst '+(man?'ATTENTION':'NORMAL')+'">'+SAFE.loop.mode+'</span><span class="mono">'+SAFE.loop.output.toFixed(1)+' %</span>'+(man?'<button type="button" class="btn" id="bAuto" style="padding:2px 8px;font-size:11px">恢復自動</button>':''));
-  setHTML($('#sfLoopD'),man?'操作員輸出固定，溫度不再由控制器維持；恢復自動由人員操作':'PI：XMEAS(9) → XMV(10)，設定值 120.40 degC');
-  var cur=VAL[$('#pXmv').value];$('#pCurV').textContent=cur!==undefined?'目前 '+(+cur).toFixed(2)+' %':'';
+  setHTML($('#sfLoop'),'<span class="rst '+(man?'ATTENTION':'NORMAL')+'">'+SAFE.loop.mode+'</span><span class="mono">'+SAFE.loop.output.toFixed(1)+' %</span>'+(man?'<button type="button" class="btn" id="bAuto" style="padding:2px 8px;font-size:11px">'+esc(t('sf.auto'))+'</button>':''));
+  setHTML($('#sfLoopD'),esc(t(man?'sf.loopMan':'sf.loopAuto')));
+  var cur=VAL[$('#pXmv').value];$('#pCurV').textContent=cur!==undefined?t('pp.current',{v:(+cur).toFixed(2)}):'';
 }
 function syncLog(){if(!CONNECTED){var changed=GSEQ!==ENG.gateSeq;GLOG=ENG.gateLog;GSEQ=ENG.gateSeq;if(changed)renderGateLog();}}
 function renderGateLog(){
   var L=(GLOG||[]).slice(-30).reverse();
-  $('#logCount').textContent=GSEQ+' 筆';
-  if(!L.length){setHTML($('#glog'),'<div class="pb"><div class="empty">尚無紀錄。頁面上的試算 / 套用與 MCP 的 propose_adjustment 都會記錄在這裡。</div></div>');return;}
+  $('#logCount').textContent=t('log.count',{n:GSEQ});
+  if(!L.length){setHTML($('#glog'),'<div class="pb"><div class="empty">'+esc(t('log.empty'))+'</div></div>');return;}
   setHTML($('#glog'),L.map(function(e){
-    var tm='';try{tm=new Date(e.ts).toLocaleTimeString('zh-TW',{hour12:false})}catch(x){tm=e.ts}
-    var src=e.source==='mcp'?'<span class="flag acc">MCP</span>':'<span class="flag plan">'+(e.source==='page'?'頁面':esc(e.source))+'</span>';
-    var md=e.mode==='apply'?(e.applied?'<span class="flag ok">已套用</span>':'<span class="flag">套用 · 未執行</span>'):'<span class="flag">試算</span>';
+    var tm='';try{tm=new Date(e.ts).toLocaleTimeString(LANG==='zh'?'zh-TW':'en-GB',{hour12:false})}catch(x){tm=e.ts}
+    var src=e.source==='mcp'?'<span class="flag acc">MCP</span>':'<span class="flag plan">'+(e.source==='page'?esc(t('log.page')):esc(e.source))+'</span>';
+    var md=e.mode==='apply'?(e.applied?'<span class="flag ok">'+esc(t('log.applied'))+'</span>':'<span class="flag">'+esc(t('log.notExec'))+'</span>'):'<span class="flag">'+esc(t('log.dry'))+'</span>';
     var vd=e.verdict==='ACCEPT'?'ACCEPT':'REJECT';
     return '<div class="gl"><span class="s">#'+(+e.seq)+'</span><div class="m"><span class="vd '+vd+'">'+vd+'</span><b class="mono">'+esc(e.input.xmv)+' → '+esc(e.input.target)+' %</b>'+src+md+'</div><div class="c">'+esc(tm)+' · '+esc(e.snapshot.id)+(e.reasons.length?' · '+e.reasons.map(function(x){return esc(x.code)}).join(', '):'')+'</div></div>';
   }).join(''));
 }
-var LASTOK=null;
+var LASTOK=null,LASTGATE=null;
 function propKey(){return $('#pXmv').value+'|'+$('#pTarget').value+'|'+$('#pWhy').value}
 function syncApply(){$('#pApply').disabled=LASTOK===null||LASTOK!==propKey();}
-function showGate(r,apply){
-  if(!r||!r.verdict){setHTML($('#pRes'),'<div class="gres"><span class="vd REJECT">ERROR</span> '+esc((r&&r.error)||'gate 無回應')+'</div>');return;}
-  var h='<div class="gres"><div class="gh"><span class="vd '+r.verdict+'">'+r.verdict+'</span><b class="mono">'+esc(r.input.xmv)+' → '+esc(r.input.target)+' %</b>'+(r.current!==null?'<span class="muted">目前 '+(+r.current).toFixed(2)+' %</span>':'')+
-    (apply?(r.applied?'<span class="flag ok">已套用 · 迴路轉 MANUAL</span>':'<span class="flag">未套用</span>'):'<span class="flag">試算 · 未改變工廠</span>')+'<span class="ref snap">'+esc(r.snapshot.id)+'</span></div>';
-  if(r.reasons.length)h+='<ul>'+r.reasons.map(function(x){return '<li><code>'+esc(x.code)+'</code> '+esc(RZH[x.code]||'')+'<div class="muted" style="font-size:11px">'+esc(x.message)+'</div></li>'}).join('')+'</ul>';
-  else h+='<div class="g" style="color:#8fdcb4">所有檢查通過'+(apply?'':'；可按「套用」（套用時會以當下狀態重新評估）')+'</div>';
+/* render only; called again on a language switch */
+function renderGate(r,apply){
+  if(!r||!r.verdict){setHTML($('#pRes'),'<div class="gres"><span class="vd REJECT">ERROR</span> '+esc((r&&r.error)||t('g.noResponse'))+'</div>');return;}
+  var h='<div class="gres"><div class="gh"><span class="vd '+esc(r.verdict)+'">'+esc(r.verdict)+'</span><b class="mono">'+esc(r.input.xmv)+' → '+esc(r.input.target)+' %</b>'+(r.current!==null?'<span class="muted">'+esc(t('pp.current',{v:(+r.current).toFixed(2)}))+'</span>':'')+
+    (apply?(r.applied?'<span class="flag ok">'+esc(t('g.applied'))+'</span>':'<span class="flag">'+esc(t('g.notApplied'))+'</span>'):'<span class="flag">'+esc(t('g.dry'))+'</span>')+'<span class="ref snap">'+esc(r.snapshot.id)+'</span></div>';
+  if(r.reasons.length)h+='<ul>'+r.reasons.map(function(x){var lab=t('rz.'+x.code);return '<li><code>'+esc(x.code)+'</code> '+(lab!=='rz.'+x.code?esc(lab):'')+'<div class="muted" style="font-size:11px">'+esc(x.message)+'</div></li>'}).join('')+'</ul>';
+  else h+='<div class="g" style="color:#8fdcb4">'+esc(t('g.pass'))+(apply?'':esc(t('g.passHint')))+'</div>';
   if(r.simulation){var a=r.simulation.withChange,b=r.simulation.noChange;
-    h+='<div class="sim">分支模擬 '+a.horizonMin+' min（調整 / 不調整）：XMEAS(9) 峰值 '+a.peak['XMEAS(9)'].toFixed(2)+' / '+b.peak['XMEAS(9)'].toFixed(2)+' degC · XMEAS(7) 峰值 '+a.peak['XMEAS(7)'].toFixed(1)+' / '+b.peak['XMEAS(7)'].toFixed(1)+' kPa · 最差規則 '+a.worstRuleState+' / '+b.worstRuleState+(a.meanSpe!==null?' · SPE 平均 '+a.meanSpe.toFixed(2)+' / '+b.meanSpe.toFixed(2):'')+'</div>';}
+    h+='<div class="sim">'+esc(t('g.sim',{h:a.horizonMin,a9:a.peak['XMEAS(9)'].toFixed(2),b9:b.peak['XMEAS(9)'].toFixed(2),a7:a.peak['XMEAS(7)'].toFixed(1),b7:b.peak['XMEAS(7)'].toFixed(1),aw:a.worstRuleState,bw:b.worstRuleState}))+(a.meanSpe!==null?esc(t('g.simSpe',{a:a.meanSpe.toFixed(2),b:b.meanSpe.toFixed(2)})):'')+'</div>';}
   h+='</div>';
   setHTML($('#pRes'),h);
+}
+function showGate(r,apply){
+  LASTGATE={r:r,apply:apply};renderGate(r,apply);
+  if(!r||!r.verdict)return;
   LASTOK=(!apply&&r.verdict==='ACCEPT')?propKey():null;syncApply();
 }
 function propose(apply){
   var body={xmv:$('#pXmv').value,target:parseFloat($('#pTarget').value),rationale:$('#pWhy').value};
-  if(CONNECTED){api('/api/propose',{xmv:body.xmv,target:body.target,rationale:body.rationale,apply:apply}).then(function(r){showGate(r,apply)},function(){showGate(null,apply)});return;}
+  if(CONNECTED){api('/api/propose',{xmv:body.xmv,target:body.target,rationale:body.rationale,apply:apply}).then(function(r){showGate(r,apply)},function(){showGate(null,apply)});return null;}
   var r=PCL.evaluateAdjustment(ENG,body,{apply:apply,source:'page'});
   showGate(r,apply);syncLog();
   if(r.applied){SAFE=ENG.safety();SIM.mode=ENG.plant.mode;renderSafety();renderNow();}
+  return r;
+}
+function renderXmvOptions(){
+  var sel=$('#pXmv').value||'XMV(10)';
+  $('#pXmv').innerHTML=PCL.XMV_IDS.map(function(id){var m=PCL.MODELLED_XMVS.indexOf(id)>=0;return '<option value="'+id+'"'+(id===sel?' selected':'')+'>'+id+' · '+esc(SIG[id][0])+(m?'':esc(t('pp.notModelled')))+'</option>'}).join('');
+}
+function renderGateNote(){
+  var m=function(v){return '<span class="mono">'+esc(v)+'</span>'};
+  $('#gNoteP').innerHTML=esc(t('pp.gateNote',{step:'\x01',win:'\x02',rate:'\x03',hor:'\x04'})).replace('\x01',m(GATE.maxStepPct)).replace('\x02',m(GATE.rateWindowMin)).replace('\x03',m(GATE.maxChangeInWindowPct)).replace('\x04',m(GATE.horizonMin));
 }
 function initProposal(){
-  $('#pXmv').innerHTML=PCL.XMV_IDS.map(function(id){var m=PCL.MODELLED_XMVS.indexOf(id)>=0;return '<option value="'+id+'"'+(id==='XMV(10)'?' selected':'')+'>'+id+' · '+esc(SIG[id][0])+(m?'':'（未建模）')+'</option>'}).join('');
+  renderXmvOptions();
   $('#pTarget').value=(+VAL['XMV(10)']).toFixed(1);
-  $('#gStep').textContent=GATE.maxStepPct;$('#gWin').textContent=GATE.rateWindowMin;$('#gRate').textContent=GATE.maxChangeInWindowPct;$('#gHor').textContent=GATE.horizonMin;
+  $('#pWhy').value=t('pp.whyDefault');
+  renderGateNote();
 }
 
 /* =====================================================================
    12. Connected mode: the page shows the local server's engine (same origin only)
    ===================================================================== */
 /* control calls: surface a refusal (e.g. expired token) in the mode chip instead of failing silently */
-function ctl(body){return api('/api/control',body).then(function(r){if(r&&r.error)$('#cMode').textContent='操作失敗 · '+r.error;return r;});}
+var MODE={k:'mode.offline',p:null};
+function setMode(k,p){MODE={k:k,p:p||null};$('#cMode').textContent=t(k,p);}
+function ctl(body){return api('/api/control',body).then(function(r){if(r&&r.error)setMode('mode.ctlFail',{err:r.error});return r;});}
 function api(path,body){
   /* never rejects: resolves to the server reply or to {error} so callers can show it */
   return fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-PCL-Token':TOKEN},body:JSON.stringify(body)})
     .then(function(r){
-      if(r.status===403)return {error:'伺服器拒絕（權杖已失效？請重新整理頁面）'};
+      if(r.status===403)return {error:t('api.forbidden')};
       return r.json().catch(function(){return {error:'HTTP '+r.status}}).then(function(j){return r.ok?j:{error:(j&&j.error)||('HTTP '+r.status)}});
     })
-    .catch(function(){return {error:'無法連線到本機伺服器'}});
+    .catch(function(){return {error:t('api.unreachable')}});
 }
 function serverControls(m){
   if(m.running!==SIM.running)showRunning(m.running);
@@ -1108,12 +1203,124 @@ function onTick(m){
 }
 function connect(){
   var es=new EventSource('/api/stream');
-  es.addEventListener('init',function(ev){$('#cMode').textContent='連線 · 本機引擎';onInit(JSON.parse(ev.data));});
+  es.addEventListener('init',function(ev){setMode('mode.connected');onInit(JSON.parse(ev.data));});
   es.addEventListener('tick',function(ev){onTick(JSON.parse(ev.data));});
-  es.onerror=function(){$('#cMode').textContent='連線中斷 · 重試中';};
+  es.onerror=function(){setMode('mode.lost');};
+}
+
+/* =====================================================================
+   13. Language switch, orientation shortcuts, guided run
+   ===================================================================== */
+function setLang(l,remember){
+  if(!okLang(l))return;
+  var prevWhy=t('pp.whyDefault'),oldKey=propKey();
+  LANG=l;
+  if(remember){
+    try{window.localStorage.setItem(LKEY,l)}catch(e){}
+    try{var u=new URL(location.href);if(u.searchParams.has('lang')){u.searchParams.set('lang',l);history.replaceState(null,'',u.href);}}catch(e){}
+  }
+  applyStatic();
+  if(CONNECTED)$('#simNote').textContent=t('tr.noteConn');
+  setMode(MODE.k,MODE.p);
+  showRunning(SIM.running);
+  var pn=$('#pidNote');if(pn)pn.textContent=t('pv.pidNote');
+  var gn=$('#gNote');if(gn)gn.textContent=t('pv.graphNote');
+  if($('#pWhy').value===prevWhy){$('#pWhy').value=t('pp.whyDefault');if(LASTOK===oldKey)LASTOK=propKey();}
+  renderXmvOptions();renderGateNote();syncApply();
+  buildTrends();renderSide();applyHL();lastCap='';drawAll();
+  renderNow();renderSafety();renderGateLog();
+  if(LASTGATE)renderGate(LASTGATE.r,LASTGATE.apply);
+  renderGuide();
+}
+function flash(el){if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(function(){el.classList.remove('flash')},1700);}
+function goTo(sel,focusSel){
+  var el=$(sel);if(!el)return;
+  try{el.scrollIntoView({behavior:RM?'auto':'smooth',block:'start'})}catch(x){el.scrollIntoView()}
+  var f=focusSel?$(focusSel):null;
+  if(f){try{f.focus({preventScroll:true})}catch(x){f.focus()}flash(f);}else flash(el);
+}
+var GOTO={inject:['#trendPanel','#bInject'],watch:['#safety',null],propose:['#propPanel','#pTarget']};
+
+/* Guided run: inject (or reuse) the disturbance, wait for the response, then two dry runs:
+   a step-size rejection and a small move. Captions report the verdicts the gate actually
+   returned. Dry runs only, so the plant is never changed; Stop cancels every pending step. */
+var GUIDE=null,GSTEPS=4;
+function renderGuide(){
+  var bar=$('#gbar');
+  $('#bGuide').textContent=t(GUIDE&&!GUIDE.done?'guide.stop':'guide.start');
+  if(!GUIDE){bar.hidden=true;return;}
+  bar.hidden=false;
+  $('#gbarK').textContent=GUIDE.stopped?t('guide.stoppedK'):t('guide.step',{i:GUIDE.i,n:GSTEPS});
+  $('#gbarT').textContent=t(GUIDE.key,GUIDE.p);
+  $('#gbarStop').textContent=t(GUIDE.done?'guide.close':'guide.stop');
+}
+function guideCaption(i,key,p){if(!GUIDE)return;GUIDE.i=i;GUIDE.key=key;GUIDE.p=p||null;renderGuide();}
+function gWait(ms,fn){if(!GUIDE)return;var g=GUIDE,id=setTimeout(function(){if(GUIDE===g)fn();},ms);g.timers.push(id);}
+/* note=true: a run still in progress was interrupted, so say what state it left behind */
+function stopGuide(note){
+  if(!GUIDE)return;
+  var wasRunning=!GUIDE.done;
+  GUIDE.timers.forEach(clearTimeout);GUIDE=null;
+  if(note&&wasRunning&&SIM.d>0){
+    GUIDE={timers:[],i:0,key:'guide.stopped',p:{m:SIM.d},done:true,stopped:true};
+    gWait(10000,function(){stopGuide(false)});
+  }
+  renderGuide();
+}
+function guideTry(target){
+  $('#pXmv').value='XMV(10)';$('#pTarget').value=(+target).toFixed(1);$('#pWhy').value=t('pp.whyDefault');
+  return propose(false);
+}
+function verdictParams(r){
+  if(!r||!r.verdict)return {from:'–',to:'–',d:'–',verdict:'ERROR',why:'',hor:GATE.horizonMin};
+  var cur=r.current!==null?+r.current:+VAL['XMV(10)'];
+  return {from:cur.toFixed(1),to:(+r.input.target).toFixed(1),d:Math.abs(r.input.target-cur).toFixed(1),verdict:r.verdict,why:r.reasons.length?' ('+r.reasons.map(function(x){return x.code}).join(', ')+')':'',hor:GATE.horizonMin};
+}
+function startGuide(){
+  if(CONNECTED)return;
+  stopGuide(false);
+  GUIDE={timers:[],i:1,key:'guide.s1',p:null,done:false,accepted:false};
+  var had=SIM.d>0;
+  if(!had){$('#selDist').value='5';inject();}else if(!SIM.running)setRunning(true);
+  guideCaption(1,had?'guide.s1had':'guide.s1',{m:SIM.d});
+  goTo('#safety');
+  var t0=Date.now();
+  (function poll(){gWait(400,function(){
+    var ready=DET&&DET.first['XMV(10)']!==undefined&&SAFE&&SAFE.pca&&SAFE.pca.exceeded.any;
+    if((ready&&Date.now()-t0>4000)||Date.now()-t0>12000)guideStep2();else poll();
+  });})();
+}
+function guideStep2(){
+  guideCaption(2,'guide.s2',{state:SAFE?SAFE.rules.worst.state:'NORMAL'});
+  goTo('#trendPanel');
+  gWait(7000,guideStep3);
+}
+function guideStep3(){
+  /* a step 5 %-points over the step limit, upward unless that would leave the valve range */
+  var u=+VAL['XMV(10)'],big=GATE.maxStepPct+5;
+  var r=guideTry(u+big<=GATE.xmvMax?u+big:u-big);
+  guideCaption(3,'guide.s3',verdictParams(r));
+  goTo('#propPanel');
+  gWait(7000,guideStep4);
+}
+function guideStep4(){
+  var u=+VAL['XMV(10)'];
+  var r=guideTry(u+1<=GATE.xmvMax?u+1:u-1);
+  if(!r||r.verdict!=='ACCEPT')r=guideTry(u);
+  var ok=!!(r&&r.verdict==='ACCEPT');GUIDE.accepted=ok;
+  guideCaption(4,ok?'guide.s4':'guide.s4no',verdictParams(r));
+  gWait(8000,function(){GUIDE.done=true;guideCaption(4,GUIDE.accepted?'guide.done':'guide.doneNo');gWait(15000,function(){stopGuide(false)});});
 }
 
 document.addEventListener('click',function(e){
+  var lb=e.target.closest('[data-lang]');
+  if(lb){setLang(lb.getAttribute('data-lang'),true);return;}
+  var go=e.target.closest('[data-goto]');
+  if(go){var gt=GOTO[go.getAttribute('data-goto')];if(gt)goTo(gt[0],gt[1]);return;}
+  if(e.target.closest('#bGuide')){if(GUIDE&&!GUIDE.done)stopGuide(true);else startGuide();return;}
+  if(e.target.closest('#gbarStop')){stopGuide(true);return;}
+  /* the visitor takes over: a real click on a plant or proposal control ends the guided run */
+  if(GUIDE&&!GUIDE.done&&e.isTrusted&&e.target.closest('#bInject,#bClear,#bRun,#bAuto,#pTry,#pApply,#pCur'))stopGuide(true);
   var v=e.target.closest('[data-view]');
   if(v){var g=v.dataset.view==='graph';$('#wrapPid').hidden=g;$('#wrapGraph').hidden=!g;setToggle('data-view',v.dataset.view);return;}
   var wv=e.target.closest('[data-win]');
@@ -1131,14 +1338,19 @@ document.addEventListener('click',function(e){
   if(el){select(el.dataset.k);}
 });
 document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&GUIDE&&!(e.target.closest&&e.target.closest('input,select,textarea'))){stopGuide(true);return;}
   if(e.key!=='Enter'&&e.key!==' ')return;var el=e.target.closest&&e.target.closest('svg .el');
   if(el){e.preventDefault();select(el.dataset.k);}
 });
+/* typing or choosing in the proposal or disturbance controls also hands control back to the visitor */
+function guideTakeover(e){if(GUIDE&&!GUIDE.done&&e.isTrusted&&e.target.closest&&e.target.closest('#pTarget,#pXmv,#pWhy,#selDist'))stopGuide(true);}
 document.addEventListener('input',function(e){
+  guideTakeover(e);
   if(e.target.id==='impDepth'){HL.depth=+e.target.value;$('#impDepthV').textContent=e.target.value;if(HL.src==='impact'){stopPlay();HL.shown=HL.depth;applyHL();}}
   if(e.target.id==='pTarget'||e.target.id==='pWhy')syncApply();
 });
 document.addEventListener('change',function(e){
+  guideTakeover(e);
   if(e.target.id==='pXmv'){var cv=VAL[e.target.value];if(cv!==undefined)$('#pTarget').value=(+cv).toFixed(1);syncApply();renderSafety();}
 });
 $('#bRun').addEventListener('click',function(){setRunning(!SIM.running)});
@@ -1148,20 +1360,25 @@ window.addEventListener('resize',function(){dirty=true});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)dirty=true});
 
 /* boot */
+applyStatic();
 setToggle('data-view','pid');setToggle('data-speed','1');setToggle('data-win','h1');
 $('#lgHops').innerHTML=HOPC.map(function(c,i){return '<i style="background:'+c+'">'+i+'</i>'}).join('');
 renderPID();renderGraph();buildTrends();
 if(CONNECTED){
-  $('#cMode').textContent='連線 · 本機引擎（連線中）';
-  $('.simnote b').textContent='本機引擎模擬資料（同一個 lumped model，示意，非實際模擬器輸出）';
+  setMode('mode.connecting');
+  $('#simNote').textContent=t('tr.noteConn');
+  $('#bGuide').hidden=true;
+  showRunning(false);
   initProposal();renderSide();applyHL();renderGateLog();
   connect();
 }else{
+  setMode('mode.offline');
   for(var i=0;i<CAP;i++)simStep();
   SAFE=ENG.safety();syncLog();
   initProposal();renderSide();applyHL();renderNow();renderSafety();renderGateLog();
   setRunning(!RM);
 }
+renderGuide();
 dirty=true;requestAnimationFrame(frame);
 })();
 </script>

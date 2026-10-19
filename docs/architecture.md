@@ -10,7 +10,9 @@ src/engine/  plain TypeScript, no DOM
   knowledge.ts   staged knowledge revision with fragment ids and review status
   simulation.ts  one plant state + capped history + safety + logs; branch() for simulate-before-act
 
-web/index.template.html + engine IIFE  ->  index.html (static page, works offline)
+src/page/strings.ts  page UI strings, English (default) and Traditional Chinese
+
+web/index.template.html + engine IIFE + strings  ->  index.html (static page, works offline)
 src/server/    Node: one process, one engine instance
   web.ts   127.0.0.1 viewer, the same page in connected mode (SSE)
   mcp.ts   MCP tools / resources / prompt over stdio (optional Streamable HTTP)

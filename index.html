@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plant Context Lab</title>
 <link rel="icon" href="data:,">
-<meta name="description" content="Tennessee Eastman 製程的 P&amp;ID、拓撲影響傳播與瀏覽器內即時趨勢概念示範。">
+<meta name="description" content="以 Tennessee Eastman 製程示範工業工廠的 context layer：P&amp;ID、即時模擬趨勢、以已審核限值建立的規則、PCA 異常監測與先模擬再執行的調整 gate。">
 <style>
 :root{
   color-scheme:dark;
@@ -254,6 +254,7 @@ svg.hlon .tag.dim{opacity:.35}
 .foot .hon{border:1px solid var(--line2);border-radius:6px;padding:9px 12px;background:var(--panel);color:var(--text2)}
 .foot .hon b{color:var(--text)}
 .caps{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.caps .badge{white-space:normal;max-width:100%;line-height:1.45}
 
 /* ---------- safety bar ---------- */
 .safety{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,1.25fr) minmax(0,.9fr);gap:0}
@@ -305,6 +306,31 @@ svg.hlon .tag.dim{opacity:.35}
 .gl .m{color:var(--text2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
 .gl .c{grid-column:2;font-family:var(--mono);font-size:10.5px;color:var(--muted);overflow-wrap:anywhere}
 
+/* ---------- orientation strip, language toggle, guided run ---------- */
+.panel{scroll-margin-top:64px}
+.langseg button{padding:3px 9px;font-size:11.5px}
+.orient{display:grid;gap:9px;padding:12px 14px}
+.or-what{margin:0;font-size:13.5px;color:var(--text2);line-height:1.55}
+.or-what b{color:var(--text);font-weight:600}
+.or-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.or-k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--acc2);font-weight:600;white-space:nowrap}
+.or-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1 1 560px;min-width:0}
+.or-steps li{display:flex;min-width:0}
+.or-step{all:unset;box-sizing:border-box;display:flex;gap:8px;align-items:flex-start;width:100%;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--bg2);cursor:pointer;font-size:12.5px;color:var(--text2);line-height:1.45;overflow-wrap:anywhere}
+.or-step:hover{border-color:var(--acc-bd)}
+.or-step:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.or-step .n{flex:none;width:18px;height:18px;border-radius:50%;background:var(--acc-bg);border:1px solid var(--acc-bd);color:var(--acc2);font-family:var(--mono);font-size:11px;font-weight:700;text-align:center;line-height:16px;margin-top:1px}
+.or-step b{color:var(--text);font-weight:600}
+.or-mcp{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
+.or-mcp code{font-family:var(--mono);font-size:11.5px;color:var(--acc2);background:var(--bg2);border:1px solid var(--line2);border-radius:4px;padding:1px 6px;overflow-wrap:anywhere;user-select:all;min-width:0}
+@media (max-width:900px){.or-steps{grid-template-columns:minmax(0,1fr);flex-basis:100%}}
+.gbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;width:min(680px,calc(100% - 24px));display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--acc-bd);border-radius:8px;background:rgba(14,21,28,.97);box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:12.5px;color:var(--text2)}
+.gbar[hidden]{display:none}
+.gbar .gt{flex:1;min-width:0;overflow-wrap:anywhere}
+.gbar .gk{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--acc2);font-weight:600;margin-bottom:2px}
+.flash{animation:flash 1.6s ease-out 1}
+@keyframes flash{0%{box-shadow:0 0 0 3px rgba(43,195,200,.9)}100%{box-shadow:0 0 0 3px rgba(43,195,200,0)}}
+
 @media (max-width:640px){
   .top{padding:8px 12px;position:static}
   .chip.rev{display:none}
@@ -325,42 +351,60 @@ svg.hlon .tag.dim{opacity:.35}
   </div>
   <div class="sp"></div>
   <div class="chips">
-    <span class="chip" id="cLive"><span class="dot" id="cDot"></span><span id="cLiveT">暫停</span></span>
+    <span class="chip" id="cLive"><span class="dot" id="cDot"></span><span id="cLiveT" data-i18n="live.paused">暫停</span></span>
     <span class="chip mono num" id="cT">t = 0.00 h</span>
     <span class="chip mono num" id="cK">K = 0</span>
-    <span class="chip" id="cMode" title="離線：引擎在瀏覽器內執行；連線：顯示本機伺服器上的同一個引擎">離線 · 瀏覽器內引擎</span>
+    <span class="chip" id="cMode" data-i18n-title="mode.title" title="離線：引擎在瀏覽器內執行；連線：顯示本機伺服器上的同一個引擎" data-i18n="mode.offline">離線 · 瀏覽器內引擎</span>
     <span class="chip mono rev">plant rev 0.2.0</span>
+  </div>
+  <div class="seg langseg" role="group" data-i18n-aria="lang.label" aria-label="語言">
+    <button type="button" data-lang="en" lang="en" aria-pressed="false">EN</button>
+    <button type="button" data-lang="zh" lang="zh-Hant" aria-pressed="true">中文</button>
   </div>
 </header>
 
 <main class="wrap">
-  <section class="panel safety" id="safety" aria-label="安全狀態" aria-live="polite">
-    <div><div class="k">規則 · Rules <span class="badge built" title="限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs &amp; Vogel (1993)">已審核限值</span></div><div class="v" id="sfRule"></div><div class="d" id="sfRuleD"></div></div>
-    <div><div class="k">PCA 異常分數 · monitor <span class="badge sim" title="離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型">不輸出故障標籤</span></div><div class="v" id="sfPca"></div><div class="d" id="sfPcaD"></div></div>
-    <div><div class="k">主要貢獻變數 · contributors</div><div class="v" id="sfTop"></div><div class="d">貢獻變數 ≠ 原因；只說明哪些訊號偏離正常相關結構</div></div>
-    <div><div class="k">XMV(10) 迴路 · loop</div><div class="v" id="sfLoop"></div><div class="d" id="sfLoopD"></div></div>
+  <section class="panel orient" id="orient" aria-label="Plant Context Lab">
+    <p class="or-what" data-i18n-html="or.what"><b>工業工廠的 context layer。</b>P&amp;ID 拓撲、訊號綁定與已審核的工程知識，全部釘在確切的 snapshot 上；由規則、PCA 異常監測與「先模擬再執行」的 gate 決定提議的調整能不能執行。</p>
+    <div class="or-row">
+      <div class="or-k" data-i18n="or.try">30 秒上手</div>
+      <ol class="or-steps">
+        <li><button type="button" class="or-step" data-goto="inject"><span class="n" aria-hidden="true">1</span><span data-i18n-html="or.s1">注入 <b>IDV(4)</b> 擾動：反應器冷卻水入口溫度 step。</span></button></li>
+        <li><button type="button" class="or-step" data-goto="watch"><span class="n" aria-hidden="true">2</span><span data-i18n-html="or.s2">觀察規則、PCA 分數與冷卻迴路的反應：<b>XMV(10)</b> 開大以維持反應器溫度。</span></button></li>
+        <li><button type="button" class="or-step" data-goto="propose"><span class="n" aria-hidden="true">3</span><span data-i18n-html="or.s3">對 <b>XMV(10)</b> 提出目標值並按<b>試算</b>：gate 會接受或拒絕，並說明原因。</span></button></li>
+      </ol>
+      <button type="button" class="btn pri" id="bGuide" data-i18n="guide.start">▶ 導覽執行</button>
+    </div>
+    <div class="or-mcp"><span data-i18n="or.mcp">用本機 MCP server 接上你自己的 LLM：</span><code>npx -y github:shaun0457/plant-context-lab</code><span data-i18n="or.mcp2">再開 127.0.0.1:8787 觀看</span></div>
+  </section>
+
+  <section class="panel safety" id="safety" data-i18n-aria="sf.aria" aria-label="安全狀態" aria-live="polite">
+    <div><div class="k"><span data-i18n="sf.rules">規則 · Rules</span> <span class="badge built" data-i18n="sf.rulesBadge" data-i18n-title="sf.rulesTip" title="限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs &amp; Vogel (1993)">已審核限值</span></div><div class="v" id="sfRule"></div><div class="d" id="sfRuleD"></div></div>
+    <div><div class="k"><span data-i18n="sf.pca">PCA 異常分數 · monitor</span> <span class="badge sim" data-i18n="sf.pcaBadge" data-i18n-title="sf.pcaTip" title="離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型">不輸出故障標籤</span></div><div class="v" id="sfPca"></div><div class="d" id="sfPcaD"></div></div>
+    <div><div class="k" data-i18n="sf.top">主要貢獻變數 · contributors</div><div class="v" id="sfTop"></div><div class="d" data-i18n="sf.topNote">貢獻變數 ≠ 原因；只說明哪些訊號偏離正常相關結構</div></div>
+    <div><div class="k" data-i18n="sf.loop">XMV(10) 迴路 · loop</div><div class="v" id="sfLoop"></div><div class="d" id="sfLoopD"></div></div>
   </section>
 
   <section class="row1">
     <div class="panel" id="plantPanel">
       <div class="ph">
-        <h2>製程畫面 · Plant view</h2>
-        <div class="seg" role="group" aria-label="切換視圖">
+        <h2 data-i18n="pv.title">製程畫面 · Plant view</h2>
+        <div class="seg" role="group" data-i18n-aria="pv.switch" aria-label="切換視圖">
           <button type="button" data-view="pid" aria-pressed="true">P&amp;ID</button>
           <button type="button" data-view="graph" aria-pressed="false">Graph</button>
         </div>
         <span class="sp"></span>
-        <span class="badge built" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
+        <span class="badge built" data-i18n="pv.topo" data-i18n-title="pv.topoTip" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
       </div>
       <div class="hlbar" id="hlbar"></div>
-      <div class="swipe">← 左右滑動看完整圖面 →</div>
+      <div class="swipe" data-i18n="pv.swipe">← 左右滑動看完整圖面 →</div>
       <div class="svgwrap" id="wrapPid"><svg id="pid" viewBox="0 0 1180 650" role="group" aria-label="Tennessee Eastman P&amp;ID"></svg></div>
       <div class="svgwrap" id="wrapGraph" hidden><svg id="gsvg" viewBox="0 0 1180 600" role="group" aria-label="Process graph node-link view"></svg></div>
       <div class="pb legend">
-        <span><span class="ln"></span>製程物流 material</span>
-        <span><span class="ln cw"></span>公用流體 utility</span>
-        <span>影響 hop <span class="hops" id="lgHops"></span></span>
-        <span>點選設備或管線查看訊號、工程知識與影響範圍</span>
+        <span><span class="ln"></span><span data-i18n="pv.material">製程物流 material</span></span>
+        <span><span class="ln cw"></span><span data-i18n="pv.utility">公用流體 utility</span></span>
+        <span><span data-i18n="pv.hop">影響 hop</span> <span class="hops" id="lgHops"></span></span>
+        <span data-i18n="pv.hint">點選設備或管線查看訊號、工程知識與影響範圍</span>
       </div>
     </div>
     <aside class="panel side" id="side" aria-live="polite"></aside>
@@ -369,25 +413,25 @@ svg.hlon .tag.dim{opacity:.35}
   <section class="row2">
     <div class="panel" id="trendPanel">
       <div class="ph">
-        <h2>即時趨勢 · Live trends</h2>
+        <h2 data-i18n="tr.title">即時趨勢 · Live trends</h2>
         <span class="sp"></span>
-        <span class="badge sim">瀏覽器內模擬</span>
+        <span class="badge sim" data-i18n="tr.badge">瀏覽器內模擬</span>
       </div>
-      <div class="simnote"><b>瀏覽器內模擬資料（示意，非實際模擬器輸出）</b></div>
+      <div class="simnote"><b id="simNote" data-i18n="tr.note">瀏覽器內模擬資料（示意，非實際模擬器輸出）</b></div>
       <div class="ctrl">
         <div class="grp">
-          <button type="button" class="btn pri" id="bRun">▶ 開始</button>
-          <div class="seg" role="group" aria-label="速度"><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="4" aria-pressed="false">4×</button></div>
-          <div class="seg" role="group" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled title="注入擾動後可用">擾動事件</button></div>
+          <button type="button" class="btn pri" id="bRun" data-i18n="run.start">▶ 開始</button>
+          <div class="seg" role="group" data-i18n-aria="tr.speed" aria-label="速度"><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="4" aria-pressed="false">4×</button></div>
+          <div class="seg" role="group" data-i18n-aria="tr.window" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled data-i18n="tr.evt" data-i18n-title="tr.evtTip" title="注入擾動後可用">擾動事件</button></div>
         </div>
         <div class="grp">
-          <label class="lbl" for="selDist">擾動</label>
+          <label class="lbl" for="selDist" data-i18n="tr.dist">擾動</label>
           <select id="selDist">
-            <option value="5">IDV(4) 反應器冷卻水入口溫度 step +5 °C</option>
-            <option value="10">IDV(4) 反應器冷卻水入口溫度 step +10 °C</option>
+            <option value="5" data-i18n="tr.opt5">IDV(4) 反應器冷卻水入口溫度 step +5 °C</option>
+            <option value="10" data-i18n="tr.opt10">IDV(4) 反應器冷卻水入口溫度 step +10 °C</option>
           </select>
-          <button type="button" class="btn warnb" id="bInject">⚡ 注入擾動</button>
-          <button type="button" class="btn" id="bClear" disabled>移除擾動</button>
+          <button type="button" class="btn warnb" id="bInject" data-i18n="tr.inject">⚡ 注入擾動</button>
+          <button type="button" class="btn" id="bClear" disabled data-i18n="tr.remove">移除擾動</button>
         </div>
       </div>
       <div class="tgrid" id="tgrid"></div>
@@ -395,34 +439,34 @@ svg.hlon .tag.dim{opacity:.35}
     </div>
 
     <div class="panel" id="nowPanel">
-      <div class="ph"><h2>現在發生什麼 · reactor cooling</h2><span class="sp"></span><span class="badge wip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
+      <div class="ph"><h2 data-i18n="now.title">現在發生什麼 · reactor cooling</h2><span class="sp"></span><span class="badge wip" data-i18n="now.badge" data-i18n-title="now.badgeTip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
       <div id="now"></div>
     </div>
   </section>
 
   <section class="row3">
     <div class="panel" id="propPanel">
-      <div class="ph"><h2>調整提案 · Adjustment proposal</h2><span class="sp"></span><span class="badge built" title="每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用">gate 決定，提案者只提議</span></div>
+      <div class="ph"><h2 data-i18n="pp.title">調整提案 · Adjustment proposal</h2><span class="sp"></span><span class="badge built" data-i18n="pp.badge" data-i18n-title="pp.badgeTip" title="每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用">gate 決定，提案者只提議</span></div>
       <div class="pb">
         <div class="form">
-          <label for="pXmv">操作變數</label>
+          <label for="pXmv" data-i18n="pp.xmv">操作變數</label>
           <select id="pXmv"></select>
-          <label for="pTarget">目標值 %</label>
-          <div class="inl"><input type="number" id="pTarget" min="0" max="100" step="0.1"><button type="button" class="btn" id="pCur" style="padding:3px 8px;font-size:11px">帶入目前值</button><span class="mono dim" id="pCurV"></span></div>
-          <label for="pWhy">理由</label>
-          <input type="text" id="pWhy" maxlength="500" value="操作員手動試算" placeholder="理由（必填）">
+          <label for="pTarget" data-i18n="pp.target">目標值 %</label>
+          <div class="inl"><input type="number" id="pTarget" min="0" max="100" step="0.1"><button type="button" class="btn" id="pCur" style="padding:3px 8px;font-size:11px" data-i18n="pp.useCur">帶入目前值</button><span class="mono dim" id="pCurV"></span></div>
+          <label for="pWhy" data-i18n="pp.why">理由</label>
+          <input type="text" id="pWhy" maxlength="500" value="操作員手動試算" data-i18n-ph="pp.whyPh" placeholder="理由（必填）">
         </div>
         <div class="btnrow">
-          <button type="button" class="btn" id="pTry">試算</button>
-          <button type="button" class="btn pri" id="pApply" disabled title="先試算並取得 ACCEPT">套用</button>
-          <span class="note" style="margin-top:0">套用時以當下狀態重新評估，只有 ACCEPT 才會執行</span>
+          <button type="button" class="btn" id="pTry" data-i18n="pp.try">試算</button>
+          <button type="button" class="btn pri" id="pApply" disabled data-i18n="pp.apply" data-i18n-title="pp.applyTip" title="先試算並取得 ACCEPT">套用</button>
+          <span class="note" style="margin-top:0" data-i18n="pp.applyNote">套用時以當下狀態重新評估，只有 ACCEPT 才會執行</span>
         </div>
         <div id="pRes"></div>
-        <div class="note">gate：步幅 ≤ <b class="mono" id="gStep">10</b> %、每 <span class="mono" id="gWin">10</span> 模擬分鐘累計 ≤ <span class="mono" id="gRate">15</span> %、TRIP 時禁止調整、只能調整模型內有模擬的 XMV；套用前先在分支上模擬 <span class="mono" id="gHor">30</span> 分鐘，若任何規則到 ALARM / TRIP、明顯吃掉限值餘裕或 PCA SPE 明顯變差即 REJECT。擾動注入仍由人操作。</div>
+        <div class="note" id="gNoteP"></div>
       </div>
     </div>
     <div class="panel" id="logPanel">
-      <div class="ph"><h2>Gate 紀錄 · Gate log</h2><span class="sp"></span><span class="badge sim" id="logCount">0 筆</span></div>
+      <div class="ph"><h2 data-i18n="log.title">Gate 紀錄 · Gate log</h2><span class="sp"></span><span class="badge sim" id="logCount" data-i18n="log.count0">0 筆</span></div>
       <div class="glog" id="glog"></div>
     </div>
   </section>
@@ -431,19 +475,25 @@ svg.hlon .tag.dim{opacity:.35}
 </main>
 
 <footer class="foot">
-  <div class="hon"><b>概念示範。</b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。
+  <div class="hon"><span data-i18n-html="ft.hon"><b>概念示範。</b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。</span>
     <div class="caps">
-      <span class="badge built">已實作 · 製程拓撲與訊號綁定（人工核對）</span>
-      <span class="badge built">已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）</span>
-      <span class="badge built">已實作 · 工程知識擷取與人工審查（staged revision）</span>
-      <span class="badge wip">開發中 · plant context composition</span>
-      <span class="badge wip">開發中 · UI 讀取 pinned snapshot</span>
-      <span class="badge sim">示範 · 規則、PCA 與 gate 僅供教學，不可用於實際工廠操作</span>
+      <span class="badge built" data-i18n="ft.c1">已實作 · 製程拓撲與訊號綁定（人工核對）</span>
+      <span class="badge built" data-i18n="ft.c2">已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）</span>
+      <span class="badge built" data-i18n="ft.c3">已實作 · 工程知識擷取與人工審查（staged revision）</span>
+      <span class="badge wip" data-i18n="ft.c4">開發中 · plant context composition</span>
+      <span class="badge wip" data-i18n="ft.c5">開發中 · UI 讀取 pinned snapshot</span>
+      <span class="badge sim" data-i18n="ft.c6">示範 · 規則、PCA 與 gate 僅供教學，不可用於實際工廠操作</span>
     </div>
   </div>
 </footer>
 
-<script>"use strict";var PCL=(()=>{var B=Object.defineProperty;var Ke=Object.getOwnPropertyDescriptor;var qe=Object.getOwnPropertyNames;var We=Object.prototype.hasOwnProperty;var je=(t,e,n)=>e in t?B(t,e,{enumerable:!0,configurable:!0,writable:!0,value:n}):t[e]=n;var He=(t,e)=>{for(var n in e)B(t,n,{get:e[n],enumerable:!0})},Be=(t,e,n,r)=>{if(e&&typeof e=="object"||typeof e=="function")for(let o of qe(e))!We.call(t,o)&&o!==n&&B(t,o,{get:()=>e[o],enumerable:!(r=Ke(e,o))||r.enumerable});return t};var Je=t=>Be(B({},"__esModule",{value:!0}),t);var T=(t,e,n)=>je(t,typeof e!="symbol"?e+"":e,n);var it={};He(it,{ATTENTION_HEADROOM_FRACTION:()=>Oe,BIND:()=>V,CHANGE_CAP:()=>Xe,EVENT_CAP:()=>Le,EXPLICITLY_UNSPECIFIED:()=>$,GATE_LOG_CAP:()=>_e,GATE_PARAMS:()=>be,HISTORY_CAP:()=>Me,KNOW:()=>ge,KR:()=>I,LOOPS:()=>te,MAX_HOPS:()=>Ne,MAX_SIGNAL_IDS:()=>Ae,MAX_SIGNAL_POINTS:()=>fe,MINUTES_PER_STEP:()=>y,MODELLED_SIGNALS:()=>Y,MODELLED_XMVS:()=>D,NODE_FORTRAN:()=>he,PCA_MODEL:()=>De,REFNAME:()=>Se,RULED_SIGNALS:()=>q,RULES:()=>N,SHORT:()=>ne,SIG:()=>R,SIGNAL_IDS:()=>v,SN:()=>C,STATE_ORDER:()=>x,STEP_H:()=>X,SUB:()=>ie,Simulation:()=>j,TE:()=>L,TEDGES:()=>G,TN:()=>k,TNODES:()=>H,TOPO:()=>ee,TR_SETPOINT:()=>ze,XMV_IDS:()=>J,ZH:()=>Re,bfs:()=>ke,clonePlantState:()=>ce,createPlantState:()=>le,createRng:()=>ae,createSimulation:()=>at,eigSym:()=>ye,elLabel:()=>Ue,evaluateAdjustment:()=>rt,evaluateRules:()=>W,fitPca:()=>Qe,gauss:()=>O,getEngineeringContext:()=>ot,impact:()=>tt,isKnownSignal:()=>z,keyOf:()=>et,quantile:()=>de,refOf:()=>Ee,resolveElement:()=>we,restoreAuto:()=>me,scorePca:()=>F,setDisturbance:()=>Q,setManualOutput:()=>pe,simulateAhead:()=>xe,snapshotOf:()=>Ce,stepPlant:()=>ue,topologySummary:()=>st,uniform:()=>se,windowMean:()=>K,worseState:()=>$e});var Pe={format:"pca-monitor/1",variables:["XMEAS(7)","XMEAS(9)","XMEAS(11)","XMEAS(13)","XMEAS(21)","XMV(10)"],window:5,mean:[2705.344538,120.4522295,80.13751956,2634.025844,94.65570449,41.07999626],scale:[5.666974995,.8272710714,.4336213629,5.386938765,1.009254568,1.476609952],loadings:[[.4580233388,.1793703455],[.4672921889,.02058461187],[.4162821996,.3579144201],[.4579466088,.1792944863],[.3935175991,-.4585164169],[-.1843653013,.7726033933]],eigenvalues:[4.537307319,1.405776726],allEigenvalues:[4.537307319,1.405776726,.05121119713,.004818219396,.0006045015312,.0002820367834],k:2,explainedVariance:.9905140075,confidence:.99,t2Limit:11.7387,speLimit:.461,training:{generator:"scripts/train-pca.ts (engine lumped model)",seeds:[101,202,303,404,505,606],holdoutSeeds:[707,808],warmupSteps:480,stepsPerSeed:3e3,sampleHours:.01,rows:17976,operatingMode:"XMV(10) loop AUTO, no disturbance, plus operator moves of up to +/-3 % held 18-54 min",preprocessing:"5-sample moving mean, autoscaled with training mean and standard deviation",componentRule:"smallest k with cumulative explained variance >= 0.9",limits:"empirical 99 % quantile of training T² and SPE",labels:"none; the monitor outputs scores and contributors only",holdoutFalseAlarm:{t2:.0067,spe:.0017,any:.0083},holdoutFalseAlarmAutoOnly:{t2:0,spe:0,any:0}}};function ae(t){return{s:t>>>0||2654435769}}function se(t){t.s=t.s+1831565813>>>0;let e=t.s;return e=Math.imul(e^e>>>15,e|1),e^=e+Math.imul(e^e>>>7,e|61),((e^e>>>14)>>>0)/4294967296}function O(t){let e=0,n=0;for(;e===0;)e=se(t);for(;n===0;)n=se(t);return Math.sqrt(-2*Math.log(e))*Math.cos(2*Math.PI*n)}var R={"XMEAS(1)":["A feed","kscmh",.25052],"XMEAS(2)":["D feed","kg/h",3664],"XMEAS(3)":["E feed","kg/h",4509.3],"XMEAS(4)":["A and C feed","kscmh",9.3477],"XMEAS(5)":["Recycle flow","kscmh",26.902],"XMEAS(6)":["Reactor feed rate","kscmh",42.339],"XMEAS(7)":["Reactor pressure","kPa gauge",2705],"XMEAS(8)":["Reactor level","%",75],"XMEAS(9)":["Reactor temperature","degC",120.4],"XMEAS(10)":["Purge rate","kscmh",.33712],"XMEAS(11)":["Separator temperature","degC",80.109],"XMEAS(12)":["Separator level","%",50],"XMEAS(13)":["Separator pressure","kPa gauge",2633.7],"XMEAS(14)":["Separator underflow","m3/h",25.16],"XMEAS(15)":["Stripper level","%",50],"XMEAS(16)":["Stripper pressure","kPa gauge",3102.2],"XMEAS(17)":["Stripper underflow","m3/h",22.949],"XMEAS(18)":["Stripper temperature","degC",65.731],"XMEAS(19)":["Stripper steam flow","kg/h",230.31],"XMEAS(20)":["Compressor work","kW",341.43],"XMEAS(21)":["Reactor CW outlet temperature","degC",94.599],"XMEAS(22)":["Condenser CW outlet temperature","degC",77.297],"XMV(1)":["D feed flow","%",63.053],"XMV(2)":["E feed flow","%",53.98],"XMV(3)":["A feed flow","%",24.644],"XMV(4)":["A and C feed flow","%",61.302],"XMV(5)":["Compressor recycle valve","%",22.21],"XMV(6)":["Purge valve","%",40.064],"XMV(7)":["Separator liquid flow","%",38.1],"XMV(8)":["Stripper product flow","%",46.534],"XMV(9)":["Stripper steam valve","%",47.446],"XMV(10)":["Reactor CW flow","% command",41.106],"XMV(11)":["Condenser CW flow","%",18.114],"XMV(12)":["Agitator speed","%",50]};(function(){let e={6:[23,"ABCDEF",[32.188,8.8933,26.383,6.882,18.776,1.6567]],9:[29,"ABCDEFGH",[32.958,13.823,23.978,1.2565,18.579,2.2633,4.8436,2.2986]],11:[37,"DEFGH",[.01787,.8357,.09858,53.724,43.828]]};Object.keys(e).forEach(n=>{let r=e[n];for(let o=0;o<r[1].length;o++)R["XMEAS("+(r[0]+o)+")"]=["stream "+n+" composition "+r[1][o],"mol%",r[2][o],r[1][o]]})})();var v=Object.keys(R),J=v.filter(t=>t.startsWith("XMV(")),D=["XMV(10)"],Y=["XMEAS(7)","XMEAS(9)","XMEAS(11)","XMEAS(13)","XMEAS(21)","XMV(10)"];function z(t){return Object.prototype.hasOwnProperty.call(R,t)}var X=.01,ie=10,ze=120.4,y=X*60;function le(t){let e={Tr:120.4,To:94.599,Tin0:35,UA:1,Cc:.02,Cr:.25,u0:41.106,Kc:6,Ti:.25,I:0,u:41.106,d:0,df:0,Pl:0,Sl:0,qn:0,mn:0,pn:0,Q0:0,kF:0};e.Q0=e.UA*(e.Tr-e.To),e.kF=e.Q0/(e.To-e.Tin0)/e.u0;let n={},r={};return v.forEach(o=>{r[o]=0,n[o]=R[o][2]}),{M:e,t:0,K:0,VAL:n,OU:r,rng:ae(t),mode:"AUTO",uMan:e.u0}}function ce(t){return{M:{...t.M},t:t.t,K:t.K,VAL:{...t.VAL},OU:{...t.OU},rng:{s:t.rng.s},mode:t.mode,uMan:t.uMan}}function ue(t){let e=t.M,n=t.rng,r=X/ie;e.mn=O(n)*.012;for(let c=0;c<ie;c++){e.df+=(e.d-e.df)*r/.01,e.qn+=-e.qn/.4*r+.0025*Math.sqrt(r)*O(n);let i=e.Tin0+e.df,s=e.Q0*(1+e.qn),S=e.Tr+e.mn-120.4;t.mode==="AUTO"?(e.I+=S*r,e.u=Math.max(0,Math.min(100,e.u0+e.Kc*S+e.Kc/e.Ti*e.I))):e.u=Math.max(0,Math.min(100,t.uMan));let u=(e.kF*e.u*(i-e.To)+e.UA*(e.Tr-e.To))/e.Cc,m=(s-e.UA*(e.Tr-e.To))/e.Cr;e.To+=u*r,e.Tr+=m*r,e.Pl+=(e.Tr-120.4-e.Pl)*r/.08,e.Sl+=(e.Tr-120.4-e.Sl)*r/.25}e.pn+=-e.pn/.15*X+.9*Math.sqrt(X)*O(n),t.t+=X,t.K++;let o=t.VAL,a=t.OU;for(let c=0;c<v.length;c++){let i=v[c];a[i]+=-a[i]/.3*X+.0012*Math.sqrt(X)*O(n),o[i]=R[i][2]*(1+a[i]+6e-4*O(n))}o["XMEAS(9)"]=e.Tr+e.mn,o["XMEAS(21)"]=e.To+O(n)*.03,o["XMV(10)"]=e.u,o["XMEAS(7)"]=2705+7*e.Pl+e.pn+O(n)*.35,o["XMEAS(11)"]=80.109+.6*e.Sl+O(n)*.02,o["XMEAS(13)"]=2633.7+.95*(o["XMEAS(7)"]-2705)+O(n)*.3}function Q(t,e){t.M.d=e}function pe(t,e){t.mode="MANUAL",t.uMan=Math.max(0,Math.min(100,e))}function me(t){if(t.mode==="AUTO")return;let e=t.M,n=e.Tr+e.mn-120.4;e.I=(e.u-e.u0-e.Kc*n)*e.Ti/e.Kc,t.mode="AUTO"}function K(t,e){if(!t.length)return null;let n=Math.min(e,t.length),r=t[0].length,o=new Array(r).fill(0);for(let a=t.length-n;a<t.length;a++)for(let c=0;c<r;c++)o[c]+=t[a][c];for(let a=0;a<r;a++)o[a]/=n;return o}function F(t,e,n=3){let r=t.variables.length,o=t.k,a=new Array(r);for(let p=0;p<r;p++)a[p]=(e[p]-t.mean[p])/t.scale[p];let c=new Array(o).fill(0);for(let p=0;p<o;p++)for(let l=0;l<r;l++)c[p]+=t.loadings[l][p]*a[l];let i=0;for(let p=0;p<o;p++)i+=c[p]*c[p]/t.eigenvalues[p];let s=new Array(r),S=0;for(let p=0;p<r;p++){let l=0;for(let d=0;d<o;d++)l+=t.loadings[p][d]*c[d];s[p]=a[p]-l,S+=s[p]*s[p]}let M=i/t.t2Limit,u=S/t.speLimit,m=u>=M?"SPE":"T2",g=new Array(r);for(let p=0;p<r;p++)if(m==="SPE")g[p]=s[p]*s[p];else{let l=0;for(let d=0;d<o;d++)l+=t.loadings[p][d]*c[d]/t.eigenvalues[d];g[p]=Math.max(0,a[p]*l)}let h=g.reduce((p,l)=>p+l,0)||1,w=t.variables.map((p,l)=>({signal:p,share:+(g[l]/h).toFixed(3),direction:a[l]>=0?"high":"low"})).sort((p,l)=>l.share-p.share).slice(0,n);return{t2:+i.toFixed(3),t2Limit:t.t2Limit,spe:+S.toFixed(3),speLimit:t.speLimit,score:+Math.max(M,u).toFixed(3),exceeded:{t2:M>1,spe:u>1,any:M>1||u>1},dominant:m,contributors:w}}function ye(t){let e=t.length,n=t.map(a=>a.slice()),r=Array.from({length:e},(a,c)=>Array.from({length:e},(i,s)=>c===s?1:0));for(let a=0;a<100;a++){let c=0;for(let i=0;i<e;i++)for(let s=i+1;s<e;s++)c+=n[i][s]*n[i][s];if(c<1e-22)break;for(let i=0;i<e;i++)for(let s=i+1;s<e;s++){if(Math.abs(n[i][s])<1e-300)continue;let S=(n[s][s]-n[i][i])/(2*n[i][s]),M=Math.sign(S||1)/(Math.abs(S)+Math.sqrt(S*S+1)),u=1/Math.sqrt(M*M+1),m=M*u;for(let g=0;g<e;g++){let h=n[g][i],w=n[g][s];n[g][i]=u*h-m*w,n[g][s]=m*h+u*w}for(let g=0;g<e;g++){let h=n[i][g],w=n[s][g];n[i][g]=u*h-m*w,n[s][g]=m*h+u*w}for(let g=0;g<e;g++){let h=r[g][i],w=r[g][s];r[g][i]=u*h-m*w,r[g][s]=m*h+u*w}}}let o=Array.from({length:e},(a,c)=>c).sort((a,c)=>n[c][c]-n[a][a]);return{values:o.map(a=>n[a][a]),vectors:r.map(a=>o.map(c=>a[c]))}}function de(t,e){if(!t.length)return NaN;let n=(t.length-1)*e,r=Math.floor(n),o=Math.ceil(n);return t[r]+(t[o]-t[r])*(n-r)}function Qe(t,e){let n=t.length,r=e.variables.length,o=new Array(r).fill(0);t.forEach(l=>l.forEach((d,A)=>{o[A]+=d/n}));let a=new Array(r).fill(0);t.forEach(l=>l.forEach((d,A)=>{a[A]+=(d-o[A])**2/(n-1)}));for(let l=0;l<r;l++)a[l]=Math.sqrt(a[l])||1;let c=t.map(l=>l.map((d,A)=>(d-o[A])/a[A])),i=Array.from({length:r},()=>new Array(r).fill(0));c.forEach(l=>{for(let d=0;d<r;d++)for(let A=0;A<r;A++)i[d][A]+=l[d]*l[A]/(n-1)});let{values:s,vectors:S}=ye(i),M=s.reduce((l,d)=>l+d,0),u=0,m=0;for(;u<r&&m/M<e.varianceTarget;)m+=s[u],u++;u=Math.max(1,Math.min(r-1,u));let g=S.map(l=>l.slice(0,u)),h={format:"pca-monitor/1",variables:e.variables.slice(),window:e.window,mean:o,scale:a,loadings:g,eigenvalues:s.slice(0,u),allEigenvalues:s,k:u,explainedVariance:s.slice(0,u).reduce((l,d)=>l+d,0)/M,confidence:e.confidence,t2Limit:1,speLimit:1,training:e.training},w=[],p=[];return t.forEach(l=>{let d=F(h,l);w.push(d.t2),p.push(d.spe)}),w.sort((l,d)=>l-d),p.sort((l,d)=>l-d),h.t2Limit=+de(w,e.confidence).toFixed(4),h.speLimit=+de(p,e.confidence).toFixed(4),h}var I={row1:{id:"tags-and-limits/row-1 · frag-4999c3a9b6",rv:"review-02/03 APPROVE"},row2:{id:"tags-and-limits/row-2 · frag-05f213cc29",rv:"review-05/06 APPROVE"},row3:{id:"tags-and-limits/row-3 · frag-20b267aeb6",rv:"review-07 APPROVE"},row4:{id:"tags-and-limits/row-4 · frag-5f243b087c",rv:"review-08 APPROVE"},ctrl:{id:"subsystem/control-relation ¶1 · frag-1a009aaf08",rv:"review-10 APPROVE"},c145:{id:"troubleshooting/competing-limit ¶1 · frag-225d0c88bb",rv:"review-11 REJECT"},rcw:{id:"troubleshooting/unverified-instrumentation ¶1 · frag-13c00a2a06",rv:"review-12 REJECT"},remap:{id:"operating-procedure/step-4 · frag-a6eeeb83f3",rv:"review-09 REMAP"},sop1:{id:"operating-procedure/step-1 · frag-08e4924b61",rv:"原文 · 未編譯"},sop2:{id:"operating-procedure/step-2 · frag-6e22886716",rv:"原文 · 未編譯"},sop3:{id:"operating-procedure/step-3 · frag-cfadbe187e",rv:"原文 · 未編譯"},tsrev:{id:"troubleshooting/temperature-review ¶1 · frag-3133c1a869",rv:"原文 · 未編譯"},topo:{id:"tep-process-graph 0.2.0 · downstream BFS",rv:"HUMAN_VERIFIED"}},ge={"n:reactor":[{t:"LIMIT",s:"APPROVED",txt:"XMEAS(9) reactor temperature：normal upper 150 degC；shutdown high 175 degC。normal upper 不可當作 shutdown threshold。",r:["row2"]},{t:"LIMIT",s:"APPROVED",txt:"XMEAS(7) reactor pressure：normal upper 2895 kPa gauge；shutdown high 3000 kPa gauge。",r:["row1"]},{t:"CONFLICT",s:"REJECTED",txt:"競爭主張「normal upper 145 degC」（troubleshooting note）已 REJECT；150 與 145 兩份引用都保留供稽核。",r:["c145"]},{t:"SOP",s:"SOURCE",txt:"Read XMEAS(9) with its unit and exact source identity; distinguish the coolant outlet reading…",r:["sop2"]},{t:"SOP",s:"SOURCE",txt:"Compare the process temperature with the normal and shutdown constraints in the tag table…",r:["sop3"]},{t:"REMAP",s:"APPROVED",txt:"「reactor-side temperature」只在該 mention 對應 XMEAS(9)，不建立全域 alias。",r:["remap"]}],"e:reactor_cooling_water_in":[{t:"CONTROL",s:"APPROVED",txt:"XMV(10) manipulates reactor cooling-water flow. Increasing cooling flow is a means of increasing heat removal, subject to the thermal state and available utility conditions.",r:["ctrl"]},{t:"TAG",s:"APPROVED",txt:"XMV(10)：單位 % command；基準 41.106；指令範圍 0–100；不是製程 alarm / shutdown 限值。",r:["row4"]},{t:"GAP",s:"REJECTED",txt:"提議的入口溫度儀表 RCW-IN-TT 在 pinned plant context 中不存在 → 不建立 signal identity。入口溫度無法直接觀測。",r:["rcw"]}],"e:reactor_cooling_water_out":[{t:"TAG",s:"APPROVED",txt:"XMEAS(21) reactor cooling-water outlet temperature，degC；基準 94.599；alarm 與 shutdown 未指定 → 不推測限值。",r:["row3"]},{t:"SOP",s:"SOURCE",txt:"When process temperature rises, compare process and cooling-water outlet readings…",r:["tsrev"]}],"n:reactor_cooling_water_supply":[{t:"SOP",s:"SOURCE",txt:"Identify the reactor and internal cooling bundle in the selected plant revision.",r:["sop1"]}],"n:reactor_cooling_water_return":[{t:"SOP",s:"SOURCE",txt:"Identify the reactor and internal cooling bundle in the selected plant revision.",r:["sop1"]}]},Se={downs_vogel_1993:"Downs & Vogel (1993)",sim_fortran:"TEP Fortran model · teprob.f",bathelt_ricker_jelali_2015:"Bathelt, Ricker & Jelali (2015) Fig. 3",sim_python_backend:"TEP Python backend",upstream_constants:"simulator variable metadata"},he={reactor_feed_mixer:1,reactor:1,separator:1,stripper:1};function Ee(t){let e=I[t];return{key:t,id:e.id,review:e.rv}}var x={NORMAL:0,ATTENTION:1,ALARM:2,TRIP:3},Z="Downs & Vogel (1993), process operating constraints",Oe=.25;function Ie(t,e){return+(e-Oe*(e-t)).toFixed(2)}var N=[{id:"RL-XMEAS9-ATT",signal:"XMEAS(9)",kind:"ATTENTION_BAND",comparator:">=",value:Ie(120.4,150),unit:"degC",state:"ATTENTION",source:{knowledge:null,review:null,publication:null,derivedFrom:"RL-XMEAS9-NU"},note:"Demo convention: last 25 % of headroom from nominal 120.40 to the approved normal upper 150 degC. Not a published limit."},{id:"RL-XMEAS9-NU",signal:"XMEAS(9)",kind:"NORMAL_UPPER",comparator:">",value:150,unit:"degC",state:"ALARM",source:{knowledge:I.row2.id,review:I.row2.rv,publication:Z},note:"Normal operating upper limit. Must not be used as the shutdown threshold. A competing 145 degC claim was rejected (review-11)."},{id:"RL-XMEAS9-SD",signal:"XMEAS(9)",kind:"SHUTDOWN_HIGH",comparator:">=",value:175,unit:"degC",state:"TRIP",source:{knowledge:I.row2.id,review:I.row2.rv,publication:Z},note:"Shutdown high limit. The lumped model has no interlock; TRIP is reported, not executed."},{id:"RL-XMEAS7-ATT",signal:"XMEAS(7)",kind:"ATTENTION_BAND",comparator:">=",value:Ie(2705,2895),unit:"kPa gauge",state:"ATTENTION",source:{knowledge:null,review:null,publication:null,derivedFrom:"RL-XMEAS7-NU"},note:"Demo convention: last 25 % of headroom from nominal 2705.0 to the approved normal upper 2895 kPa gauge. Not a published limit."},{id:"RL-XMEAS7-NU",signal:"XMEAS(7)",kind:"NORMAL_UPPER",comparator:">",value:2895,unit:"kPa gauge",state:"ALARM",source:{knowledge:I.row1.id,review:I.row1.rv,publication:Z},note:"Normal operating upper limit."},{id:"RL-XMEAS7-SD",signal:"XMEAS(7)",kind:"SHUTDOWN_HIGH",comparator:">=",value:3e3,unit:"kPa gauge",state:"TRIP",source:{knowledge:I.row1.id,review:I.row1.rv,publication:Z},note:"Shutdown high limit. The lumped model has no interlock; TRIP is reported, not executed."}],q=Array.from(new Set(N.map(t=>t.signal))),$={"XMEAS(21)":I.row3.id};function Ze(t,e){return t.comparator===">="?e>=t.value:e>t.value}function W(t){let e=[],n={state:"NORMAL",signal:null,ruleId:null};q.forEach(o=>{let a=t[o],c=N.filter(u=>u.signal===o).sort((u,m)=>x[u.state]-x[m.state]),i="NORMAL",s=null,S=null;for(let u of c)Number.isFinite(a)&&Ze(u,a)?(i=u.state,s=u.id):S||(S={ruleId:u.id,value:u.value,state:u.state});let M=c.find(u=>u.kind==="NORMAL_UPPER");e.push({signal:o,name:R[o][0],value:a,unit:R[o][1],state:i,ruleId:s,nextLimit:S,headroomToNormalUpper:M&&Number.isFinite(a)?+(M.value-a).toFixed(3):null}),x[i]>x[n.state]&&(n={state:i,signal:o,ruleId:s})});let r=v.filter(o=>o.startsWith("XMEAS(")&&!q.includes(o));return{worst:n,signals:e,noReviewedLimit:r}}function $e(t,e){return x[t]>=x[e]?t:e}var Me=480,Le=100,Xe=50,_e=200,Ae=8,fe=60;function Ce(t,e){return{id:"snap@T"+t.toFixed(2)+"h/K"+e,T_h:+t.toFixed(4),K:e}}var j=class t{constructor(e={}){T(this,"plant");T(this,"pcaModel");T(this,"historyCap");T(this,"hist");T(this,"pcaRows");T(this,"events");T(this,"changes");T(this,"gateLog");T(this,"gateSeq");T(this,"eventSeq");T(this,"now");T(this,"safetyCache");var r,o,a,c,i;this.plant=le((r=e.seed)!=null?r:1),this.pcaModel=(o=e.pcaModel)!=null?o:null,this.historyCap=(a=e.historyCap)!=null?a:Me,this.hist={t:[],K:[],v:{}},v.forEach(s=>{this.hist.v[s]=[]}),this.pcaRows=[],this.events=[],this.changes=[],this.gateLog=[],this.gateSeq=0,this.eventSeq=0,this.now=(c=e.now)!=null?c:(()=>Date.now()),this.safetyCache=null;let n=(i=e.warmup)!=null?i:Me;for(let s=0;s<n;s++)this.step()}step(e=1){for(let n=0;n<e;n++)ue(this.plant),this.record()}record(){let e=this.plant;if(this.pcaModel)for(this.pcaRows.push(this.pcaModel.variables.map(r=>e.VAL[r]));this.pcaRows.length>this.pcaModel.window;)this.pcaRows.shift();if(this.historyCap<=0)return;let n=this.hist;n.t.push(e.t),n.K.push(e.K),n.t.length>this.historyCap&&(n.t.shift(),n.K.shift());for(let r=0;r<v.length;r++){let o=n.v[v[r]];o.push(e.VAL[v[r]]),o.length>this.historyCap&&o.shift()}}get t(){return this.plant.t}get K(){return this.plant.K}snapshot(){return Ce(this.plant.t,this.plant.K)}values(){return{...this.plant.VAL}}sample(){return{snapshot:this.snapshot(),t:this.plant.t,K:this.plant.K,values:this.values(),mode:this.plant.mode,disturbance:this.plant.M.d}}pcaScore(){if(!this.pcaModel)return null;let e=K(this.pcaRows,this.pcaModel.window);return e?F(this.pcaModel,e):null}safety(){let e=this.safetyCache;if(e&&e.K===this.plant.K&&e.mode===this.plant.mode)return e.s;let n={snapshot:this.snapshot(),rules:W(this.plant.VAL),pca:this.pcaScore(),loop:{xmv:"XMV(10)",mode:this.plant.mode,output:+this.plant.M.u.toFixed(3)}};return this.safetyCache={K:this.plant.K,mode:this.plant.mode,s:n},n}injectIdv4(e,n="human"){let r=Math.max(0,Math.min(10,Number(e)||0));Q(this.plant,r),this.pushEvent(r>0?"IDV4_INJECT":"IDV4_REMOVE",n,{magnitude_degC:r})}removeDisturbance(e="human"){this.plant.M.d&&(Q(this.plant,0),this.pushEvent("IDV4_REMOVE",e,{}))}restoreAuto(e="human"){this.plant.mode!=="AUTO"&&(me(this.plant),this.safetyCache=null,this.pushEvent("LOOP_AUTO",e,{output:+this.plant.M.u.toFixed(3)}))}applyAdjustment(e,n,r){if(e!=="XMV(10)")throw new Error("not a modelled XMV: "+e);let o=this.plant.M.u;pe(this.plant,n),this.safetyCache=null;let a={K:this.plant.K,t:this.plant.t,xmv:e,from:o,to:this.plant.uMan};for(this.changes.push(a);this.changes.length>Xe;)this.changes.shift();return this.pushEvent("ADJUSTMENT_APPLIED",r,{xmv:e,from:+o.toFixed(3),to:a.to,mode:"MANUAL"}),a}pushEvent(e,n,r){for(this.events.push({seq:++this.eventSeq,type:e,snapshot:this.snapshot(),source:n,detail:r});this.events.length>Le;)this.events.shift()}branch(){let e=new t({seed:1,warmup:0,historyCap:0,pcaModel:this.pcaModel,now:this.now});return e.plant=ce(this.plant),e.pcaRows=this.pcaRows.map(n=>n.slice()),e.changes=this.changes.map(n=>({...n})),e}signalWindow(e,n,r=fe){let o=Array.from(new Set(e.map(String))),a=o.slice(Ae),c=o.slice(0,Ae),i=c.filter(p=>!z(p)),s=this.historyCap*y,S=Math.max(y,Math.min(s,Number(n)||30)),M=Math.max(1,Math.round(S/y)),u=Math.min(M,this.hist.t.length),m=this.hist.t.length-u,g=Math.max(2,Math.min(fe,r)),h=Math.max(1,Math.ceil(u/g));return{signals:c.filter(z).map(p=>{let l=this.hist.v[p],d=[];for(let A=this.hist.t.length-1;A>=m;A-=h)d.push([+this.hist.t[A].toFixed(3),+l[A].toFixed(4)]);return d.reverse(),{id:p,name:R[p][0],unit:R[p][1],latest:+this.plant.VAL[p].toFixed(4),points:d}}),unknown:i,windowMinutes:+(u*y).toFixed(1),truncatedIds:a}}};var ee={n:[["feed_a_supply","FEED_SOURCE","A feed supply"],["feed_d_supply","FEED_SOURCE","D feed supply"],["feed_e_supply","FEED_SOURCE","E feed supply"],["feed_ac_supply","FEED_SOURCE","A and C feed supply"],["reactor_feed_mixer","MIXER","Reactor feed mixing zone"],["reactor","REACTOR","Reactor"],["condenser","CONDENSER","Product condenser"],["separator","SEPARATOR","Vapor-liquid separator"],["compressor","COMPRESSOR","Recycle compressor"],["stripper","STRIPPER","Product stripper"],["purge_outlet","PRODUCT_SINK","Purge outlet"],["product_outlet","PRODUCT_SINK","Product outlet"],["reactor_cooling_water_supply","UTILITY_SOURCE","Reactor cooling water supply"],["reactor_cooling_water_return","UTILITY_SINK","Reactor cooling water return"],["condenser_cooling_water_supply","UTILITY_SOURCE","Condenser cooling water supply"],["condenser_cooling_water_return","UTILITY_SINK","Condenser cooling water return"],["stripper_steam_supply","UTILITY_SOURCE","Stripper steam supply"]],e:[["stream_1","MATERIAL_STREAM","feed_a_supply","reactor_feed_mixer","A feed"],["stream_2","MATERIAL_STREAM","feed_d_supply","reactor_feed_mixer","D feed"],["stream_3","MATERIAL_STREAM","feed_e_supply","reactor_feed_mixer","E feed"],["stream_4","MATERIAL_STREAM","feed_ac_supply","stripper","A and C feed"],["stream_5","MATERIAL_STREAM","stripper","reactor_feed_mixer","Stripper overhead"],["stream_6","MATERIAL_STREAM","reactor_feed_mixer","reactor","Reactor feed"],["stream_7","MATERIAL_STREAM","reactor","condenser","Reactor product"],["condenser_outlet","MATERIAL_STREAM","condenser","separator","Condensed reactor product"],["separator_vapor","MATERIAL_STREAM","separator","compressor","Separator vapor to recycle"],["stream_8","MATERIAL_STREAM","compressor","reactor_feed_mixer","Recycle"],["stream_9","MATERIAL_STREAM","separator","purge_outlet","Purge"],["stream_10","MATERIAL_STREAM","separator","stripper","Separator underflow"],["stream_11","MATERIAL_STREAM","stripper","product_outlet","Product"],["reactor_cooling_water_in","UTILITY_STREAM","reactor_cooling_water_supply","reactor","Reactor cooling water inlet"],["reactor_cooling_water_out","UTILITY_STREAM","reactor","reactor_cooling_water_return","Reactor cooling water outlet"],["condenser_cooling_water_in","UTILITY_STREAM","condenser_cooling_water_supply","condenser","Condenser cooling water inlet"],["condenser_cooling_water_out","UTILITY_STREAM","condenser","condenser_cooling_water_return","Condenser cooling water outlet"],["stripper_steam","UTILITY_STREAM","stripper_steam_supply","stripper","Stripper steam"]],b:[["XMEAS(1)","stream_1","MEASURES","flow"],["XMEAS(2)","stream_2","MEASURES","flow"],["XMEAS(3)","stream_3","MEASURES","flow"],["XMEAS(4)","stream_4","MEASURES","flow"],["XMEAS(5)","stream_8","MEASURES","flow"],["XMEAS(6)","stream_6","MEASURES","flow"],["XMEAS(7)","reactor","MEASURES","pressure"],["XMEAS(8)","reactor","MEASURES","level"],["XMEAS(9)","reactor","MEASURES","temperature"],["XMEAS(10)","stream_9","MEASURES","flow"],["XMEAS(11)","separator","MEASURES","temperature"],["XMEAS(12)","separator","MEASURES","level"],["XMEAS(13)","separator","MEASURES","pressure"],["XMEAS(14)","stream_10","MEASURES","flow"],["XMEAS(15)","stripper","MEASURES","level"],["XMEAS(16)","stripper","MEASURES","pressure"],["XMEAS(17)","stream_11","MEASURES","flow"],["XMEAS(18)","stripper","MEASURES","temperature"],["XMEAS(19)","stripper_steam","MEASURES","flow"],["XMEAS(20)","compressor","MEASURES","power"],["XMEAS(21)","reactor_cooling_water_out","MEASURES","temperature"],["XMEAS(22)","condenser_cooling_water_out","MEASURES","temperature"],["XMEAS(23)","stream_6","MEASURES","composition"],["XMEAS(24)","stream_6","MEASURES","composition"],["XMEAS(25)","stream_6","MEASURES","composition"],["XMEAS(26)","stream_6","MEASURES","composition"],["XMEAS(27)","stream_6","MEASURES","composition"],["XMEAS(28)","stream_6","MEASURES","composition"],["XMEAS(29)","stream_9","MEASURES","composition"],["XMEAS(30)","stream_9","MEASURES","composition"],["XMEAS(31)","stream_9","MEASURES","composition"],["XMEAS(32)","stream_9","MEASURES","composition"],["XMEAS(33)","stream_9","MEASURES","composition"],["XMEAS(34)","stream_9","MEASURES","composition"],["XMEAS(35)","stream_9","MEASURES","composition"],["XMEAS(36)","stream_9","MEASURES","composition"],["XMEAS(37)","stream_11","MEASURES","composition"],["XMEAS(38)","stream_11","MEASURES","composition"],["XMEAS(39)","stream_11","MEASURES","composition"],["XMEAS(40)","stream_11","MEASURES","composition"],["XMEAS(41)","stream_11","MEASURES","composition"],["XMV(1)","stream_2","ACTUATES","flow"],["XMV(2)","stream_3","ACTUATES","flow"],["XMV(3)","stream_1","ACTUATES","flow"],["XMV(4)","stream_4","ACTUATES","flow"],["XMV(5)","compressor","ACTUATES","valve_position"],["XMV(6)","stream_9","ACTUATES","valve_position"],["XMV(7)","stream_10","ACTUATES","flow"],["XMV(8)","stream_11","ACTUATES","flow"],["XMV(9)","stripper_steam","ACTUATES","valve_position"],["XMV(10)","reactor_cooling_water_in","ACTUATES","flow"],["XMV(11)","condenser_cooling_water_in","ACTUATES","flow"],["XMV(12)","reactor","ACTUATES","speed"]]},te=[{id:"recycle",name:"循環回路 · recycle loop",path:"reactor → condenser → separator → compressor → feed mixer → reactor",e:["stream_7","condenser_outlet","separator_vapor","stream_8","stream_6"]},{id:"stripper",name:"汽提回路 · stripper loop",path:"separator → stripper → feed mixer → reactor → condenser → separator",e:["stream_10","stream_5","stream_6","stream_7","condenser_outlet"]}],ne={feed_a_supply:"A feed",feed_d_supply:"D feed",feed_e_supply:"E feed",feed_ac_supply:"A+C feed",reactor_feed_mixer:"Feed mixer",reactor:"Reactor",condenser:"Condenser",separator:"Separator",compressor:"Compressor",stripper:"Stripper",purge_outlet:"Purge",product_outlet:"Product",reactor_cooling_water_supply:"Reactor CW supply",reactor_cooling_water_return:"Reactor CW return",condenser_cooling_water_supply:"Cond. CW supply",condenser_cooling_water_return:"Cond. CW return",stripper_steam_supply:"Steam supply"},Re={feed_a_supply:"A 進料",feed_d_supply:"D 進料",feed_e_supply:"E 進料",feed_ac_supply:"A+C 進料",reactor_feed_mixer:"進料混合區",reactor:"反應器",condenser:"產物冷凝器",separator:"氣液分離器",compressor:"循環壓縮機",stripper:"產品汽提塔",purge_outlet:"排放口",product_outlet:"產品出口",reactor_cooling_water_supply:"反應器冷卻水供應",reactor_cooling_water_return:"反應器冷卻水回水",condenser_cooling_water_supply:"冷凝器冷卻水供應",condenser_cooling_water_return:"冷凝器冷卻水回水",stripper_steam_supply:"汽提蒸汽供應",stream_1:"A 進料",stream_2:"D 進料",stream_3:"E 進料",stream_4:"A+C 進料",stream_5:"汽提塔塔頂",stream_6:"反應器進料",stream_7:"反應器產物",condenser_outlet:"冷凝後產物",separator_vapor:"分離器氣相",stream_8:"循環",stream_9:"排放",stream_10:"分離器底流",stream_11:"產品",reactor_cooling_water_in:"反應器冷卻水入口",reactor_cooling_water_out:"反應器冷卻水出口",condenser_cooling_water_in:"冷凝器冷卻水入口",condenser_cooling_water_out:"冷凝器冷卻水出口",stripper_steam:"汽提蒸汽"},k={},L={},H=[],G=[],V={},C={};ee.n.forEach(t=>{let e={id:t[0],kind:t[1],name:t[2]};k[e.id]=e,H.push(e)});ee.e.forEach(t=>{let e={id:t[0],kind:t[1],s:t[2],t:t[3],name:t[4]};L[e.id]=e,G.push(e);let n=/^stream_(\d+)$/.exec(e.id);n&&(C[e.id]=n[1])});ee.b.forEach(t=>{(V[t[1]]=V[t[1]]||[]).push({v:t[0],rel:t[2],q:t[3]})});function et(t){return(k[t]?"n:":"e:")+t}function Ue(t){let e=t.slice(2);return t[0]==="n"?ne[e]:C[e]?"stream "+C[e]:L[e].name}function we(t){if(typeof t!="string")return null;let e=t.trim();return e.startsWith("n:")&&Object.prototype.hasOwnProperty.call(k,e.slice(2))||e.startsWith("e:")&&Object.prototype.hasOwnProperty.call(L,e.slice(2))?e:Object.prototype.hasOwnProperty.call(k,e)?"n:"+e:Object.prototype.hasOwnProperty.call(L,e)?"e:"+e:null}var Ne=6;function ke(t,e){let n={},r=[];function o(a,c){n["n:"+a]===void 0&&(n["n:"+a]=c,r.push([a,c]))}if(t[0]==="n")o(t.slice(2),0);else{let a=L[t.slice(2)];n[t]=0,o(a.t,1)}for(;r.length;){let a=r.shift(),c=a[0],i=a[1];i>=e||G.forEach(s=>{s.s===c&&(n["e:"+s.id]===void 0&&(n["e:"+s.id]=i+1),o(s.t,i+1))})}return n}function tt(t,e){let n=Math.max(1,Math.min(Ne,Math.floor(e))),r=ke(t,n),o={};Object.keys(r).forEach(i=>{let s=r[i];s!==0&&(o[s]=o[s]||[]).push(i)});let a=Object.keys(o).map(Number).sort((i,s)=>i-s).map(i=>{let s=o[i],S=[];return s.forEach(M=>(V[M.slice(2)]||[]).forEach(u=>{u.rel==="MEASURES"&&R[u.v]&&S.push(u.v)})),{hop:i,elements:s.map(M=>({key:M,label:Ue(M)})),measuredSignals:S}}),c=te.map(i=>{let s=i.e.filter(S=>r["e:"+S]!==void 0).length;return{id:i.id,name:i.name,reached:s,of:i.e.length,closed:s===i.e.length}});return{start:t,maxHops:n,hops:a,loops:c,reachableCount:Object.keys(r).length,caveat:"Structural reachability only. It describes where an effect could travel, not that it did; closed-loop control can mask downstream deviations. Not causal evidence."}}var be={xmvMin:0,xmvMax:100,maxStepPct:10,rateWindowMin:10,maxChangeInWindowPct:15,horizonMin:30,speMarginOfLimit:1,maxHeadroomLossFraction:.05,rationaleMaxLen:500},nt=12;function xe(t,e,n){let r=t.branch();e&&r.applyAdjustment(e.xmv,e.target,"branch");let o=Math.max(1,Math.round(n/y)),a=["XMEAS(9)","XMEAS(7)","XMEAS(21)","XMV(10)"],c={};a.forEach(l=>{c[l]=-1/0});let i="NORMAL",s={signal:null,ruleId:null,atMin:null},S=0,M=0,u=0,m=-1/0,g=null,h=[],w=Math.max(1,Math.ceil(o/nt));for(let l=1;l<=o;l++){r.step();let d=r.plant.VAL;a.forEach(_=>{d[_]>c[_]&&(c[_]=d[_])});let A=W(d);x[A.worst.state]>x[i]&&(i=A.worst.state,s={signal:A.worst.signal,ruleId:A.worst.ruleId,atMin:+(l*y).toFixed(1)});let E=null;if(r.pcaModel){let _=K(r.pcaRows,r.pcaModel.window);if(_){let b=F(r.pcaModel,_);E=b.spe,S+=b.spe,M+=b.t2,u++,b.spe>m&&(m=b.spe),g===null&&b.exceeded.any&&(g=+(l*y).toFixed(1))}}(l%w===0||l===o)&&h.push({min:+(l*y).toFixed(1),"XMEAS(9)":+d["XMEAS(9)"].toFixed(3),"XMEAS(7)":+d["XMEAS(7)"].toFixed(1),"XMEAS(21)":+d["XMEAS(21)"].toFixed(3),"XMV(10)":+d["XMV(10)"].toFixed(3),spe:E})}let p={};return a.forEach(l=>{p[l]=+r.plant.VAL[l].toFixed(3),c[l]=+c[l].toFixed(3)}),{horizonMin:+(o*y).toFixed(1),steps:o,worstRuleState:i,worstRule:s,peak:c,end:p,meanSpe:u?+(S/u).toFixed(3):null,maxSpe:u?+m.toFixed(3):null,meanT2:u?+(M/u).toFixed(3):null,firstPcaExceedMin:g,trajectory:h}}function Ve(t,e){return typeof t=="string"?t.slice(0,e):""}function rt(t,e,n={}){let r=be,o={xmv:Ve(e==null?void 0:e.xmv,32).trim(),target:typeof(e==null?void 0:e.target)=="number"?e.target:Number(e==null?void 0:e.target),rationale:Ve(e==null?void 0:e.rationale,r.rationaleMaxLen).trim()},a=t.snapshot(),c=[],i=[],s=(E,_,b,P)=>{i.push({code:E,pass:_}),_===!1&&c.push({code:E,message:b||E,detail:P})},S=J.includes(o.xmv);s("XMV_UNKNOWN",S,'Unknown manipulated variable "'+o.xmv+'". Valid ids are XMV(1)..XMV(12).',{allowed:J.slice()});let M=D.includes(o.xmv);s("XMV_NOT_MODELLED",S?M:null,o.xmv+" exists in TEP but the lumped model does not simulate it, so the effect of a change cannot be checked.",{modelled:D.slice()});let u=Number.isFinite(o.target);s("TARGET_INVALID",u,"Target must be a finite number in percent."),s("TARGET_OUT_OF_RANGE",u?o.target>=r.xmvMin&&o.target<=r.xmvMax:null,"Target "+o.target+" % is outside the XMV range "+r.xmvMin+".."+r.xmvMax+" %.",{min:r.xmvMin,max:r.xmvMax}),s("RATIONALE_MISSING",o.rationale.length>0,"A rationale is required for every proposal.");let m=t.safety(),g=m.rules.worst.state==="TRIP";s("TRIP_ACTIVE",!g,"A TRIP rule is active ("+m.rules.worst.ruleId+"). No adjustments; escalate to a human.",{ruleId:m.rules.worst.ruleId});let h=S?t.plant.VAL[o.xmv]:null,w=null;if(M&&u&&h!==null){let E=Math.abs(o.target-h);s("STEP_TOO_LARGE",E<=r.maxStepPct+1e-9,"Step of "+E.toFixed(2)+" %-points exceeds the maximum "+r.maxStepPct+" per action.",{step:+E.toFixed(3),max:r.maxStepPct,current:+h.toFixed(3)});let _=t.t-r.rateWindowMin/60,b=t.changes.filter(P=>P.xmv===o.xmv&&P.t>_+1e-9).reduce((P,U)=>P+Math.abs(U.to-U.from),0);s("RATE_LIMIT",b+E<=r.maxChangeInWindowPct+1e-9,"Applied change in the last "+r.rateWindowMin+" simulated min ("+b.toFixed(2)+") plus this step ("+E.toFixed(2)+") exceeds "+r.maxChangeInWindowPct+" %-points.",{usedInWindow:+b.toFixed(3),step:+E.toFixed(3),budget:r.maxChangeInWindowPct,windowMin:r.rateWindowMin})}else s("STEP_TOO_LARGE",null),s("RATE_LIMIT",null);if(c.length===0){let E=xe(t,{xmv:o.xmv,target:o.target},r.horizonMin),_=xe(t,null,r.horizonMin);w={withChange:E,noChange:_};let b=E.worstRuleState,P=_.worstRuleState,U=x[P]>=x.ALARM,Fe=q.some(f=>E.peak[f]>_.peak[f]+1e-9),Te=x[b]>x[P]||Fe,ve={...E.worstRule,noChangeWorstState:P,judgedRelativeToNoChange:U};s("SIM_RULE_TRIP",!(b==="TRIP"&&(!U||Te)),"Simulated "+r.horizonMin+" min ahead, "+E.worstRule.ruleId+" reaches TRIP at +"+E.worstRule.atMin+" min"+(U?" and the change does not improve on no change ("+P+").":"."),ve),s("SIM_RULE_ALARM",!(b==="ALARM"&&(!U||Te)),"Simulated "+r.horizonMin+" min ahead, "+E.worstRule.ruleId+" reaches ALARM at +"+E.worstRule.atMin+" min"+(U?" and the change does not improve on no change ("+P+").":"."),ve);let re=N.filter(f=>f.kind==="NORMAL_UPPER").map(f=>{let oe=r.maxHeadroomLossFraction*(f.value-R[f.signal][2]),Ge=E.peak[f.signal]-_.peak[f.signal];return{signal:f.signal,ruleId:f.id,loss:+Ge.toFixed(3),allowed:+oe.toFixed(3)}}).filter(f=>f.loss>f.allowed);if(s("SIM_HEADROOM_LOSS",re.length===0,"Versus no change, the simulated peak of "+re.map(f=>f.signal+" rises by "+f.loss+" (allowed "+f.allowed+")").join(", ")+", eating into the headroom to the normal upper limit.",{exceeded:re}),t.pcaModel&&E.meanSpe!==null&&_.meanSpe!==null){let f=r.speMarginOfLimit*t.pcaModel.speLimit,oe=E.meanSpe-_.meanSpe;s("PCA_SPE_WORSENS",!(oe>f&&E.meanSpe>t.pcaModel.speLimit),"Mean SPE over the horizon would rise from "+_.meanSpe.toFixed(2)+" (no change) to "+E.meanSpe.toFixed(2)+", more than the margin "+f.toFixed(2)+".",{meanSpeWith:E.meanSpe,meanSpeWithout:_.meanSpe,margin:+f.toFixed(3),speLimit:t.pcaModel.speLimit})}else s("PCA_SPE_WORSENS",null)}else s("SIM_RULE_TRIP",null),s("SIM_RULE_ALARM",null),s("SIM_HEADROOM_LOSS",null),s("PCA_SPE_WORSENS",null);let l=c.length===0?"ACCEPT":"REJECT",d=!1;l==="ACCEPT"&&n.apply&&(t.applyAdjustment(o.xmv,o.target,n.source||"unknown"),d=!0);let A={seq:++t.gateSeq,ts:new Date(t.now()).toISOString(),snapshot:a,source:n.source||"unknown",mode:n.apply?"apply":"dry-run",input:o,verdict:l,reasons:c.map(E=>({code:E.code,message:E.message})),applied:d};for(t.gateLog.push(A);t.gateLog.length>_e;)t.gateLog.shift();return{verdict:l,reasons:c,checks:i,snapshot:a,input:o,current:h==null?null:+h.toFixed(3),simulation:w,params:be,applied:d,logSeq:A.seq}}function ot(t){let e=we(t);if(!e)return null;let n=e.slice(2),r=e[0]==="n",o=r?k[n]:L[n],a=V[n]||[],c=a.map(m=>{let g=N.filter(h=>h.signal===m.v).map(h=>h.id);return{id:m.v,relation:m.rel,quantity:m.q,name:R[m.v][0],unit:R[m.v][1],nominal:R[m.v][2],modelled:Y.includes(m.v),limits:g.length?g:"no reviewed limit"}}),i=(ge[e]||[]).map(m=>({type:m.t,status:m.s,text:m.txt,refs:m.r.map(Ee)})),s=a.map(m=>m.v),S=N.filter(m=>s.includes(m.signal)).map(m=>({...m})),M=(r?["downs_vogel_1993"].concat(he[n]?["sim_fortran"]:[]):["downs_vogel_1993","sim_fortran"]).map(m=>Se[m]).concat(["tep-process-graph 0.2.0 · HUMAN_VERIFIED"]),u=s.filter(m=>$[m]).map(m=>m+": alarm and shutdown limits are explicitly unspecified ("+$[m]+"); do not infer one.");return{element:{key:e,id:n,type:r?"NODE":"EDGE",kind:o.kind,name:o.name,label:r?ne[n]:C[n]?"stream "+C[n]:o.name,labelZh:Re[n]||"",...r?{}:{from:L[n].s,to:L[n].t},...C[n]?{stream:C[n]}:{}},signals:c,knowledge:i,rules:S,topologyRefs:M,coverage:(i.length?"Reviewed knowledge covers the reactor-cooling subsystem only.":"No extracted limits, SOP or control descriptions for this element; the knowledge base covers the reactor-cooling subsystem only.")+(u.length?" "+u.join(" "):"")}}function st(){return{revision:"tep-process-graph 0.2.0 (HUMAN_VERIFIED)",nodes:H.map(t=>({id:t.id,kind:t.kind,name:t.name})),edges:G.map(t=>({id:t.id,kind:t.kind,from:t.s,to:t.t,name:t.name})),loops:te.map(t=>({id:t.id,path:t.path})),counts:{nodes:H.length,edges:G.length,bindings:Object.values(V).reduce((t,e)=>t+e.length,0)},modelledSignals:Y.slice(),modelledXmvs:D.slice()}}var De=Pe;function at(t={}){return new j({pcaModel:De,...t})}return Je(it);})();</script>
+<div class="gbar" id="gbar" role="status" aria-live="polite" hidden>
+  <div class="gt"><div class="gk" id="gbarK"></div><div id="gbarT"></div></div>
+  <button type="button" class="btn" id="gbarStop"></button>
+</div>
+
+<script>var PCL_I18N={"en":{"lang.label":"Language","live.paused":"Paused","live.on":"LIVE · streaming","run.start":"▶ Start","run.pause":"❚❚ Pause","mode.title":"Offline: the engine runs in your browser. Connected: shows the same engine running on the local server.","mode.offline":"Offline · in-browser engine","mode.connecting":"Connected · local engine (connecting)","mode.connected":"Connected · local engine","mode.lost":"Disconnected · retrying","mode.ctlFail":"Control failed · {err}","api.forbidden":"Server refused (token expired? reload the page)","api.unreachable":"Cannot reach the local server","or.what":"\u003cb>A context layer for an industrial plant.\u003c/b> P&amp;ID topology, signal bindings and reviewed engineering knowledge, all pinned to an exact snapshot. Rules, a PCA anomaly monitor and a simulate-before-act gate decide whether a proposed adjustment is allowed.","or.try":"Try it in 30 seconds","or.s1":"Inject the \u003cb>IDV(4)\u003c/b> disturbance, a step in reactor cooling-water inlet temperature.","or.s2":"Watch the rules, the PCA score and the cooling loop react: \u003cb>XMV(10)\u003c/b> opens to hold reactor temperature.","or.s3":"Propose an \u003cb>XMV(10)\u003c/b> target and press \u003cb>Dry run\u003c/b>: the gate accepts or rejects it and says why.","or.mcp":"Connect your own LLM through the local MCP server:","or.mcp2":"then watch it at 127.0.0.1:8787","guide.start":"▶ Guided run","guide.stop":"■ Stop","guide.close":"Close","guide.step":"Guided run {i}/{n}","guide.stoppedK":"Guided run stopped","guide.s1":"Injecting IDV(4) +{m} °C, a step in cooling-water inlet temperature. The inlet has no instrument, so only downstream signals can show it.","guide.s1had":"IDV(4) +{m} °C is already injected (a step in cooling-water inlet temperature). The inlet has no instrument, so only downstream signals can show it.","guide.s2":"The controller opens XMV(10) to take up the disturbance. Watch the PCA score: the valve is more open than normal for these temperatures. Worst rule state now: {state}.","guide.s3":"Proposal 1: XMV(10) {from} → {to} %, a {d} %-point step. Gate verdict: {verdict}{why}.","guide.s4":"Proposal 2: XMV(10) {from} → {to} %, a {d} %-point step. Gate verdict: {verdict}{why}. It first simulated {hor} min ahead on a branch copy, with and without the change.","guide.s4no":"Proposal 2: XMV(10) {from} → {to} %, a {d} %-point step. Gate verdict: {verdict}{why}. Even a small move is refused in the current state.","guide.done":"Done. The proposals are in the gate log, and Apply is enabled for the accepted one. The disturbance is still active; remove it in Live trends.","guide.doneNo":"Done. The gate accepted none of the proposals, so Apply stays disabled; the reasons are in the gate log. The disturbance is still active; remove it in Live trends.","guide.stopped":"IDV(4) +{m} °C is still injected. Remove it in Live trends, or keep exploring.","sf.aria":"Safety status","sf.rules":"Rules","sf.rulesBadge":"Reviewed limits","sf.rulesTip":"Limits from reviewed engineering knowledge (tags-and-limits row-1 / row-2) and Downs & Vogel (1993)","sf.pca":"PCA anomaly score","sf.pcaBadge":"No fault labels","sf.pcaTip":"Trained offline on simulated normal operation. Outputs a score and contributing variables only; it never names a fault.","sf.top":"Top contributors","sf.topNote":"Contributor ≠ cause: it only shows which signals break the normal correlation structure.","sf.loop":"XMV(10) loop","sf.others":" · the other {n} XMEAS have no reviewed limit (none guessed)","sf.pcaExc":"Above limit","sf.pcaOk":"Within limit","sf.meterTip":"1.0× = 99 % limit (centre line)","sf.pcaD":"T² {t2} / {t2l} · SPE {spe} / {spel} (99 % limits)","sf.topRef":"within limits; for reference only","sf.auto":"Return to AUTO","sf.loopMan":"Operator output is fixed; the controller no longer holds temperature. Returning to AUTO is a human action.","sf.loopAuto":"PI: XMEAS(9) → XMV(10), setpoint 120.40 degC","stz.NORMAL":"within reviewed limits","stz.ATTENTION":"approaching a limit","stz.ALARM":"above normal upper","stz.TRIP":"shutdown limit · hand over to a person","pv.title":"Plant view","pv.switch":"Switch view","pv.topoTip":"tep-sim ProcessGraph 0.2.0, human-verified","pv.topo":"Topology 17 nodes · 18 edges · 53 bindings","pv.swipe":"← Swipe sideways to see the whole drawing →","pv.material":"Material stream","pv.utility":"Utility stream","pv.hop":"Impact hop","pv.hint":"Click a unit or a pipe to see its signals, engineering knowledge and downstream impact","pv.pidNote":"TEP flowsheet · hand-drawn layout (topology per ProcessGraph 0.2.0)","pv.graphNote":"node-link view · same node / edge ids · abstract layout","hl.sel":"Selected","hl.none":"· no impact shown","hl.dist":"IDV(4) disturbance","hl.impact":"Impact analysis","hl.from":"from","hl.range":"· downstream hops ≤ {n} · {count} elements","hl.closed":"closed","hl.caveat":"· structurally reachable = hypothesis space, not evidence","hl.clear":"Clear highlight","imp.play":"▶ Play hop by hop","imp.stop":"■ Stop","sd.signals":"Signals","sd.noSignals":"TEP has no XMEAS / XMV instrument on this element (listed as an unbound entity in the fixture); no measurement is guessed.","sd.xmv":"Manipulated variable (XMV)","sd.anchor":"Measured anchor {a}","sd.anchorTip":"Measured in tep-agent-lab: simulator branch comparison (reactor cooling incident, 0.1 h) {a}","sd.unverified":"Unverified","sd.unverifiedTip":"Binding human-verified; propagation not yet measured","sd.prov":"Binding provenance: HUMAN_VERIFIED_MAPPING · {a} · {b}. Values are simulated in the browser (illustrative).","sd.knowledge":"Engineering knowledge","sd.noKnowledge":"The knowledge base covers the reactor-cooling subsystem only; this element has no extracted limits, SOP or control description.","sd.approved":"Approved","sd.rejected":"Rejected","sd.source":"Source quote","sd.impact":"Downstream impact","sd.depth":"Depth: hops ≤","sd.show":"Show downstream impact","sd.topoRefs":"Topology refs","imp.intro":"Runs a BFS from this element along material and utility flow, colours both views by hop and marks loops.","imp.measured":" · measured","imp.sep":", ","imp.none":"No downstream elements within this depth.","imp.loopClosed":"Loop closed: the effect can come back near its origin","imp.loopPartial":"Propagation has entered the loop (increase the depth to see it close)","imp.caveat":"Graph traversal only shows where an effect could travel structurally; TEP runs in closed loop, so controllers can mask downstream deviations.","tr.title":"Live trends","tr.badge":"Simulated in browser","tr.note":"Simulated in your browser (illustrative, not output from the TEP simulator)","tr.noteConn":"Simulated by the local engine (same lumped model; illustrative, not output from the TEP simulator)","tr.speed":"Speed","tr.window":"Time window","tr.evt":"Disturbance event","tr.evtTip":"Available after you inject a disturbance","tr.dist":"Disturbance","tr.opt5":"IDV(4) reactor cooling-water inlet temperature step +5 °C","tr.opt10":"IDV(4) reactor cooling-water inlet temperature step +10 °C","tr.inject":"⚡ Inject disturbance","tr.remove":"Remove disturbance","tr.primary":"Primary response","tr.base":"Baseline {b} · dashed","tr.vsBase":"{dv} vs baseline","tr.removedMark":"▲ IDV(4) removed","tr.capNone":"No disturbance injected. The inlet temperature has no instrument, so after you inject IDV(4) the response shows only in downstream signals.","tr.capRemoved":"Disturbance removed at t = {t} h; the controller is moving XMV(10) back.","tr.capPrimary":"\u003cb>Primary response: XMV(10) {du} %\u003c/b>. The controller takes up the disturbance with the cooling-water valve and holds reactor temperature (XMEAS(9) peak {p9} degC, XMEAS(21) peak {p21} degC, about {hd} degC of headroom to the 150 normal upper limit).","tr.capOver":"The IDV(4) event is over and the signals are back at baseline. Switch to “Disturbance event” to review the response.","tr.capWait":"IDV(4) +{m} °C injected at t = {t} h; waiting for the signals to respond.","now.title":"What is happening now · reactor cooling","now.badge":"Structured summary · illustrative","now.badgeTip":"Context composition is still in development in tep-agent-lab","now.stNormal":"NORMAL","now.tNormal":"The reactor-cooling subsystem runs near baseline; no deviation exceeds its threshold","now.stRecovering":"Disturbance removed · RECOVERING","now.tRecovering":"Inlet temperature is back at baseline; the controller is moving XMV(10) back","now.stDisturbed":"DISTURBED","now.tCwFirst":"Cooling-water outlet temperature rose first and reactor temperature followed with a lag","now.tCtrlOpen":"; the controller is opening XMV(10)","now.tReactorDev":"Reactor temperature has left baseline","now.tCtrlAdjust":"; the controller is adjusting XMV(10)","now.stCompensated":"COMPENSATED","now.tCompensated":"Temperatures are back at baseline; XMV(10) holds a new operating point ({u} %, baseline {b} %)","now.stWaiting":"Injected · WAITING","now.tWaiting":"IDV(4) injected; waiting for the signals to respond (the inlet temperature has no instrument, so the disturbance itself cannot be seen)","now.stMasked":"MASKED","now.tMasked":"A disturbance is present, but the main signals stay within their thresholds (closed-loop control may mask it)","now.tManual":"; XMV(10) is in MANUAL, so the controller no longer corrects","now.current":"Current condition","now.colon":": ","now.n.x9":"reactor temperature","now.n.x7":"reactor pressure","now.n.x21":"cooling-water outlet temperature","now.n.u10":"cooling-water flow command","now.limTrip":"at or above shutdown {sd} → ","now.limAlarm":"above normal upper {nu}, below shutdown {sd} → ","now.limAtt":"approaching normal upper {nu} (headroom {hd}, in the attention band) → ","now.limNormal":"below normal upper {nu} (headroom {hd}) and shutdown {sd} → ","now.x21NoLimit":"no approved alarm / shutdown limit; none is guessed","now.u10Range":" (0–100, a command range, not a process limit)","now.manual":"\u003cb>XMV(10)\u003c/b> loop is \u003cspan class=\"w\">MANUAL\u003c/span> (operator output {u} %): the controller no longer holds reactor temperature; only a person can return it to AUTO","now.observed":"Observed changes","now.noDev":"Relative to baseline, none of the four signals exceeds its threshold (threshold = 4σ or a minimum change)","now.idv":"\u003cb>IDV(4)\u003c/b> inlet temperature step {s}, injected at t = {t} h (simulated event; the inlet temperature itself is not measured)","now.removed":"removed","now.noneYet":"No signal has exceeded its threshold yet ({m} min elapsed)","now.crossed":"{i}. \u003cb>{id}\u003c/b> {nm} crossed its threshold at t = {t} h (lag {lag} min); now {cur}, peak {pk}","now.primary":"The primary response is \u003cb>XMV(10)\u003c/b> (now {c} %): the controller takes up the disturbance with the cooling-water valve and holds reactor temperature (XMEAS(9) peak only {p} degC)","now.order":"Detection order {o}. Time order need not match topology hops: graph reachability shows possible paths only, not causal evidence","now.context":"Engineering context","now.ctxCtrl":"XMV(10) sets reactor cooling-water flow; more flow removes more heat, within the limits of the thermal state and utility conditions","now.ctxRcw":"The inlet temperature has no known instrument (RCW-IN-TT was rejected): the disturbance source can only be inferred from how XMEAS(21), XMEAS(9) and XMV(10) respond","now.ctxSop":"SOP source text: when temperature rises, compare process and cooling-water outlet readings","now.ctxTopo":"Topology: from the reactor cooling-water inlet, {n} elements are structurally reachable within 6 hops, including the recycle loop back to the reactor","now.ctx150":"Reactor temperature normal upper is 150 degC; the competing 145 degC claim was rejected, and both citations are kept","st.built":"Built","st.reviews":"12 human reviews: 10 approve / remap, 2 reject","st.snapServer":"Generated by the local server engine","st.snapPage":"Generated in this browser","st.pinned":"Every statement is pinned to an exact snapshot (T, K and revision), so it can be reproduced and traced.","pp.title":"Adjustment proposal","pp.badge":"The gate decides; the proposer only proposes","pp.badgeTip":"Every proposal goes through a deterministic gate; only an ACCEPT is applied","pp.xmv":"Manipulated variable","pp.target":"Target %","pp.useCur":"Use current value","pp.why":"Rationale","pp.whyDefault":"Operator dry run","pp.whyPh":"Rationale (required)","pp.try":"Dry run","pp.apply":"Apply","pp.applyTip":"Dry-run first and get an ACCEPT","pp.applyNote":"Apply re-evaluates against the current state; only an ACCEPT is executed","pp.gateNote":"Gate: step ≤ {step} %-points, at most {rate} %-points within {win} simulated min, no adjustment during TRIP, only XMVs the model simulates. Before applying, it simulates {hor} min ahead on a branch copy and REJECTs if any rule reaches ALARM / TRIP, headroom to a limit shrinks noticeably, or the PCA SPE gets clearly worse. Disturbance injection stays a human action.","pp.notModelled":" (not modelled)","pp.current":"current {v} %","g.noResponse":"no response from the gate","g.applied":"Applied · loop now MANUAL","g.notApplied":"Not applied","g.dry":"Dry run · plant unchanged","g.pass":"All checks passed","g.passHint":"; you can press Apply (it re-evaluates against the current state)","g.sim":"Branch simulation {h} min (with / without change): XMEAS(9) peak {a9} / {b9} degC · XMEAS(7) peak {a7} / {b7} kPa · worst rule {aw} / {bw}","g.simSpe":" · mean SPE {a} / {b}","rz.XMV_UNKNOWN":"not a TEP manipulated variable","rz.XMV_NOT_MODELLED":"the model does not simulate this XMV, so its effect cannot be checked","rz.TARGET_INVALID":"target is not a number","rz.TARGET_OUT_OF_RANGE":"outside 0–100 %","rz.RATIONALE_MISSING":"rationale missing","rz.TRIP_ACTIVE":"no adjustment during TRIP; hand over to a person","rz.STEP_TOO_LARGE":"step too large","rz.RATE_LIMIT":"rate limit exceeded","rz.SIM_RULE_TRIP":"branch simulation reaches TRIP","rz.SIM_RULE_ALARM":"branch simulation reaches ALARM","rz.SIM_HEADROOM_LOSS":"branch simulation eats noticeably into headroom","rz.PCA_SPE_WORSENS":"branch simulation makes the PCA SPE clearly worse","log.title":"Gate log","log.count":"{n} entries","log.count0":"0 entries","log.empty":"No entries yet. Dry runs and applies from this page and propose_adjustment calls over MCP are all logged here.","log.page":"page","log.applied":"Applied","log.notExec":"Apply · not executed","log.dry":"Dry run","ft.hon":"\u003cb>Concept demo.\u003c/b> Trends are simulated in the browser; the topology comes from the Tennessee Eastman process graph. Implemented in tep-agent-lab: live plant streaming is built; plant context composition and the UI read are in progress.","ft.c1":"Built · process topology and signal bindings (human-verified)","ft.c2":"Built · live plant streaming (not connected here; this page uses the browser simulation)","ft.c3":"Built · engineering-knowledge extraction with human review (staged revision)","ft.c4":"In progress · plant context composition","ft.c5":"In progress · UI read of pinned snapshots","ft.c6":"Demo · rules, PCA and gate are for education only, not for real plant operation"},"zh":{"lang.label":"語言","live.paused":"暫停","live.on":"LIVE · 串流中","run.start":"▶ 開始","run.pause":"❚❚ 暫停","mode.title":"離線：引擎在瀏覽器內執行；連線：顯示本機伺服器上的同一個引擎","mode.offline":"離線 · 瀏覽器內引擎","mode.connecting":"連線 · 本機引擎（連線中）","mode.connected":"連線 · 本機引擎","mode.lost":"連線中斷 · 重試中","mode.ctlFail":"操作失敗 · {err}","api.forbidden":"伺服器拒絕（權杖已失效？請重新整理頁面）","api.unreachable":"無法連線到本機伺服器","or.what":"\u003cb>工業工廠的 context layer。\u003c/b>P&amp;ID 拓撲、訊號綁定與已審核的工程知識，全部釘在確切的 snapshot 上；由規則、PCA 異常監測與「先模擬再執行」的 gate 決定提議的調整能不能執行。","or.try":"30 秒上手","or.s1":"注入 \u003cb>IDV(4)\u003c/b> 擾動：反應器冷卻水入口溫度 step。","or.s2":"觀察規則、PCA 分數與冷卻迴路的反應：\u003cb>XMV(10)\u003c/b> 開大以維持反應器溫度。","or.s3":"對 \u003cb>XMV(10)\u003c/b> 提出目標值並按\u003cb>試算\u003c/b>：gate 會接受或拒絕，並說明原因。","or.mcp":"用本機 MCP server 接上你自己的 LLM：","or.mcp2":"再開 127.0.0.1:8787 觀看","guide.start":"▶ 導覽執行","guide.stop":"■ 停止","guide.close":"關閉","guide.step":"導覽 {i}/{n}","guide.stoppedK":"導覽已停止","guide.s1":"注入 IDV(4) +{m} °C：冷卻水入口溫度 step。入口溫度沒有儀表，只能從下游訊號看到。","guide.s1had":"IDV(4) +{m} °C 已經注入（冷卻水入口溫度 step）。入口溫度沒有儀表，只能從下游訊號看到。","guide.s2":"控制器開大 XMV(10) 吸收擾動。注意 PCA 分數：以目前溫度來說閥開得比正常大。目前最差規則狀態：{state}。","guide.s3":"提案 1：XMV(10) {from} → {to} %，一次 {d} 個百分點。gate 判定：{verdict}{why}。","guide.s4":"提案 2：XMV(10) {from} → {to} %，一次 {d} 個百分點。gate 判定：{verdict}{why}。判定前先在分支上模擬 {hor} 分鐘（調整 / 不調整）。","guide.s4no":"提案 2：XMV(10) {from} → {to} %，一次 {d} 個百分點。gate 判定：{verdict}{why}。在目前狀態下連小幅調整也被拒絕。","guide.done":"完成。提案都記在 gate 紀錄，被接受的那個可以按「套用」。擾動仍在，可在即時趨勢移除。","guide.doneNo":"完成。gate 沒有接受任何提案，所以「套用」維持停用；原因記在 gate 紀錄。擾動仍在，可在即時趨勢移除。","guide.stopped":"IDV(4) +{m} °C 仍在注入中。可在即時趨勢移除，或繼續自行操作。","sf.aria":"安全狀態","sf.rules":"規則 · Rules","sf.rulesBadge":"已審核限值","sf.rulesTip":"限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs & Vogel (1993)","sf.pca":"PCA 異常分數 · monitor","sf.pcaBadge":"不輸出故障標籤","sf.pcaTip":"離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型","sf.top":"主要貢獻變數 · contributors","sf.topNote":"貢獻變數 ≠ 原因；只說明哪些訊號偏離正常相關結構","sf.loop":"XMV(10) 迴路 · loop","sf.others":" · 其餘 {n} 個 XMEAS 無已審核限值（不推測）","sf.pcaExc":"超出門檻","sf.pcaOk":"門檻內","sf.meterTip":"1.0× = 99% 門檻（中線）","sf.pcaD":"T² {t2} / {t2l} · SPE {spe} / {spel}（99% 門檻）","sf.topRef":"未超限，僅供參考","sf.auto":"恢復自動","sf.loopMan":"操作員輸出固定，溫度不再由控制器維持；恢復自動由人員操作","sf.loopAuto":"PI：XMEAS(9) → XMV(10)，設定值 120.40 degC","stz.NORMAL":"正常","stz.ATTENTION":"注意","stz.ALARM":"警報","stz.TRIP":"跳車 · 交由人員處理","pv.title":"製程畫面 · Plant view","pv.switch":"切換視圖","pv.topoTip":"tep-sim ProcessGraph 0.2.0，人工核對","pv.topo":"拓撲 17 nodes · 18 edges · 53 bindings","pv.swipe":"← 左右滑動看完整圖面 →","pv.material":"製程物流 material","pv.utility":"公用流體 utility","pv.hop":"影響 hop","pv.hint":"點選設備或管線查看訊號、工程知識與影響範圍","pv.pidNote":"TEP flowsheet · 版面為自繪示意（拓撲依 ProcessGraph 0.2.0）","pv.graphNote":"node-link view · 同一組 node / edge ids · 抽象版面","hl.sel":"選取","hl.none":"· 未顯示影響範圍","hl.dist":"IDV(4) 擾動","hl.impact":"影響分析","hl.from":"起點","hl.range":"· 下游 hop ≤ {n} · {count} 個元素","hl.closed":"閉合","hl.caveat":"· 結構上可達 = 假設空間，不是證據","hl.clear":"清除高亮","imp.play":"▶ 逐層播放","imp.stop":"■ 停止","sd.signals":"訊號 · Signals","sd.noSignals":"TEP 在此元素沒有 XMEAS / XMV 儀表（fixture 列為 unbound entity），不推測量測。","sd.xmv":"操作變數 XMV","sd.anchor":"實測錨點 {a}","sd.anchorTip":"tep-agent-lab 實際模擬分支比對（reactor cooling incident, 0.1 h）{a}","sd.unverified":"待驗證","sd.unverifiedTip":"綁定已人工核對；傳播尚未實測","sd.prov":"綁定 provenance：HUMAN_VERIFIED_MAPPING · {a} · {b}。數值為瀏覽器內模擬（示意）。","sd.knowledge":"工程知識 · Engineering knowledge","sd.noKnowledge":"知識庫目前只涵蓋 reactor cooling 子系統；此元素沒有已擷取的限值、SOP 或控制描述。","sd.approved":"已審核","sd.rejected":"已駁回","sd.source":"原文引用","sd.impact":"影響 · Downstream impact","sd.depth":"深度 hop ≤","sd.show":"顯示下游影響","sd.topoRefs":"拓撲來源 · Topology refs","imp.intro":"以此元素為起點，沿物流 / 公用流體方向做 BFS，在兩個視圖上依 hop 上色並標出回路。","imp.measured":" · 實測","imp.sep":"、","imp.none":"此深度內沒有下游元素。","imp.loopClosed":"回路閉合：擾動會再次回到起點附近","imp.loopPartial":"傳播已進入回路（加深 hop 可看到閉合）","imp.caveat":"圖遍歷只說明擾動在結構上「可能」傳到哪裡；TEP 以閉迴路運轉，控制器可能遮蔽下游偏差。","tr.title":"即時趨勢 · Live trends","tr.badge":"瀏覽器內模擬","tr.note":"瀏覽器內模擬資料（示意，非實際模擬器輸出）","tr.noteConn":"本機引擎模擬資料（同一個 lumped model，示意，非實際模擬器輸出）","tr.speed":"速度","tr.window":"時間窗","tr.evt":"擾動事件","tr.evtTip":"注入擾動後可用","tr.dist":"擾動","tr.opt5":"IDV(4) 反應器冷卻水入口溫度 step +5 °C","tr.opt10":"IDV(4) 反應器冷卻水入口溫度 step +10 °C","tr.inject":"⚡ 注入擾動","tr.remove":"移除擾動","tr.primary":"首要反應","tr.base":"基準 {b} · 虛線","tr.vsBase":"{dv} vs 基準","tr.removedMark":"▲ 移除 IDV(4)","tr.capNone":"尚未注入擾動。入口溫度沒有儀表，注入 IDV(4) 後只能從下游訊號看到反應。","tr.capRemoved":"擾動已於 t = {t} h 移除；控制器正把 XMV(10) 拉回原位。","tr.capPrimary":"\u003cb>首要反應：XMV(10) {du} %\u003c/b>：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值 {p9} degC，XMEAS(21) 峰值 {p21} degC，離 normal upper 150 仍有約 {hd} degC）。","tr.capOver":"IDV(4) 事件已結束，訊號回到基準。切換「擾動事件」可回看當時的反應。","tr.capWait":"IDV(4) +{m} °C 已於 t = {t} h 注入，等待訊號反應。","now.title":"現在發生什麼 · reactor cooling","now.badge":"結構化摘要 · 示意","now.badgeTip":"tep-agent-lab 中 context composition 仍在開發","now.stNormal":"正常 · NORMAL","now.tNormal":"reactor cooling 子系統在基準附近運轉，沒有超過門檻的偏差","now.stRecovering":"擾動已移除 · RECOVERING","now.tRecovering":"入口溫度回到基準，控制器正把 XMV(10) 拉回原位","now.stDisturbed":"擾動中 · DISTURBED","now.tCwFirst":"冷卻水出口溫度先上升，反應器溫度延遲跟上","now.tCtrlOpen":"；控制器正在加大 XMV(10)","now.tReactorDev":"反應器溫度偏離基準","now.tCtrlAdjust":"；控制器正在調整 XMV(10)","now.stCompensated":"已補償 · COMPENSATED","now.tCompensated":"溫度已回到基準；XMV(10) 停在新的操作點（{u} %，基準 {b} %）","now.stWaiting":"已注入 · WAITING","now.tWaiting":"IDV(4) 已注入，等待訊號反應（入口溫度無儀表，無法直接看到擾動）","now.stMasked":"擾動中 · MASKED","now.tMasked":"擾動存在，但主要訊號未超過門檻（閉迴路控制可能遮蔽）","now.tManual":"；XMV(10) 為 MANUAL，控制器不再修正","now.current":"目前狀態 · Current condition","now.colon":"：","now.n.x9":"反應器溫度","now.n.x7":"反應器壓力","now.n.x21":"冷卻水出口溫度","now.n.u10":"冷卻水流量指令","now.limTrip":"達到 shutdown {sd} → ","now.limAlarm":"超過 normal upper {nu}，低於 shutdown {sd} → ","now.limAtt":"接近 normal upper {nu}（餘裕 {hd}，進入注意帶）→ ","now.limNormal":"低於 normal upper {nu}（餘裕 {hd}）與 shutdown {sd} → ","now.x21NoLimit":"沒有核准的 alarm / shutdown 限值，不推測","now.u10Range":"（0–100，指令值，不是製程限值）","now.manual":"\u003cb>XMV(10)\u003c/b> 迴路為 \u003cspan class=\"w\">MANUAL\u003c/span>（操作員輸出 {u} %）：反應器溫度不再由控制器維持；恢復自動須由人員操作","now.observed":"觀察到的變化 · Observed changes","now.noDev":"相對於基準，四個訊號都沒有超過門檻（門檻 = 4σ 或最小變化量）","now.idv":"\u003cb>IDV(4)\u003c/b> 入口溫度 step {s}，於 t = {t} h 注入（模擬事件；入口溫度本身沒有量測）","now.removed":"已移除","now.noneYet":"尚未有訊號超過門檻（已過 {m} min）","now.crossed":"{i}. \u003cb>{id}\u003c/b> {nm} 在 t = {t} h 超過門檻（延遲 {lag} min）；目前 {cur}，峰值 {pk}","now.primary":"首要反應是 \u003cb>XMV(10)\u003c/b>（目前 {c} %）：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值只有 {p} degC）","now.order":"偵測順序 {o}。時間順序與拓撲 hop 不必相同：圖可達只代表可能路徑，不是因果證據","now.context":"相關工程脈絡 · Engineering context","now.ctxCtrl":"XMV(10) 調節反應器冷卻水流量；加大流量可增加移熱，但受熱狀態與公用流體條件限制","now.ctxRcw":"入口溫度沒有已知儀表（RCW-IN-TT 已駁回）：擾動來源只能由 XMEAS(21)、XMEAS(9) 與 XMV(10) 的反應推論","now.ctxSop":"SOP 原文：溫度上升時比對製程溫度與冷卻水出口讀值","now.ctxTopo":"拓撲：自 reactor cooling water inlet 起，6 hop 內結構上可達 {n} 個元素，含 recycle loop 回流到反應器","now.ctx150":"reactor temperature 的 normal upper 以 150 degC 為準；競爭的 145 degC 已駁回，引用保留","st.built":"已實作","st.reviews":"人工審查 12 筆：10 approve / remap，2 reject","st.snapServer":"本機伺服器引擎產生","st.snapPage":"本頁於瀏覽器內產生","st.pinned":"每一條陳述都釘在一個確切的 snapshot（T、K 與 revision）上，所以能被重現與追溯。","pp.title":"調整提案 · Adjustment proposal","pp.badge":"gate 決定，提案者只提議","pp.badgeTip":"每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用","pp.xmv":"操作變數","pp.target":"目標值 %","pp.useCur":"帶入目前值","pp.why":"理由","pp.whyDefault":"操作員手動試算","pp.whyPh":"理由（必填）","pp.try":"試算","pp.apply":"套用","pp.applyTip":"先試算並取得 ACCEPT","pp.applyNote":"套用時以當下狀態重新評估，只有 ACCEPT 才會執行","pp.gateNote":"gate：步幅 ≤ {step} %、每 {win} 模擬分鐘累計 ≤ {rate} %、TRIP 時禁止調整、只能調整模型內有模擬的 XMV；套用前先在分支上模擬 {hor} 分鐘，若任何規則到 ALARM / TRIP、明顯吃掉限值餘裕或 PCA SPE 明顯變差即 REJECT。擾動注入仍由人操作。","pp.notModelled":"（未建模）","pp.current":"目前 {v} %","g.noResponse":"gate 無回應","g.applied":"已套用 · 迴路轉 MANUAL","g.notApplied":"未套用","g.dry":"試算 · 未改變工廠","g.pass":"所有檢查通過","g.passHint":"；可按「套用」（套用時會以當下狀態重新評估）","g.sim":"分支模擬 {h} min（調整 / 不調整）：XMEAS(9) 峰值 {a9} / {b9} degC · XMEAS(7) 峰值 {a7} / {b7} kPa · 最差規則 {aw} / {bw}","g.simSpe":" · SPE 平均 {a} / {b}","rz.XMV_UNKNOWN":"不是 TEP 的操作變數","rz.XMV_NOT_MODELLED":"模型未模擬此 XMV，無法驗證效果","rz.TARGET_INVALID":"目標值不是數字","rz.TARGET_OUT_OF_RANGE":"超出 0–100 %","rz.RATIONALE_MISSING":"缺少理由","rz.TRIP_ACTIVE":"TRIP 中禁止調整，請交由人員處理","rz.STEP_TOO_LARGE":"單次步幅過大","rz.RATE_LIMIT":"超過變化率上限","rz.SIM_RULE_TRIP":"分支模擬會達 TRIP","rz.SIM_RULE_ALARM":"分支模擬會達 ALARM","rz.SIM_HEADROOM_LOSS":"分支模擬明顯吃掉限值餘裕","rz.PCA_SPE_WORSENS":"分支模擬 PCA SPE 明顯變差","log.title":"Gate 紀錄 · Gate log","log.count":"{n} 筆","log.count0":"0 筆","log.empty":"尚無紀錄。頁面上的試算 / 套用與 MCP 的 propose_adjustment 都會記錄在這裡。","log.page":"頁面","log.applied":"已套用","log.notExec":"套用 · 未執行","log.dry":"試算","ft.hon":"\u003cb>概念示範。\u003c/b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。","ft.c1":"已實作 · 製程拓撲與訊號綁定（人工核對）","ft.c2":"已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）","ft.c3":"已實作 · 工程知識擷取與人工審查（staged revision）","ft.c4":"開發中 · plant context composition","ft.c5":"開發中 · UI 讀取 pinned snapshot","ft.c6":"示範 · 規則、PCA 與 gate 僅供教學，不可用於實際工廠操作"}};</script>
+<script>"use strict";var PCL=(()=>{var Z=Object.defineProperty;var Ke=Object.getOwnPropertyDescriptor;var qe=Object.getOwnPropertyNames;var We=Object.prototype.hasOwnProperty;var je=(t,e,n)=>e in t?Z(t,e,{enumerable:!0,configurable:!0,writable:!0,value:n}):t[e]=n;var He=(t,e)=>{for(var n in e)Z(t,n,{get:e[n],enumerable:!0})},Ze=(t,e,n,r)=>{if(e&&typeof e=="object"||typeof e=="function")for(let o of qe(e))!We.call(t,o)&&o!==n&&Z(t,o,{get:()=>e[o],enumerable:!(r=Ke(e,o))||r.enumerable});return t};var Be=t=>Ze(Z({},"__esModule",{value:!0}),t);var T=(t,e,n)=>je(t,typeof e!="symbol"?e+"":e,n);var it={};He(it,{ATTENTION_HEADROOM_FRACTION:()=>Oe,BIND:()=>V,CHANGE_CAP:()=>Le,EVENT_CAP:()=>Xe,EXPLICITLY_UNSPECIFIED:()=>$,GATE_LOG_CAP:()=>_e,GATE_PARAMS:()=>be,HISTORY_CAP:()=>Me,KNOW:()=>ge,KR:()=>I,LOOPS:()=>te,MAX_HOPS:()=>Ne,MAX_SIGNAL_IDS:()=>Ae,MAX_SIGNAL_POINTS:()=>fe,MINUTES_PER_STEP:()=>y,MODELLED_SIGNALS:()=>J,MODELLED_XMVS:()=>D,NODE_FORTRAN:()=>Se,PCA_MODEL:()=>De,REFNAME:()=>he,RULED_SIGNALS:()=>q,RULES:()=>N,SHORT:()=>ne,SIG:()=>R,SIGNAL_IDS:()=>v,SN:()=>C,STATE_ORDER:()=>x,STEP_H:()=>L,SUB:()=>ie,Simulation:()=>j,TE:()=>X,TEDGES:()=>G,TN:()=>k,TNODES:()=>H,TOPO:()=>ee,TR_SETPOINT:()=>Ye,XMV_IDS:()=>B,ZH:()=>Re,bfs:()=>ke,clonePlantState:()=>ce,createPlantState:()=>le,createRng:()=>ae,createSimulation:()=>at,eigSym:()=>ye,elLabel:()=>Ue,evaluateAdjustment:()=>rt,evaluateRules:()=>W,fitPca:()=>ze,gauss:()=>O,getEngineeringContext:()=>ot,impact:()=>tt,isKnownSignal:()=>Y,keyOf:()=>et,quantile:()=>de,refOf:()=>Ee,resolveElement:()=>we,restoreAuto:()=>me,scorePca:()=>F,setDisturbance:()=>z,setManualOutput:()=>pe,simulateAhead:()=>xe,snapshotOf:()=>Ce,stepPlant:()=>ue,topologySummary:()=>st,uniform:()=>se,windowMean:()=>K,worseState:()=>$e});var Pe={format:"pca-monitor/1",variables:["XMEAS(7)","XMEAS(9)","XMEAS(11)","XMEAS(13)","XMEAS(21)","XMV(10)"],window:5,mean:[2705.344538,120.4522295,80.13751956,2634.025844,94.65570449,41.07999626],scale:[5.666974995,.8272710714,.4336213629,5.386938765,1.009254568,1.476609952],loadings:[[.4580233388,.1793703455],[.4672921889,.02058461187],[.4162821996,.3579144201],[.4579466088,.1792944863],[.3935175991,-.4585164169],[-.1843653013,.7726033933]],eigenvalues:[4.537307319,1.405776726],allEigenvalues:[4.537307319,1.405776726,.05121119713,.004818219396,.0006045015312,.0002820367834],k:2,explainedVariance:.9905140075,confidence:.99,t2Limit:11.7387,speLimit:.461,training:{generator:"scripts/train-pca.ts (engine lumped model)",seeds:[101,202,303,404,505,606],holdoutSeeds:[707,808],warmupSteps:480,stepsPerSeed:3e3,sampleHours:.01,rows:17976,operatingMode:"XMV(10) loop AUTO, no disturbance, plus operator moves of up to +/-3 % held 18-54 min",preprocessing:"5-sample moving mean, autoscaled with training mean and standard deviation",componentRule:"smallest k with cumulative explained variance >= 0.9",limits:"empirical 99 % quantile of training T² and SPE",labels:"none; the monitor outputs scores and contributors only",holdoutFalseAlarm:{t2:.0067,spe:.0017,any:.0083},holdoutFalseAlarmAutoOnly:{t2:0,spe:0,any:0}}};function ae(t){return{s:t>>>0||2654435769}}function se(t){t.s=t.s+1831565813>>>0;let e=t.s;return e=Math.imul(e^e>>>15,e|1),e^=e+Math.imul(e^e>>>7,e|61),((e^e>>>14)>>>0)/4294967296}function O(t){let e=0,n=0;for(;e===0;)e=se(t);for(;n===0;)n=se(t);return Math.sqrt(-2*Math.log(e))*Math.cos(2*Math.PI*n)}var R={"XMEAS(1)":["A feed","kscmh",.25052],"XMEAS(2)":["D feed","kg/h",3664],"XMEAS(3)":["E feed","kg/h",4509.3],"XMEAS(4)":["A and C feed","kscmh",9.3477],"XMEAS(5)":["Recycle flow","kscmh",26.902],"XMEAS(6)":["Reactor feed rate","kscmh",42.339],"XMEAS(7)":["Reactor pressure","kPa gauge",2705],"XMEAS(8)":["Reactor level","%",75],"XMEAS(9)":["Reactor temperature","degC",120.4],"XMEAS(10)":["Purge rate","kscmh",.33712],"XMEAS(11)":["Separator temperature","degC",80.109],"XMEAS(12)":["Separator level","%",50],"XMEAS(13)":["Separator pressure","kPa gauge",2633.7],"XMEAS(14)":["Separator underflow","m3/h",25.16],"XMEAS(15)":["Stripper level","%",50],"XMEAS(16)":["Stripper pressure","kPa gauge",3102.2],"XMEAS(17)":["Stripper underflow","m3/h",22.949],"XMEAS(18)":["Stripper temperature","degC",65.731],"XMEAS(19)":["Stripper steam flow","kg/h",230.31],"XMEAS(20)":["Compressor work","kW",341.43],"XMEAS(21)":["Reactor CW outlet temperature","degC",94.599],"XMEAS(22)":["Condenser CW outlet temperature","degC",77.297],"XMV(1)":["D feed flow","%",63.053],"XMV(2)":["E feed flow","%",53.98],"XMV(3)":["A feed flow","%",24.644],"XMV(4)":["A and C feed flow","%",61.302],"XMV(5)":["Compressor recycle valve","%",22.21],"XMV(6)":["Purge valve","%",40.064],"XMV(7)":["Separator liquid flow","%",38.1],"XMV(8)":["Stripper product flow","%",46.534],"XMV(9)":["Stripper steam valve","%",47.446],"XMV(10)":["Reactor CW flow","% command",41.106],"XMV(11)":["Condenser CW flow","%",18.114],"XMV(12)":["Agitator speed","%",50]};(function(){let e={6:[23,"ABCDEF",[32.188,8.8933,26.383,6.882,18.776,1.6567]],9:[29,"ABCDEFGH",[32.958,13.823,23.978,1.2565,18.579,2.2633,4.8436,2.2986]],11:[37,"DEFGH",[.01787,.8357,.09858,53.724,43.828]]};Object.keys(e).forEach(n=>{let r=e[n];for(let o=0;o<r[1].length;o++)R["XMEAS("+(r[0]+o)+")"]=["stream "+n+" composition "+r[1][o],"mol%",r[2][o],r[1][o]]})})();var v=Object.keys(R),B=v.filter(t=>t.startsWith("XMV(")),D=["XMV(10)"],J=["XMEAS(7)","XMEAS(9)","XMEAS(11)","XMEAS(13)","XMEAS(21)","XMV(10)"];function Y(t){return Object.prototype.hasOwnProperty.call(R,t)}var L=.01,ie=10,Ye=120.4,y=L*60;function le(t){let e={Tr:120.4,To:94.599,Tin0:35,UA:1,Cc:.02,Cr:.25,u0:41.106,Kc:6,Ti:.25,I:0,u:41.106,d:0,df:0,Pl:0,Sl:0,qn:0,mn:0,pn:0,Q0:0,kF:0};e.Q0=e.UA*(e.Tr-e.To),e.kF=e.Q0/(e.To-e.Tin0)/e.u0;let n={},r={};return v.forEach(o=>{r[o]=0,n[o]=R[o][2]}),{M:e,t:0,K:0,VAL:n,OU:r,rng:ae(t),mode:"AUTO",uMan:e.u0}}function ce(t){return{M:{...t.M},t:t.t,K:t.K,VAL:{...t.VAL},OU:{...t.OU},rng:{s:t.rng.s},mode:t.mode,uMan:t.uMan}}function ue(t){let e=t.M,n=t.rng,r=L/ie;e.mn=O(n)*.012;for(let c=0;c<ie;c++){e.df+=(e.d-e.df)*r/.01,e.qn+=-e.qn/.4*r+.0025*Math.sqrt(r)*O(n);let i=e.Tin0+e.df,s=e.Q0*(1+e.qn),h=e.Tr+e.mn-120.4;t.mode==="AUTO"?(e.I+=h*r,e.u=Math.max(0,Math.min(100,e.u0+e.Kc*h+e.Kc/e.Ti*e.I))):e.u=Math.max(0,Math.min(100,t.uMan));let u=(e.kF*e.u*(i-e.To)+e.UA*(e.Tr-e.To))/e.Cc,m=(s-e.UA*(e.Tr-e.To))/e.Cr;e.To+=u*r,e.Tr+=m*r,e.Pl+=(e.Tr-120.4-e.Pl)*r/.08,e.Sl+=(e.Tr-120.4-e.Sl)*r/.25}e.pn+=-e.pn/.15*L+.9*Math.sqrt(L)*O(n),t.t+=L,t.K++;let o=t.VAL,a=t.OU;for(let c=0;c<v.length;c++){let i=v[c];a[i]+=-a[i]/.3*L+.0012*Math.sqrt(L)*O(n),o[i]=R[i][2]*(1+a[i]+6e-4*O(n))}o["XMEAS(9)"]=e.Tr+e.mn,o["XMEAS(21)"]=e.To+O(n)*.03,o["XMV(10)"]=e.u,o["XMEAS(7)"]=2705+7*e.Pl+e.pn+O(n)*.35,o["XMEAS(11)"]=80.109+.6*e.Sl+O(n)*.02,o["XMEAS(13)"]=2633.7+.95*(o["XMEAS(7)"]-2705)+O(n)*.3}function z(t,e){t.M.d=e}function pe(t,e){t.mode="MANUAL",t.uMan=Math.max(0,Math.min(100,e))}function me(t){if(t.mode==="AUTO")return;let e=t.M,n=e.Tr+e.mn-120.4;e.I=(e.u-e.u0-e.Kc*n)*e.Ti/e.Kc,t.mode="AUTO"}function K(t,e){if(!t.length)return null;let n=Math.min(e,t.length),r=t[0].length,o=new Array(r).fill(0);for(let a=t.length-n;a<t.length;a++)for(let c=0;c<r;c++)o[c]+=t[a][c];for(let a=0;a<r;a++)o[a]/=n;return o}function F(t,e,n=3){let r=t.variables.length,o=t.k,a=new Array(r);for(let p=0;p<r;p++)a[p]=(e[p]-t.mean[p])/t.scale[p];let c=new Array(o).fill(0);for(let p=0;p<o;p++)for(let l=0;l<r;l++)c[p]+=t.loadings[l][p]*a[l];let i=0;for(let p=0;p<o;p++)i+=c[p]*c[p]/t.eigenvalues[p];let s=new Array(r),h=0;for(let p=0;p<r;p++){let l=0;for(let d=0;d<o;d++)l+=t.loadings[p][d]*c[d];s[p]=a[p]-l,h+=s[p]*s[p]}let M=i/t.t2Limit,u=h/t.speLimit,m=u>=M?"SPE":"T2",g=new Array(r);for(let p=0;p<r;p++)if(m==="SPE")g[p]=s[p]*s[p];else{let l=0;for(let d=0;d<o;d++)l+=t.loadings[p][d]*c[d]/t.eigenvalues[d];g[p]=Math.max(0,a[p]*l)}let S=g.reduce((p,l)=>p+l,0)||1,w=t.variables.map((p,l)=>({signal:p,share:+(g[l]/S).toFixed(3),direction:a[l]>=0?"high":"low"})).sort((p,l)=>l.share-p.share).slice(0,n);return{t2:+i.toFixed(3),t2Limit:t.t2Limit,spe:+h.toFixed(3),speLimit:t.speLimit,score:+Math.max(M,u).toFixed(3),exceeded:{t2:M>1,spe:u>1,any:M>1||u>1},dominant:m,contributors:w}}function ye(t){let e=t.length,n=t.map(a=>a.slice()),r=Array.from({length:e},(a,c)=>Array.from({length:e},(i,s)=>c===s?1:0));for(let a=0;a<100;a++){let c=0;for(let i=0;i<e;i++)for(let s=i+1;s<e;s++)c+=n[i][s]*n[i][s];if(c<1e-22)break;for(let i=0;i<e;i++)for(let s=i+1;s<e;s++){if(Math.abs(n[i][s])<1e-300)continue;let h=(n[s][s]-n[i][i])/(2*n[i][s]),M=Math.sign(h||1)/(Math.abs(h)+Math.sqrt(h*h+1)),u=1/Math.sqrt(M*M+1),m=M*u;for(let g=0;g<e;g++){let S=n[g][i],w=n[g][s];n[g][i]=u*S-m*w,n[g][s]=m*S+u*w}for(let g=0;g<e;g++){let S=n[i][g],w=n[s][g];n[i][g]=u*S-m*w,n[s][g]=m*S+u*w}for(let g=0;g<e;g++){let S=r[g][i],w=r[g][s];r[g][i]=u*S-m*w,r[g][s]=m*S+u*w}}}let o=Array.from({length:e},(a,c)=>c).sort((a,c)=>n[c][c]-n[a][a]);return{values:o.map(a=>n[a][a]),vectors:r.map(a=>o.map(c=>a[c]))}}function de(t,e){if(!t.length)return NaN;let n=(t.length-1)*e,r=Math.floor(n),o=Math.ceil(n);return t[r]+(t[o]-t[r])*(n-r)}function ze(t,e){let n=t.length,r=e.variables.length,o=new Array(r).fill(0);t.forEach(l=>l.forEach((d,A)=>{o[A]+=d/n}));let a=new Array(r).fill(0);t.forEach(l=>l.forEach((d,A)=>{a[A]+=(d-o[A])**2/(n-1)}));for(let l=0;l<r;l++)a[l]=Math.sqrt(a[l])||1;let c=t.map(l=>l.map((d,A)=>(d-o[A])/a[A])),i=Array.from({length:r},()=>new Array(r).fill(0));c.forEach(l=>{for(let d=0;d<r;d++)for(let A=0;A<r;A++)i[d][A]+=l[d]*l[A]/(n-1)});let{values:s,vectors:h}=ye(i),M=s.reduce((l,d)=>l+d,0),u=0,m=0;for(;u<r&&m/M<e.varianceTarget;)m+=s[u],u++;u=Math.max(1,Math.min(r-1,u));let g=h.map(l=>l.slice(0,u)),S={format:"pca-monitor/1",variables:e.variables.slice(),window:e.window,mean:o,scale:a,loadings:g,eigenvalues:s.slice(0,u),allEigenvalues:s,k:u,explainedVariance:s.slice(0,u).reduce((l,d)=>l+d,0)/M,confidence:e.confidence,t2Limit:1,speLimit:1,training:e.training},w=[],p=[];return t.forEach(l=>{let d=F(S,l);w.push(d.t2),p.push(d.spe)}),w.sort((l,d)=>l-d),p.sort((l,d)=>l-d),S.t2Limit=+de(w,e.confidence).toFixed(4),S.speLimit=+de(p,e.confidence).toFixed(4),S}var I={row1:{id:"tags-and-limits/row-1 · frag-4999c3a9b6",rv:"review-02/03 APPROVE"},row2:{id:"tags-and-limits/row-2 · frag-05f213cc29",rv:"review-05/06 APPROVE"},row3:{id:"tags-and-limits/row-3 · frag-20b267aeb6",rv:"review-07 APPROVE"},row4:{id:"tags-and-limits/row-4 · frag-5f243b087c",rv:"review-08 APPROVE"},ctrl:{id:"subsystem/control-relation ¶1 · frag-1a009aaf08",rv:"review-10 APPROVE"},c145:{id:"troubleshooting/competing-limit ¶1 · frag-225d0c88bb",rv:"review-11 REJECT"},rcw:{id:"troubleshooting/unverified-instrumentation ¶1 · frag-13c00a2a06",rv:"review-12 REJECT"},remap:{id:"operating-procedure/step-4 · frag-a6eeeb83f3",rv:"review-09 REMAP"},sop1:{id:"operating-procedure/step-1 · frag-08e4924b61",rv:"source text · not compiled",rvZh:"原文 · 未編譯"},sop2:{id:"operating-procedure/step-2 · frag-6e22886716",rv:"source text · not compiled",rvZh:"原文 · 未編譯"},sop3:{id:"operating-procedure/step-3 · frag-cfadbe187e",rv:"source text · not compiled",rvZh:"原文 · 未編譯"},tsrev:{id:"troubleshooting/temperature-review ¶1 · frag-3133c1a869",rv:"source text · not compiled",rvZh:"原文 · 未編譯"},topo:{id:"tep-process-graph 0.2.0 · downstream BFS",rv:"HUMAN_VERIFIED"}},ge={"n:reactor":[{t:"LIMIT",s:"APPROVED",txt:"XMEAS(9) reactor temperature: normal upper 150 degC; shutdown high 175 degC. The normal upper limit must not be used as a shutdown threshold.",txtZh:"XMEAS(9) reactor temperature：normal upper 150 degC；shutdown high 175 degC。normal upper 不可當作 shutdown threshold。",r:["row2"]},{t:"LIMIT",s:"APPROVED",txt:"XMEAS(7) reactor pressure: normal upper 2895 kPa gauge; shutdown high 3000 kPa gauge.",txtZh:"XMEAS(7) reactor pressure：normal upper 2895 kPa gauge；shutdown high 3000 kPa gauge。",r:["row1"]},{t:"CONFLICT",s:"REJECTED",txt:'Competing claim "normal upper 145 degC" (troubleshooting note) was REJECTED; both the 150 and the 145 citations are kept for audit.',txtZh:"競爭主張「normal upper 145 degC」（troubleshooting note）已 REJECT；150 與 145 兩份引用都保留供稽核。",r:["c145"]},{t:"SOP",s:"SOURCE",txt:"Read XMEAS(9) with its unit and exact source identity; distinguish the coolant outlet reading…",r:["sop2"]},{t:"SOP",s:"SOURCE",txt:"Compare the process temperature with the normal and shutdown constraints in the tag table…",r:["sop3"]},{t:"REMAP",s:"APPROVED",txt:'"reactor-side temperature" maps to XMEAS(9) for that mention only; no global alias is created.',txtZh:"「reactor-side temperature」只在該 mention 對應 XMEAS(9)，不建立全域 alias。",r:["remap"]}],"e:reactor_cooling_water_in":[{t:"CONTROL",s:"APPROVED",txt:"XMV(10) manipulates reactor cooling-water flow. Increasing cooling flow is a means of increasing heat removal, subject to the thermal state and available utility conditions.",r:["ctrl"]},{t:"TAG",s:"APPROVED",txt:"XMV(10): unit % command; nominal 41.106; command range 0–100; not a process alarm / shutdown limit.",txtZh:"XMV(10)：單位 % command；基準 41.106；指令範圍 0–100；不是製程 alarm / shutdown 限值。",r:["row4"]},{t:"GAP",s:"REJECTED",txt:"The proposed inlet temperature instrument RCW-IN-TT does not exist in the pinned plant context → no signal identity is created. The inlet temperature cannot be observed directly.",txtZh:"提議的入口溫度儀表 RCW-IN-TT 在 pinned plant context 中不存在 → 不建立 signal identity。入口溫度無法直接觀測。",r:["rcw"]}],"e:reactor_cooling_water_out":[{t:"TAG",s:"APPROVED",txt:"XMEAS(21) reactor cooling-water outlet temperature, degC; nominal 94.599; alarm and shutdown unspecified → no limit is inferred.",txtZh:"XMEAS(21) reactor cooling-water outlet temperature，degC；基準 94.599；alarm 與 shutdown 未指定 → 不推測限值。",r:["row3"]},{t:"SOP",s:"SOURCE",txt:"When process temperature rises, compare process and cooling-water outlet readings…",r:["tsrev"]}],"n:reactor_cooling_water_supply":[{t:"SOP",s:"SOURCE",txt:"Identify the reactor and internal cooling bundle in the selected plant revision.",r:["sop1"]}],"n:reactor_cooling_water_return":[{t:"SOP",s:"SOURCE",txt:"Identify the reactor and internal cooling bundle in the selected plant revision.",r:["sop1"]}]},he={downs_vogel_1993:"Downs & Vogel (1993)",sim_fortran:"TEP Fortran model · teprob.f",bathelt_ricker_jelali_2015:"Bathelt, Ricker & Jelali (2015) Fig. 3",sim_python_backend:"TEP Python backend",upstream_constants:"simulator variable metadata"},Se={reactor_feed_mixer:1,reactor:1,separator:1,stripper:1};function Ee(t){let e=I[t];return{key:t,id:e.id,review:e.rv}}var x={NORMAL:0,ATTENTION:1,ALARM:2,TRIP:3},Q="Downs & Vogel (1993), process operating constraints",Oe=.25;function Ie(t,e){return+(e-Oe*(e-t)).toFixed(2)}var N=[{id:"RL-XMEAS9-ATT",signal:"XMEAS(9)",kind:"ATTENTION_BAND",comparator:">=",value:Ie(120.4,150),unit:"degC",state:"ATTENTION",source:{knowledge:null,review:null,publication:null,derivedFrom:"RL-XMEAS9-NU"},note:"Demo convention: last 25 % of headroom from nominal 120.40 to the approved normal upper 150 degC. Not a published limit."},{id:"RL-XMEAS9-NU",signal:"XMEAS(9)",kind:"NORMAL_UPPER",comparator:">",value:150,unit:"degC",state:"ALARM",source:{knowledge:I.row2.id,review:I.row2.rv,publication:Q},note:"Normal operating upper limit. Must not be used as the shutdown threshold. A competing 145 degC claim was rejected (review-11)."},{id:"RL-XMEAS9-SD",signal:"XMEAS(9)",kind:"SHUTDOWN_HIGH",comparator:">=",value:175,unit:"degC",state:"TRIP",source:{knowledge:I.row2.id,review:I.row2.rv,publication:Q},note:"Shutdown high limit. The lumped model has no interlock; TRIP is reported, not executed."},{id:"RL-XMEAS7-ATT",signal:"XMEAS(7)",kind:"ATTENTION_BAND",comparator:">=",value:Ie(2705,2895),unit:"kPa gauge",state:"ATTENTION",source:{knowledge:null,review:null,publication:null,derivedFrom:"RL-XMEAS7-NU"},note:"Demo convention: last 25 % of headroom from nominal 2705.0 to the approved normal upper 2895 kPa gauge. Not a published limit."},{id:"RL-XMEAS7-NU",signal:"XMEAS(7)",kind:"NORMAL_UPPER",comparator:">",value:2895,unit:"kPa gauge",state:"ALARM",source:{knowledge:I.row1.id,review:I.row1.rv,publication:Q},note:"Normal operating upper limit."},{id:"RL-XMEAS7-SD",signal:"XMEAS(7)",kind:"SHUTDOWN_HIGH",comparator:">=",value:3e3,unit:"kPa gauge",state:"TRIP",source:{knowledge:I.row1.id,review:I.row1.rv,publication:Q},note:"Shutdown high limit. The lumped model has no interlock; TRIP is reported, not executed."}],q=Array.from(new Set(N.map(t=>t.signal))),$={"XMEAS(21)":I.row3.id};function Qe(t,e){return t.comparator===">="?e>=t.value:e>t.value}function W(t){let e=[],n={state:"NORMAL",signal:null,ruleId:null};q.forEach(o=>{let a=t[o],c=N.filter(u=>u.signal===o).sort((u,m)=>x[u.state]-x[m.state]),i="NORMAL",s=null,h=null;for(let u of c)Number.isFinite(a)&&Qe(u,a)?(i=u.state,s=u.id):h||(h={ruleId:u.id,value:u.value,state:u.state});let M=c.find(u=>u.kind==="NORMAL_UPPER");e.push({signal:o,name:R[o][0],value:a,unit:R[o][1],state:i,ruleId:s,nextLimit:h,headroomToNormalUpper:M&&Number.isFinite(a)?+(M.value-a).toFixed(3):null}),x[i]>x[n.state]&&(n={state:i,signal:o,ruleId:s})});let r=v.filter(o=>o.startsWith("XMEAS(")&&!q.includes(o));return{worst:n,signals:e,noReviewedLimit:r}}function $e(t,e){return x[t]>=x[e]?t:e}var Me=480,Xe=100,Le=50,_e=200,Ae=8,fe=60;function Ce(t,e){return{id:"snap@T"+t.toFixed(2)+"h/K"+e,T_h:+t.toFixed(4),K:e}}var j=class t{constructor(e={}){T(this,"plant");T(this,"pcaModel");T(this,"historyCap");T(this,"hist");T(this,"pcaRows");T(this,"events");T(this,"changes");T(this,"gateLog");T(this,"gateSeq");T(this,"eventSeq");T(this,"now");T(this,"safetyCache");var r,o,a,c,i;this.plant=le((r=e.seed)!=null?r:1),this.pcaModel=(o=e.pcaModel)!=null?o:null,this.historyCap=(a=e.historyCap)!=null?a:Me,this.hist={t:[],K:[],v:{}},v.forEach(s=>{this.hist.v[s]=[]}),this.pcaRows=[],this.events=[],this.changes=[],this.gateLog=[],this.gateSeq=0,this.eventSeq=0,this.now=(c=e.now)!=null?c:(()=>Date.now()),this.safetyCache=null;let n=(i=e.warmup)!=null?i:Me;for(let s=0;s<n;s++)this.step()}step(e=1){for(let n=0;n<e;n++)ue(this.plant),this.record()}record(){let e=this.plant;if(this.pcaModel)for(this.pcaRows.push(this.pcaModel.variables.map(r=>e.VAL[r]));this.pcaRows.length>this.pcaModel.window;)this.pcaRows.shift();if(this.historyCap<=0)return;let n=this.hist;n.t.push(e.t),n.K.push(e.K),n.t.length>this.historyCap&&(n.t.shift(),n.K.shift());for(let r=0;r<v.length;r++){let o=n.v[v[r]];o.push(e.VAL[v[r]]),o.length>this.historyCap&&o.shift()}}get t(){return this.plant.t}get K(){return this.plant.K}snapshot(){return Ce(this.plant.t,this.plant.K)}values(){return{...this.plant.VAL}}sample(){return{snapshot:this.snapshot(),t:this.plant.t,K:this.plant.K,values:this.values(),mode:this.plant.mode,disturbance:this.plant.M.d}}pcaScore(){if(!this.pcaModel)return null;let e=K(this.pcaRows,this.pcaModel.window);return e?F(this.pcaModel,e):null}safety(){let e=this.safetyCache;if(e&&e.K===this.plant.K&&e.mode===this.plant.mode)return e.s;let n={snapshot:this.snapshot(),rules:W(this.plant.VAL),pca:this.pcaScore(),loop:{xmv:"XMV(10)",mode:this.plant.mode,output:+this.plant.M.u.toFixed(3)}};return this.safetyCache={K:this.plant.K,mode:this.plant.mode,s:n},n}injectIdv4(e,n="human"){let r=Math.max(0,Math.min(10,Number(e)||0));z(this.plant,r),this.pushEvent(r>0?"IDV4_INJECT":"IDV4_REMOVE",n,{magnitude_degC:r})}removeDisturbance(e="human"){this.plant.M.d&&(z(this.plant,0),this.pushEvent("IDV4_REMOVE",e,{}))}restoreAuto(e="human"){this.plant.mode!=="AUTO"&&(me(this.plant),this.safetyCache=null,this.pushEvent("LOOP_AUTO",e,{output:+this.plant.M.u.toFixed(3)}))}applyAdjustment(e,n,r){if(e!=="XMV(10)")throw new Error("not a modelled XMV: "+e);let o=this.plant.M.u;pe(this.plant,n),this.safetyCache=null;let a={K:this.plant.K,t:this.plant.t,xmv:e,from:o,to:this.plant.uMan};for(this.changes.push(a);this.changes.length>Le;)this.changes.shift();return this.pushEvent("ADJUSTMENT_APPLIED",r,{xmv:e,from:+o.toFixed(3),to:a.to,mode:"MANUAL"}),a}pushEvent(e,n,r){for(this.events.push({seq:++this.eventSeq,type:e,snapshot:this.snapshot(),source:n,detail:r});this.events.length>Xe;)this.events.shift()}branch(){let e=new t({seed:1,warmup:0,historyCap:0,pcaModel:this.pcaModel,now:this.now});return e.plant=ce(this.plant),e.pcaRows=this.pcaRows.map(n=>n.slice()),e.changes=this.changes.map(n=>({...n})),e}signalWindow(e,n,r=fe){let o=Array.from(new Set(e.map(String))),a=o.slice(Ae),c=o.slice(0,Ae),i=c.filter(p=>!Y(p)),s=this.historyCap*y,h=Math.max(y,Math.min(s,Number(n)||30)),M=Math.max(1,Math.round(h/y)),u=Math.min(M,this.hist.t.length),m=this.hist.t.length-u,g=Math.max(2,Math.min(fe,r)),S=Math.max(1,Math.ceil(u/g));return{signals:c.filter(Y).map(p=>{let l=this.hist.v[p],d=[];for(let A=this.hist.t.length-1;A>=m;A-=S)d.push([+this.hist.t[A].toFixed(3),+l[A].toFixed(4)]);return d.reverse(),{id:p,name:R[p][0],unit:R[p][1],latest:+this.plant.VAL[p].toFixed(4),points:d}}),unknown:i,windowMinutes:+(u*y).toFixed(1),truncatedIds:a}}};var ee={n:[["feed_a_supply","FEED_SOURCE","A feed supply"],["feed_d_supply","FEED_SOURCE","D feed supply"],["feed_e_supply","FEED_SOURCE","E feed supply"],["feed_ac_supply","FEED_SOURCE","A and C feed supply"],["reactor_feed_mixer","MIXER","Reactor feed mixing zone"],["reactor","REACTOR","Reactor"],["condenser","CONDENSER","Product condenser"],["separator","SEPARATOR","Vapor-liquid separator"],["compressor","COMPRESSOR","Recycle compressor"],["stripper","STRIPPER","Product stripper"],["purge_outlet","PRODUCT_SINK","Purge outlet"],["product_outlet","PRODUCT_SINK","Product outlet"],["reactor_cooling_water_supply","UTILITY_SOURCE","Reactor cooling water supply"],["reactor_cooling_water_return","UTILITY_SINK","Reactor cooling water return"],["condenser_cooling_water_supply","UTILITY_SOURCE","Condenser cooling water supply"],["condenser_cooling_water_return","UTILITY_SINK","Condenser cooling water return"],["stripper_steam_supply","UTILITY_SOURCE","Stripper steam supply"]],e:[["stream_1","MATERIAL_STREAM","feed_a_supply","reactor_feed_mixer","A feed"],["stream_2","MATERIAL_STREAM","feed_d_supply","reactor_feed_mixer","D feed"],["stream_3","MATERIAL_STREAM","feed_e_supply","reactor_feed_mixer","E feed"],["stream_4","MATERIAL_STREAM","feed_ac_supply","stripper","A and C feed"],["stream_5","MATERIAL_STREAM","stripper","reactor_feed_mixer","Stripper overhead"],["stream_6","MATERIAL_STREAM","reactor_feed_mixer","reactor","Reactor feed"],["stream_7","MATERIAL_STREAM","reactor","condenser","Reactor product"],["condenser_outlet","MATERIAL_STREAM","condenser","separator","Condensed reactor product"],["separator_vapor","MATERIAL_STREAM","separator","compressor","Separator vapor to recycle"],["stream_8","MATERIAL_STREAM","compressor","reactor_feed_mixer","Recycle"],["stream_9","MATERIAL_STREAM","separator","purge_outlet","Purge"],["stream_10","MATERIAL_STREAM","separator","stripper","Separator underflow"],["stream_11","MATERIAL_STREAM","stripper","product_outlet","Product"],["reactor_cooling_water_in","UTILITY_STREAM","reactor_cooling_water_supply","reactor","Reactor cooling water inlet"],["reactor_cooling_water_out","UTILITY_STREAM","reactor","reactor_cooling_water_return","Reactor cooling water outlet"],["condenser_cooling_water_in","UTILITY_STREAM","condenser_cooling_water_supply","condenser","Condenser cooling water inlet"],["condenser_cooling_water_out","UTILITY_STREAM","condenser","condenser_cooling_water_return","Condenser cooling water outlet"],["stripper_steam","UTILITY_STREAM","stripper_steam_supply","stripper","Stripper steam"]],b:[["XMEAS(1)","stream_1","MEASURES","flow"],["XMEAS(2)","stream_2","MEASURES","flow"],["XMEAS(3)","stream_3","MEASURES","flow"],["XMEAS(4)","stream_4","MEASURES","flow"],["XMEAS(5)","stream_8","MEASURES","flow"],["XMEAS(6)","stream_6","MEASURES","flow"],["XMEAS(7)","reactor","MEASURES","pressure"],["XMEAS(8)","reactor","MEASURES","level"],["XMEAS(9)","reactor","MEASURES","temperature"],["XMEAS(10)","stream_9","MEASURES","flow"],["XMEAS(11)","separator","MEASURES","temperature"],["XMEAS(12)","separator","MEASURES","level"],["XMEAS(13)","separator","MEASURES","pressure"],["XMEAS(14)","stream_10","MEASURES","flow"],["XMEAS(15)","stripper","MEASURES","level"],["XMEAS(16)","stripper","MEASURES","pressure"],["XMEAS(17)","stream_11","MEASURES","flow"],["XMEAS(18)","stripper","MEASURES","temperature"],["XMEAS(19)","stripper_steam","MEASURES","flow"],["XMEAS(20)","compressor","MEASURES","power"],["XMEAS(21)","reactor_cooling_water_out","MEASURES","temperature"],["XMEAS(22)","condenser_cooling_water_out","MEASURES","temperature"],["XMEAS(23)","stream_6","MEASURES","composition"],["XMEAS(24)","stream_6","MEASURES","composition"],["XMEAS(25)","stream_6","MEASURES","composition"],["XMEAS(26)","stream_6","MEASURES","composition"],["XMEAS(27)","stream_6","MEASURES","composition"],["XMEAS(28)","stream_6","MEASURES","composition"],["XMEAS(29)","stream_9","MEASURES","composition"],["XMEAS(30)","stream_9","MEASURES","composition"],["XMEAS(31)","stream_9","MEASURES","composition"],["XMEAS(32)","stream_9","MEASURES","composition"],["XMEAS(33)","stream_9","MEASURES","composition"],["XMEAS(34)","stream_9","MEASURES","composition"],["XMEAS(35)","stream_9","MEASURES","composition"],["XMEAS(36)","stream_9","MEASURES","composition"],["XMEAS(37)","stream_11","MEASURES","composition"],["XMEAS(38)","stream_11","MEASURES","composition"],["XMEAS(39)","stream_11","MEASURES","composition"],["XMEAS(40)","stream_11","MEASURES","composition"],["XMEAS(41)","stream_11","MEASURES","composition"],["XMV(1)","stream_2","ACTUATES","flow"],["XMV(2)","stream_3","ACTUATES","flow"],["XMV(3)","stream_1","ACTUATES","flow"],["XMV(4)","stream_4","ACTUATES","flow"],["XMV(5)","compressor","ACTUATES","valve_position"],["XMV(6)","stream_9","ACTUATES","valve_position"],["XMV(7)","stream_10","ACTUATES","flow"],["XMV(8)","stream_11","ACTUATES","flow"],["XMV(9)","stripper_steam","ACTUATES","valve_position"],["XMV(10)","reactor_cooling_water_in","ACTUATES","flow"],["XMV(11)","condenser_cooling_water_in","ACTUATES","flow"],["XMV(12)","reactor","ACTUATES","speed"]]},te=[{id:"recycle",name:"recycle loop",nameZh:"循環回路",path:"reactor → condenser → separator → compressor → feed mixer → reactor",e:["stream_7","condenser_outlet","separator_vapor","stream_8","stream_6"]},{id:"stripper",name:"stripper loop",nameZh:"汽提回路",path:"separator → stripper → feed mixer → reactor → condenser → separator",e:["stream_10","stream_5","stream_6","stream_7","condenser_outlet"]}],ne={feed_a_supply:"A feed",feed_d_supply:"D feed",feed_e_supply:"E feed",feed_ac_supply:"A+C feed",reactor_feed_mixer:"Feed mixer",reactor:"Reactor",condenser:"Condenser",separator:"Separator",compressor:"Compressor",stripper:"Stripper",purge_outlet:"Purge",product_outlet:"Product",reactor_cooling_water_supply:"Reactor CW supply",reactor_cooling_water_return:"Reactor CW return",condenser_cooling_water_supply:"Cond. CW supply",condenser_cooling_water_return:"Cond. CW return",stripper_steam_supply:"Steam supply"},Re={feed_a_supply:"A 進料",feed_d_supply:"D 進料",feed_e_supply:"E 進料",feed_ac_supply:"A+C 進料",reactor_feed_mixer:"進料混合區",reactor:"反應器",condenser:"產物冷凝器",separator:"氣液分離器",compressor:"循環壓縮機",stripper:"產品汽提塔",purge_outlet:"排放口",product_outlet:"產品出口",reactor_cooling_water_supply:"反應器冷卻水供應",reactor_cooling_water_return:"反應器冷卻水回水",condenser_cooling_water_supply:"冷凝器冷卻水供應",condenser_cooling_water_return:"冷凝器冷卻水回水",stripper_steam_supply:"汽提蒸汽供應",stream_1:"A 進料",stream_2:"D 進料",stream_3:"E 進料",stream_4:"A+C 進料",stream_5:"汽提塔塔頂",stream_6:"反應器進料",stream_7:"反應器產物",condenser_outlet:"冷凝後產物",separator_vapor:"分離器氣相",stream_8:"循環",stream_9:"排放",stream_10:"分離器底流",stream_11:"產品",reactor_cooling_water_in:"反應器冷卻水入口",reactor_cooling_water_out:"反應器冷卻水出口",condenser_cooling_water_in:"冷凝器冷卻水入口",condenser_cooling_water_out:"冷凝器冷卻水出口",stripper_steam:"汽提蒸汽"},k={},X={},H=[],G=[],V={},C={};ee.n.forEach(t=>{let e={id:t[0],kind:t[1],name:t[2]};k[e.id]=e,H.push(e)});ee.e.forEach(t=>{let e={id:t[0],kind:t[1],s:t[2],t:t[3],name:t[4]};X[e.id]=e,G.push(e);let n=/^stream_(\d+)$/.exec(e.id);n&&(C[e.id]=n[1])});ee.b.forEach(t=>{(V[t[1]]=V[t[1]]||[]).push({v:t[0],rel:t[2],q:t[3]})});function et(t){return(k[t]?"n:":"e:")+t}function Ue(t){let e=t.slice(2);return t[0]==="n"?ne[e]:C[e]?"stream "+C[e]:X[e].name}function we(t){if(typeof t!="string")return null;let e=t.trim();return e.startsWith("n:")&&Object.prototype.hasOwnProperty.call(k,e.slice(2))||e.startsWith("e:")&&Object.prototype.hasOwnProperty.call(X,e.slice(2))?e:Object.prototype.hasOwnProperty.call(k,e)?"n:"+e:Object.prototype.hasOwnProperty.call(X,e)?"e:"+e:null}var Ne=6;function ke(t,e){let n={},r=[];function o(a,c){n["n:"+a]===void 0&&(n["n:"+a]=c,r.push([a,c]))}if(t[0]==="n")o(t.slice(2),0);else{let a=X[t.slice(2)];n[t]=0,o(a.t,1)}for(;r.length;){let a=r.shift(),c=a[0],i=a[1];i>=e||G.forEach(s=>{s.s===c&&(n["e:"+s.id]===void 0&&(n["e:"+s.id]=i+1),o(s.t,i+1))})}return n}function tt(t,e){let n=Math.max(1,Math.min(Ne,Math.floor(e))),r=ke(t,n),o={};Object.keys(r).forEach(i=>{let s=r[i];s!==0&&(o[s]=o[s]||[]).push(i)});let a=Object.keys(o).map(Number).sort((i,s)=>i-s).map(i=>{let s=o[i],h=[];return s.forEach(M=>(V[M.slice(2)]||[]).forEach(u=>{u.rel==="MEASURES"&&R[u.v]&&h.push(u.v)})),{hop:i,elements:s.map(M=>({key:M,label:Ue(M)})),measuredSignals:h}}),c=te.map(i=>{let s=i.e.filter(h=>r["e:"+h]!==void 0).length;return{id:i.id,name:i.name,reached:s,of:i.e.length,closed:s===i.e.length}});return{start:t,maxHops:n,hops:a,loops:c,reachableCount:Object.keys(r).length,caveat:"Structural reachability only. It describes where an effect could travel, not that it did; closed-loop control can mask downstream deviations. Not causal evidence."}}var be={xmvMin:0,xmvMax:100,maxStepPct:10,rateWindowMin:10,maxChangeInWindowPct:15,horizonMin:30,speMarginOfLimit:1,maxHeadroomLossFraction:.05,rationaleMaxLen:500},nt=12;function xe(t,e,n){let r=t.branch();e&&r.applyAdjustment(e.xmv,e.target,"branch");let o=Math.max(1,Math.round(n/y)),a=["XMEAS(9)","XMEAS(7)","XMEAS(21)","XMV(10)"],c={};a.forEach(l=>{c[l]=-1/0});let i="NORMAL",s={signal:null,ruleId:null,atMin:null},h=0,M=0,u=0,m=-1/0,g=null,S=[],w=Math.max(1,Math.ceil(o/nt));for(let l=1;l<=o;l++){r.step();let d=r.plant.VAL;a.forEach(_=>{d[_]>c[_]&&(c[_]=d[_])});let A=W(d);x[A.worst.state]>x[i]&&(i=A.worst.state,s={signal:A.worst.signal,ruleId:A.worst.ruleId,atMin:+(l*y).toFixed(1)});let E=null;if(r.pcaModel){let _=K(r.pcaRows,r.pcaModel.window);if(_){let b=F(r.pcaModel,_);E=b.spe,h+=b.spe,M+=b.t2,u++,b.spe>m&&(m=b.spe),g===null&&b.exceeded.any&&(g=+(l*y).toFixed(1))}}(l%w===0||l===o)&&S.push({min:+(l*y).toFixed(1),"XMEAS(9)":+d["XMEAS(9)"].toFixed(3),"XMEAS(7)":+d["XMEAS(7)"].toFixed(1),"XMEAS(21)":+d["XMEAS(21)"].toFixed(3),"XMV(10)":+d["XMV(10)"].toFixed(3),spe:E})}let p={};return a.forEach(l=>{p[l]=+r.plant.VAL[l].toFixed(3),c[l]=+c[l].toFixed(3)}),{horizonMin:+(o*y).toFixed(1),steps:o,worstRuleState:i,worstRule:s,peak:c,end:p,meanSpe:u?+(h/u).toFixed(3):null,maxSpe:u?+m.toFixed(3):null,meanT2:u?+(M/u).toFixed(3):null,firstPcaExceedMin:g,trajectory:S}}function Ve(t,e){return typeof t=="string"?t.slice(0,e):""}function rt(t,e,n={}){let r=be,o={xmv:Ve(e==null?void 0:e.xmv,32).trim(),target:typeof(e==null?void 0:e.target)=="number"?e.target:Number(e==null?void 0:e.target),rationale:Ve(e==null?void 0:e.rationale,r.rationaleMaxLen).trim()},a=t.snapshot(),c=[],i=[],s=(E,_,b,P)=>{i.push({code:E,pass:_}),_===!1&&c.push({code:E,message:b||E,detail:P})},h=B.includes(o.xmv);s("XMV_UNKNOWN",h,'Unknown manipulated variable "'+o.xmv+'". Valid ids are XMV(1)..XMV(12).',{allowed:B.slice()});let M=D.includes(o.xmv);s("XMV_NOT_MODELLED",h?M:null,o.xmv+" exists in TEP but the lumped model does not simulate it, so the effect of a change cannot be checked.",{modelled:D.slice()});let u=Number.isFinite(o.target);s("TARGET_INVALID",u,"Target must be a finite number in percent."),s("TARGET_OUT_OF_RANGE",u?o.target>=r.xmvMin&&o.target<=r.xmvMax:null,"Target "+o.target+" % is outside the XMV range "+r.xmvMin+".."+r.xmvMax+" %.",{min:r.xmvMin,max:r.xmvMax}),s("RATIONALE_MISSING",o.rationale.length>0,"A rationale is required for every proposal.");let m=t.safety(),g=m.rules.worst.state==="TRIP";s("TRIP_ACTIVE",!g,"A TRIP rule is active ("+m.rules.worst.ruleId+"). No adjustments; escalate to a human.",{ruleId:m.rules.worst.ruleId});let S=h?t.plant.VAL[o.xmv]:null,w=null;if(M&&u&&S!==null){let E=Math.abs(o.target-S);s("STEP_TOO_LARGE",E<=r.maxStepPct+1e-9,"Step of "+E.toFixed(2)+" %-points exceeds the maximum "+r.maxStepPct+" per action.",{step:+E.toFixed(3),max:r.maxStepPct,current:+S.toFixed(3)});let _=t.t-r.rateWindowMin/60,b=t.changes.filter(P=>P.xmv===o.xmv&&P.t>_+1e-9).reduce((P,U)=>P+Math.abs(U.to-U.from),0);s("RATE_LIMIT",b+E<=r.maxChangeInWindowPct+1e-9,"Applied change in the last "+r.rateWindowMin+" simulated min ("+b.toFixed(2)+") plus this step ("+E.toFixed(2)+") exceeds "+r.maxChangeInWindowPct+" %-points.",{usedInWindow:+b.toFixed(3),step:+E.toFixed(3),budget:r.maxChangeInWindowPct,windowMin:r.rateWindowMin})}else s("STEP_TOO_LARGE",null),s("RATE_LIMIT",null);if(c.length===0){let E=xe(t,{xmv:o.xmv,target:o.target},r.horizonMin),_=xe(t,null,r.horizonMin);w={withChange:E,noChange:_};let b=E.worstRuleState,P=_.worstRuleState,U=x[P]>=x.ALARM,Fe=q.some(f=>E.peak[f]>_.peak[f]+1e-9),Te=x[b]>x[P]||Fe,ve={...E.worstRule,noChangeWorstState:P,judgedRelativeToNoChange:U};s("SIM_RULE_TRIP",!(b==="TRIP"&&(!U||Te)),"Simulated "+r.horizonMin+" min ahead, "+E.worstRule.ruleId+" reaches TRIP at +"+E.worstRule.atMin+" min"+(U?" and the change does not improve on no change ("+P+").":"."),ve),s("SIM_RULE_ALARM",!(b==="ALARM"&&(!U||Te)),"Simulated "+r.horizonMin+" min ahead, "+E.worstRule.ruleId+" reaches ALARM at +"+E.worstRule.atMin+" min"+(U?" and the change does not improve on no change ("+P+").":"."),ve);let re=N.filter(f=>f.kind==="NORMAL_UPPER").map(f=>{let oe=r.maxHeadroomLossFraction*(f.value-R[f.signal][2]),Ge=E.peak[f.signal]-_.peak[f.signal];return{signal:f.signal,ruleId:f.id,loss:+Ge.toFixed(3),allowed:+oe.toFixed(3)}}).filter(f=>f.loss>f.allowed);if(s("SIM_HEADROOM_LOSS",re.length===0,"Versus no change, the simulated peak of "+re.map(f=>f.signal+" rises by "+f.loss+" (allowed "+f.allowed+")").join(", ")+", eating into the headroom to the normal upper limit.",{exceeded:re}),t.pcaModel&&E.meanSpe!==null&&_.meanSpe!==null){let f=r.speMarginOfLimit*t.pcaModel.speLimit,oe=E.meanSpe-_.meanSpe;s("PCA_SPE_WORSENS",!(oe>f&&E.meanSpe>t.pcaModel.speLimit),"Mean SPE over the horizon would rise from "+_.meanSpe.toFixed(2)+" (no change) to "+E.meanSpe.toFixed(2)+", more than the margin "+f.toFixed(2)+".",{meanSpeWith:E.meanSpe,meanSpeWithout:_.meanSpe,margin:+f.toFixed(3),speLimit:t.pcaModel.speLimit})}else s("PCA_SPE_WORSENS",null)}else s("SIM_RULE_TRIP",null),s("SIM_RULE_ALARM",null),s("SIM_HEADROOM_LOSS",null),s("PCA_SPE_WORSENS",null);let l=c.length===0?"ACCEPT":"REJECT",d=!1;l==="ACCEPT"&&n.apply&&(t.applyAdjustment(o.xmv,o.target,n.source||"unknown"),d=!0);let A={seq:++t.gateSeq,ts:new Date(t.now()).toISOString(),snapshot:a,source:n.source||"unknown",mode:n.apply?"apply":"dry-run",input:o,verdict:l,reasons:c.map(E=>({code:E.code,message:E.message})),applied:d};for(t.gateLog.push(A);t.gateLog.length>_e;)t.gateLog.shift();return{verdict:l,reasons:c,checks:i,snapshot:a,input:o,current:S==null?null:+S.toFixed(3),simulation:w,params:be,applied:d,logSeq:A.seq}}function ot(t){let e=we(t);if(!e)return null;let n=e.slice(2),r=e[0]==="n",o=r?k[n]:X[n],a=V[n]||[],c=a.map(m=>{let g=N.filter(S=>S.signal===m.v).map(S=>S.id);return{id:m.v,relation:m.rel,quantity:m.q,name:R[m.v][0],unit:R[m.v][1],nominal:R[m.v][2],modelled:J.includes(m.v),limits:g.length?g:"no reviewed limit"}}),i=(ge[e]||[]).map(m=>({type:m.t,status:m.s,text:m.txt,refs:m.r.map(Ee)})),s=a.map(m=>m.v),h=N.filter(m=>s.includes(m.signal)).map(m=>({...m})),M=(r?["downs_vogel_1993"].concat(Se[n]?["sim_fortran"]:[]):["downs_vogel_1993","sim_fortran"]).map(m=>he[m]).concat(["tep-process-graph 0.2.0 · HUMAN_VERIFIED"]),u=s.filter(m=>$[m]).map(m=>m+": alarm and shutdown limits are explicitly unspecified ("+$[m]+"); do not infer one.");return{element:{key:e,id:n,type:r?"NODE":"EDGE",kind:o.kind,name:o.name,label:r?ne[n]:C[n]?"stream "+C[n]:o.name,labelZh:Re[n]||"",...r?{}:{from:X[n].s,to:X[n].t},...C[n]?{stream:C[n]}:{}},signals:c,knowledge:i,rules:h,topologyRefs:M,coverage:(i.length?"Reviewed knowledge covers the reactor-cooling subsystem only.":"No extracted limits, SOP or control descriptions for this element; the knowledge base covers the reactor-cooling subsystem only.")+(u.length?" "+u.join(" "):"")}}function st(){return{revision:"tep-process-graph 0.2.0 (HUMAN_VERIFIED)",nodes:H.map(t=>({id:t.id,kind:t.kind,name:t.name})),edges:G.map(t=>({id:t.id,kind:t.kind,from:t.s,to:t.t,name:t.name})),loops:te.map(t=>({id:t.id,path:t.path})),counts:{nodes:H.length,edges:G.length,bindings:Object.values(V).reduce((t,e)=>t+e.length,0)},modelledSignals:J.slice(),modelledXmvs:D.slice()}}var De=Pe;function at(t={}){return new j({pcaModel:De,...t})}return Be(it);})();</script>
 <script>
 (function(){
 'use strict';
@@ -451,6 +501,34 @@ var $=function(s,r){return (r||document).querySelector(s)};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 var RM=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* =====================================================================
+   0. Language: ?lang=zh|en, then the remembered choice, then Traditional Chinese.
+      Strings live in src/page/strings.ts (global PCL_I18N).
+   ===================================================================== */
+var STR=window.PCL_I18N||{en:{},zh:{}},LKEY='pcl-lang';
+function okLang(l){return l==='en'||l==='zh'}
+function pickLang(){
+  var q=null;try{q=new URLSearchParams(location.search).get('lang')}catch(e){}
+  if(okLang(q))return q;
+  var s=null;try{s=window.localStorage.getItem(LKEY)}catch(e){}
+  return okLang(s)?s:'zh';
+}
+var LANG=pickLang();
+/* t(key, params): params replace {name}; values are trusted constants, params are escaped by the caller where needed */
+function t(k,p){var s=STR[LANG]&&STR[LANG][k];if(s===undefined||s===null)s=STR.en[k];if(s===undefined||s===null)return k;
+  return p?s.replace(/\{(\w+)\}/g,function(m,n){return p[n]!==undefined?String(p[n]):m}):s;}
+/* Traditional Chinese engine fields (ZH, txtZh, rvZh, nameZh) are read only through zhv() */
+function zhv(z,en){return LANG==='zh'&&z?z:en}
+function applyStatic(root){
+  $$('[data-i18n]',root).forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'))});
+  $$('[data-i18n-html]',root).forEach(function(el){el.innerHTML=t(el.getAttribute('data-i18n-html'))});
+  $$('[data-i18n-title]',root).forEach(function(el){el.title=t(el.getAttribute('data-i18n-title'))});
+  $$('[data-i18n-aria]',root).forEach(function(el){el.setAttribute('aria-label',t(el.getAttribute('data-i18n-aria')))});
+  $$('[data-i18n-ph]',root).forEach(function(el){el.placeholder=t(el.getAttribute('data-i18n-ph'))});
+  document.documentElement.lang=LANG==='zh'?'zh-Hant':'en';
+  $$('[data-lang]').forEach(function(b){var on=b.getAttribute('data-lang')===LANG;b.setAttribute('aria-pressed',String(on));b.classList.toggle('on',on)});
+}
 
 /* =====================================================================
    1. Topology (tep-sim ProcessGraph 0.2.0, HUMAN_VERIFIED) - verbatim
@@ -556,7 +634,7 @@ function renderPID(){
        '<text class="t1" x="'+x+'" y="'+(y-3)+'" text-anchor="middle">'+t[2]+'</text><text class="t2" x="'+x+'" y="'+(y+9)+'" text-anchor="middle">'+(id.indexOf('XMV')===0?'V':'')+num+'</text>'+
        '<rect class="vb" x="'+vbx+'" y="'+(y-9)+'" width="80" height="18" rx="3"/><text class="vv" x="'+(vbx+6)+'" y="'+(y+4)+'"><tspan data-sv="'+id+'">–</tspan> '+esc(SIG[id][1].replace(' gauge','').replace(' command',''))+'</text></g>';
   });
-  s+='<text x="16" y="26" class="mono" style="font-size:10.5px;fill:#5d6e7d">TEP flowsheet · 版面為自繪示意（拓撲依 ProcessGraph 0.2.0）</text>';
+  s+='<text x="16" y="26" class="mono" id="pidNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.pidNote'))+'</text>';
   s+='<g class="badges" id="pidBadges"></g>';
   svg.innerHTML=s;
 }
@@ -616,7 +694,7 @@ function renderGraph(){
        (ic?'<text class="ic" x="'+p[0]+'" y="'+(p[1]+3.5)+'" text-anchor="middle">'+ic+'</text>':'')+
        '<text class="nm" x="'+p[0]+'" y="'+ly+'" text-anchor="middle">'+SHORT[n.id]+'</text>'+(sub?'<text class="sm" x="'+p[0]+'" y="'+(ly+12)+'" text-anchor="middle">'+sub+'</text>':'')+'</g>';
   });
-  s+='<text x="16" y="590" class="mono" style="font-size:10.5px;fill:#5d6e7d">node-link view · 同一組 node / edge ids · 抽象版面</text>';
+  s+='<text x="16" y="590" class="mono" id="gNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.graphNote'))+'</text>';
   s+='<g class="badges" id="gBadges"></g>';
   $('#gsvg').innerHTML=s;
 }
@@ -654,17 +732,17 @@ function applyHL(){
 }
 function renderHLBar(hv){
   var b=$('#hlbar');
-  if(!HL.src){b.innerHTML='<span class="k">選取</span><b>'+esc(elLabel(SEL))+'</b><span class="mono dim">'+esc(SEL.slice(2))+'</span><span class="k">· 未顯示影響範圍</span>';return;}
+  if(!HL.src){b.innerHTML='<span class="k">'+esc(t('hl.sel'))+'</span><b>'+esc(elLabel(SEL))+'</b><span class="mono dim">'+esc(SEL.slice(2))+'</span><span class="k">'+esc(t('hl.none'))+'</span>';return;}
   var n=Object.keys(hv.hop).length,closed=hv.loops.filter(function(s){return s.closed});
-  var src=HL.src==='dist'?'<span class="flag warn">IDV(4) 擾動</span> 起點 <b>Reactor CW inlet</b>':'<span class="flag acc">影響分析</span> 起點 <b>'+esc(elLabel(HL.start))+'</b>';
-  b.innerHTML=src+'<span class="k">· 下游 hop ≤ '+HL.shown+(HL.shown<HL.depth?' / '+HL.depth:'')+' · '+n+' 個元素</span>'+
-    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(s.L.name.split(' · ')[1])}).join(', ')+' 閉合</span>':'')+
-    '<span class="k">· 結構上可達 = 假設空間，不是證據</span>'+(HL.src?'<button type="button" class="btn" id="hlClear" style="padding:2px 8px;font-size:11px">清除高亮</button>':'');
+  var src=HL.src==='dist'?'<span class="flag warn">'+esc(t('hl.dist'))+'</span> '+esc(t('hl.from'))+' <b>Reactor CW inlet</b>':'<span class="flag acc">'+esc(t('hl.impact'))+'</span> '+esc(t('hl.from'))+' <b>'+esc(elLabel(HL.start))+'</b>';
+  b.innerHTML=src+'<span class="k">'+esc(t('hl.range',{n:HL.shown+(HL.shown<HL.depth?' / '+HL.depth:''),count:n}))+'</span>'+
+    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(s.L.name)}).join(', ')+' '+esc(t('hl.closed'))+'</span>':'')+
+    '<span class="k">'+esc(t('hl.caveat'))+'</span>'+(HL.src?'<button type="button" class="btn" id="hlClear" style="padding:2px 8px;font-size:11px">'+esc(t('hl.clear'))+'</button>':'');
 }
-function stopPlay(){if(HL.timer){clearInterval(HL.timer);HL.timer=null}var b=$('#impPlay');if(b)b.textContent='▶ 逐層播放';}
+function stopPlay(){if(HL.timer){clearInterval(HL.timer);HL.timer=null}var b=$('#impPlay');if(b)b.textContent=t('imp.play');}
 function runImpact(play){
   stopPlay();HL.src='impact';HL.start=SEL;
-  if(play&&!RM){HL.shown=0;applyHL();var b=$('#impPlay');if(b)b.textContent='■ 停止';
+  if(play&&!RM){HL.shown=0;applyHL();var b=$('#impPlay');if(b)b.textContent=t('imp.stop');
     HL.timer=setInterval(function(){HL.shown++;applyHL();if(HL.shown>=HL.depth)stopPlay();},750);}
   else{HL.shown=HL.depth;applyHL();}
 }
@@ -674,59 +752,60 @@ function clearHL(){stopPlay();HL.src=null;applyHL();}
    5. Side panel (selection details)
    ===================================================================== */
 function fmt(id,v){if(v===undefined||v===null||isNaN(v))return '–';var b=Math.abs(SIG[id][2]);var d=b>=1000?1:b>=100?2:b>=10?2:b>=1?3:4;return (+v).toFixed(d)}
-function sigFlag(id){return ANCHOR[id]?'<span class="flag ok" title="tep-agent-lab 實際模擬分支比對（reactor cooling incident, 0.1 h）'+esc(ANCHOR[id])+'">實測錨點 '+esc(ANCHOR[id])+'</span>':'<span class="flag plan" title="綁定已人工核對；傳播尚未實測">待驗證</span>';}
-function refChip(key){var r=KR[key];var rej=/REJECT/.test(r.rv);return '<span class="ref">'+esc(r.id)+'</span><span class="ref rv'+(rej?' rej':'')+'">'+esc(r.rv)+'</span>';}
+function sigFlag(id){return ANCHOR[id]?'<span class="flag ok" title="'+esc(t('sd.anchorTip',{a:ANCHOR[id]}))+'">'+esc(t('sd.anchor',{a:ANCHOR[id]}))+'</span>':'<span class="flag plan" title="'+esc(t('sd.unverifiedTip'))+'">'+esc(t('sd.unverified'))+'</span>';}
+function refChip(key){var r=KR[key];var rej=/REJECT/.test(r.rv);return '<span class="ref">'+esc(r.id)+'</span><span class="ref rv'+(rej?' rej':'')+'">'+esc(zhv(r.rvZh,r.rv))+'</span>';}
 function renderSide(){
   var k=SEL,id=k.slice(2),isN=k[0]==='n',el=isN?TN[id]:TE[id],h='<div class="pb">';
   h+='<div class="kindrow"><span class="kind">'+(isN?'NODE':'EDGE')+' · '+esc(el.kind)+'</span>'+(SN[id]?'<span class="kind">stream '+SN[id]+'</span>':'')+'</div>';
-  h+='<h2>'+esc(isN?SHORT[id]:el.name)+'<span class="zh">'+esc(ZH[id]||'')+'</span></h2>';
+  h+='<h2>'+esc(isN?SHORT[id]:el.name)+(LANG==='zh'?'<span class="zh">'+esc(zhv(ZH[id],''))+'</span>':'')+'</h2>';
   h+='<div class="mono dim" style="font-size:11px">'+esc(id)+(isN?'':' · '+esc(SHORT[el.s])+' → '+esc(SHORT[el.t]))+'</div>';
   /* signals */
   var list=BIND[id]||[];
-  h+='<h3>訊號 · Signals <span class="cnt">'+list.length+'</span></h3>';
-  if(!list.length)h+='<div class="empty">TEP 在此元素沒有 XMEAS / XMV 儀表（fixture 列為 unbound entity），不推測量測。</div>';
+  h+='<h3>'+esc(t('sd.signals'))+' <span class="cnt">'+list.length+'</span></h3>';
+  if(!list.length)h+='<div class="empty">'+esc(t('sd.noSignals'))+'</div>';
   else{
     var comp=list.filter(function(b){return b.q==='composition'});
     list.forEach(function(b){if(b.q==='composition')return;var m=SIG[b.v];
       h+='<div class="sig" data-sig="'+b.v+'"><span class="sid">'+b.v+'</span><span class="snm">'+esc(m[0])+' · '+(b.rel==='ACTUATES'?'ACTUATES':'MEASURES')+'</span><span class="sv"><b data-sv="'+b.v+'">–</b> <i>'+esc(m[1])+'</i></span>'+
-         '<span class="sf">'+(b.rel==='ACTUATES'?'<span class="flag acc">操作變數 XMV</span>':sigFlag(b.v))+'</span></div>';});
+         '<span class="sf">'+(b.rel==='ACTUATES'?'<span class="flag acc">'+esc(t('sd.xmv'))+'</span>':sigFlag(b.v))+'</span></div>';});
     if(comp.length){var ns=comp.map(function(b){return +b.v.match(/\d+/)[0]});
       h+='<div class="sig"><span class="sid">XMEAS('+Math.min.apply(null,ns)+'–'+Math.max.apply(null,ns)+')</span><span class="snm">composition ×'+comp.length+' · mol%</span><span class="sv"></span>'+
          '<div class="cv">'+comp.map(function(b){return SIG[b.v][3]+' <b data-sv="'+b.v+'">–</b>'}).join(' · ')+'</div><span class="sf">'+sigFlag(comp[0].v)+'</span></div>';}
-    h+='<div class="note">綁定 provenance：HUMAN_VERIFIED_MAPPING · '+esc(REFNAME.bathelt_ricker_jelali_2015)+' · '+esc(REFNAME.downs_vogel_1993)+'。數值為瀏覽器內模擬（示意）。</div>';
+    h+='<div class="note">'+esc(t('sd.prov',{a:REFNAME.bathelt_ricker_jelali_2015,b:REFNAME.downs_vogel_1993}))+'</div>';
   }
   /* knowledge */
   var kn=KNOW[k]||[];
-  h+='<h3>工程知識 · Engineering knowledge <span class="cnt">'+kn.length+'</span></h3>';
-  if(!kn.length)h+='<div class="empty">知識庫目前只涵蓋 reactor cooling 子系統；此元素沒有已擷取的限值、SOP 或控制描述。</div>';
-  kn.forEach(function(x){var st={APPROVED:'<span class="flag ok">已審核</span>',REJECTED:'<span class="flag alarm">已駁回</span>',SOURCE:'<span class="flag plan">原文引用</span>'}[x.s];
-    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+x.t+'</span>'+st+'</div><div class="kt">'+esc(x.txt)+'</div><div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
+  h+='<h3>'+esc(t('sd.knowledge'))+' <span class="cnt">'+kn.length+'</span></h3>';
+  if(!kn.length)h+='<div class="empty">'+esc(t('sd.noKnowledge'))+'</div>';
+  kn.forEach(function(x){var st={APPROVED:'<span class="flag ok">'+esc(t('sd.approved'))+'</span>',REJECTED:'<span class="flag alarm">'+esc(t('sd.rejected'))+'</span>',SOURCE:'<span class="flag plan">'+esc(t('sd.source'))+'</span>'}[x.s];
+    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+x.t+'</span>'+st+'</div><div class="kt">'+esc(zhv(x.txtZh,x.txt))+'</div><div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
   /* impact */
-  h+='<h3>影響 · Downstream impact</h3><div class="imp">'+
-     '<div class="r"><label for="impDepth" class="muted" style="font-size:12px">深度 hop ≤ <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
-     '<div class="r"><button type="button" class="btn pri" id="impShow">顯示下游影響</button><button type="button" class="btn" id="impPlay">▶ 逐層播放</button></div>'+
+  h+='<h3>'+esc(t('sd.impact'))+'</h3><div class="imp">'+
+     '<div class="r"><label for="impDepth" class="muted" style="font-size:12px">'+esc(t('sd.depth'))+' <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
+     '<div class="r"><button type="button" class="btn pri" id="impShow">'+esc(t('sd.show'))+'</button><button type="button" class="btn" id="impPlay">'+esc(t(HL.timer?'imp.stop':'imp.play'))+'</button></div>'+
      '<div id="impRes"></div></div>';
   /* topology refs */
   var refs=isN?(['downs_vogel_1993'].concat(NODE_FORTRAN[id]?['sim_fortran']:[])):['downs_vogel_1993','sim_fortran'];
-  h+='<h3>拓撲來源 · Topology refs</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div>';
+  h+='<h3>'+esc(t('sd.topoRefs'))+'</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div>';
   h+='</div>';
   $('#side').innerHTML=h;
   cacheSV();updateLive();
 }
+function loopName(L){var z=zhv(L.nameZh,'');return z?z+' · '+L.name:L.name}
 function renderImpactResult(hv){
   var box=$('#impRes');if(!box)return;
-  if(HL.src!=='impact'||HL.start!==SEL){box.innerHTML='<div class="note" style="margin-top:0">以此元素為起點，沿物流 / 公用流體方向做 BFS，在兩個視圖上依 hop 上色並標出回路。</div>';return;}
+  if(HL.src!=='impact'||HL.start!==SEL){box.innerHTML='<div class="note" style="margin-top:0">'+esc(t('imp.intro'))+'</div>';return;}
   var byHop={};Object.keys(hv.hop).forEach(function(k){var v=hv.hop[k];if(v===0)return;(byHop[v]=byHop[v]||[]).push(k)});
   var o='';
   Object.keys(byHop).map(Number).sort(function(a,b){return a-b}).forEach(function(v){
     var ks=byHop[v],ms='';
     ks.forEach(function(k){(BIND[k.slice(2)]||[]).forEach(function(b){if(b.rel!=='MEASURES')return;if(b.q==='composition'){return}
-      ms+='<span class="ref'+(ANCHOR[b.v]?' rv':'')+'" title="'+esc(SIG[b.v][0])+'">'+b.v+(ANCHOR[b.v]?' · 實測':'')+'</span>';});
+      ms+='<span class="ref'+(ANCHOR[b.v]?' rv':'')+'" title="'+esc(SIG[b.v][0])+'">'+b.v+(ANCHOR[b.v]?esc(t('imp.measured')):'')+'</span>';});
       var nc=(BIND[k.slice(2)]||[]).filter(function(b){return b.q==='composition'}).length;if(nc)ms+='<span class="ref">composition ×'+nc+'</span>';});
-    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elLabel(k))}).join('、')+'</div>'+(ms?'<div class="ms">'+ms+'</div>':'')+'</div></div>';});
-  if(!o)o='<div class="note">此深度內沒有下游元素。</div>';
-  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(s.L.name)+'</b> <span class="mono">'+s.got+'/'+s.L.e.length+'</span><div>'+(s.closed?'回路閉合：擾動會再次回到起點附近':'傳播已進入回路（加深 hop 可看到閉合）')+'</div><div class="mono dim" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
-  o+='<div class="note">圖遍歷只說明擾動在結構上「可能」傳到哪裡；TEP 以閉迴路運轉，控制器可能遮蔽下游偏差。</div>';
+    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elLabel(k))}).join(esc(t('imp.sep')))+'</div>'+(ms?'<div class="ms">'+ms+'</div>':'')+'</div></div>';});
+  if(!o)o='<div class="note">'+esc(t('imp.none'))+'</div>';
+  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(loopName(s.L))+'</b> <span class="mono">'+s.got+'/'+s.L.e.length+'</span><div>'+esc(t(s.closed?'imp.loopClosed':'imp.loopPartial'))+'</div><div class="mono dim" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
+  o+='<div class="note">'+esc(t('imp.caveat'))+'</div>';
   box.innerHTML=o;
 }
 function select(k){SEL=k;renderSide();applyHL();}
@@ -791,7 +870,7 @@ var CH=[
 /* views: 1 h live / 4.8 h live / event-anchored (-0.5 h .. +2.5 h around the injection, separately capped) */
 var VIEW='h1',WIN={h1:100,h48:CAP},PRE=50,POST=250,SHADE=80,EVT=null;
 function buildTrends(){
-  $('#tgrid').innerHTML=CH.map(function(c){return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n"><b>'+c.id+'</b>'+esc(c.nm)+(c.k==='u10'?'<span class="prim" id="prim" hidden>首要反應</span>':'')+'</div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>基準 '+c.base+' · 虛線</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
+  $('#tgrid').innerHTML=CH.map(function(c){return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n"><b>'+c.id+'</b>'+esc(c.nm)+(c.k==='u10'?'<span class="prim" id="prim" hidden>'+esc(t('tr.primary'))+'</span>':'')+'</div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>'+esc(t('tr.base',{b:c.base}))+'</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
   CH.forEach(function(c){c.cv=document.getElementById('cv-'+c.k);c.ctx=c.cv.getContext('2d');});
 }
 var dirty=true;
@@ -814,32 +893,32 @@ function drawChart(c){
   for(var g=0;g<=3;g++){var v=lo+(hi-lo)*g/3,yy=Math.round(Y(v))+.5;x.strokeStyle='#1b2733';x.lineWidth=1;x.beginPath();x.moveTo(pl,yy);x.lineTo(W-pr,yy);x.stroke();x.fillStyle='#6f8090';x.fillText(v.toFixed(c.dp),pl-5,yy);}
   x.setLineDash([4,4]);x.strokeStyle='#5d6e7d';x.beginPath();var by=Y(c.base);x.moveTo(pl,by);x.lineTo(W-pr,by);x.stroke();x.setLineDash([]);
   /* injection / removal markers: line in plot, label in the reserved top margin (never on the curve or axis labels) */
-  var lastEnd=-1e9;
+  var lastEnd=-1e9,lab=function(m){return m.lk?t(m.lk):m.l};
   var offL=MARKS.filter(function(m){var i=S.idx(m.K)+0.5;return i<0&&!S.left&&SIM.K-m.K<BUF[c.k].length;});
-  if(offL.length){var mo=offL[offL.length-1];x.font='600 10px Consolas, monospace';x.fillStyle=mo.c;x.textAlign='left';x.fillText('◀ '+mo.l.replace(/^[▼▲] /,'')+' · −'+((SIM.K-mo.K)*STEP_H).toFixed(1)+' h',pl,8);lastEnd=pl+x.measureText('◀ '+mo.l+' · −0.0 h').width;}
+  if(offL.length){var mo=offL[offL.length-1];x.font='600 10px Consolas, monospace';x.fillStyle=mo.c;x.textAlign='left';x.fillText('◀ '+lab(mo).replace(/^[▼▲] /,'')+' · −'+((SIM.K-mo.K)*STEP_H).toFixed(1)+' h',pl,8);lastEnd=pl+x.measureText('◀ '+lab(mo)+' · −0.0 h').width;}
   MARKS.forEach(function(m){var i=S.idx(m.K)+0.5;if(i<0||i>n-1)return;var mx=Math.round(X(i))+.5;
     if(m.inj){var i2=Math.min(S.idx(m.K+SHADE)+0.5,n-1);if(i2>i){x.fillStyle='rgba(226,167,60,.10)';x.fillRect(mx,pt,X(i2)-mx,ih);}}
     x.strokeStyle=m.c;x.lineWidth=1.2;x.setLineDash([3,3]);x.beginPath();x.moveTo(mx,pt-6);x.lineTo(mx,H-pb);x.stroke();x.setLineDash([]);
-    x.font='600 10px Consolas, monospace';var tw=x.measureText(m.l).width,lx=mx+4;
+    x.font='600 10px Consolas, monospace';var ml=lab(m),tw=x.measureText(ml).width,lx=mx+4;
     if(lx+tw>W-pr)lx=mx-4-tw;if(lx<lastEnd+6)lx=lastEnd+6;if(lx+tw>W-pr)lx=W-pr-tw;if(lx<pl)lx=pl;
-    x.fillStyle=m.c;x.textAlign='left';x.fillText(m.l,lx,8);lastEnd=lx+tw;});
+    x.fillStyle=m.c;x.textAlign='left';x.fillText(ml,lx,8);lastEnd=lx+tw;});
   x.textAlign='right';x.font='10px Consolas, monospace';
   if(n>1){x.strokeStyle=c.c;x.lineWidth=1.6;x.lineJoin='round';x.beginPath();for(var j=0;j<n;j++){var px=X(j),py=Y(a[j]);if(j)x.lineTo(px,py);else x.moveTo(px,py);}x.stroke();
     x.fillStyle=c.c;x.beginPath();x.arc(X(n-1),Y(a[n-1]),2.8,0,Math.PI*2);x.fill();}
 }
 function primaryOn(){return !!(EVT&&DET&&!DET.removedT&&SIM.mode==='AUTO'&&DET.first['XMV(10)']!==undefined)}
 function trendCaption(){
-  if(!EVT)return '尚未注入擾動。入口溫度沒有儀表，注入 IDV(4) 後只能從下游訊號看到反應。';
-  if(DET&&DET.removedT)return '擾動已於 t = '+DET.removedT.toFixed(2)+' h 移除；控制器正把 XMV(10) 拉回原位。';
+  if(!EVT)return esc(t('tr.capNone'));
+  if(DET&&DET.removedT)return esc(t('tr.capRemoved',{t:DET.removedT.toFixed(2)}));
   if(primaryOn()){var du=DET.cur['XMV(10)'],p9=DET.peak['XMEAS(9)']||0,p21=DET.peak['XMEAS(21)']||0;
-    return '<b>首要反應：XMV(10) '+(du>=0?'+':'')+du.toFixed(1)+' %</b>：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值 '+(p9>=0?'+':'')+p9.toFixed(2)+' degC，XMEAS(21) 峰值 '+(p21>=0?'+':'')+p21.toFixed(2)+' degC，離 normal upper 150 仍有約 '+Math.max(0,150-VAL['XMEAS(9)']).toFixed(0)+' degC）。';}
-  if(!DET)return 'IDV(4) 事件已結束，訊號回到基準。切換「擾動事件」可回看當時的反應。';
-  return 'IDV(4) +'+EVT.mag+' °C 已於 t = '+EVT.t0.toFixed(2)+' h 注入，等待訊號反應。';
+    return t('tr.capPrimary',{du:(du>=0?'+':'')+du.toFixed(1),p9:(p9>=0?'+':'')+p9.toFixed(2),p21:(p21>=0?'+':'')+p21.toFixed(2),hd:Math.max(0,150-VAL['XMEAS(9)']).toFixed(0)});}
+  if(!DET)return esc(t('tr.capOver'));
+  return esc(t('tr.capWait',{m:EVT.mag,t:EVT.t0.toFixed(2)}));
 }
 var lastCap='';
 function drawAll(){CH.forEach(drawChart);
   CH.forEach(function(c){var el=document.getElementById('td-'+c.k);var a=BUF[c.k];if(!a.length)return;var dv=a[a.length-1]-c.base;
-    var big=DET&&DET.dev[c.id];el.textContent=(dv>=0?'+':'')+dv.toFixed(c.dp)+' vs 基準';el.classList.toggle('up',!!big);
+    var big=DET&&DET.dev[c.id];el.textContent=t('tr.vsBase',{dv:(dv>=0?'+':'')+dv.toFixed(c.dp)});el.classList.toggle('up',!!big);
     var L,R;if(VIEW==='evt'&&EVT){L='−0.5 h';R=EVT.post.x9.length>=POST?'+2.5 h ✓':'+2.5 h';}else{L='−'+((WIN[VIEW]||100)*STEP_H).toFixed(1)+' h';R='now';}
     document.getElementById('tkl-'+c.k).textContent=L;document.getElementById('tkr-'+c.k).textContent=R;});
   var pr=primaryOn();$('#prim').hidden=!pr;$('#tc-u10').classList.toggle('primary',pr);
@@ -862,7 +941,7 @@ function updateLive(){
 }
 
 /* =====================================================================
-   9. "現在發生什麼" structured summary + evidence strip
+   9. "What is happening now" structured summary + evidence strip
    ===================================================================== */
 function snapId(){return 'snap@T'+SIM.t.toFixed(2)+'h/K'+SIM.K}
 var USED={};
@@ -871,64 +950,65 @@ function line(txt,sigs,kr,rules){var sn=snapId();(kr||[]).forEach(function(k){US
 function sgn(v,d){return (v>=0?'+':'')+v.toFixed(d)}
 function ruleOf(sig){if(!SAFE)return null;for(var i=0;i<SAFE.rules.signals.length;i++)if(SAFE.rules.signals[i].signal===sig)return SAFE.rules.signals[i];return null;}
 function stSpan(st){return '<span class="'+(st==='NORMAL'?'g':'w')+'">'+st+'</span>'}
-function limitText(sig,nu,sd,unit){
+function limitText(sig,nu,sd){
   var r=ruleOf(sig),v=VAL[sig],st=r?r.state:'NORMAL',hd=(nu-v).toFixed(1);
-  var t=st==='TRIP'?'達到 shutdown '+sd+' → ':st==='ALARM'?'超過 normal upper '+nu+'，低於 shutdown '+sd+' → ':st==='ATTENTION'?'接近 normal upper '+nu+'（餘裕 '+hd+'，進入注意帶）→ ':'低於 normal upper '+nu+'（餘裕 '+hd+'）與 shutdown '+sd+' → ';
+  var k=st==='TRIP'?'now.limTrip':st==='ALARM'?'now.limAlarm':st==='ATTENTION'?'now.limAtt':'now.limNormal';
   var ids=PCL.RULES.filter(function(x){return x.signal===sig&&x.kind!=='ATTENTION_BAND'}).map(function(x){return x.id});
   if(r&&r.ruleId&&ids.indexOf(r.ruleId)<0)ids.unshift(r.ruleId);
-  return {txt:t+stSpan(st),ids:ids};
+  return {txt:esc(t(k,{nu:nu,sd:sd,hd:hd}))+stSpan(st),ids:ids};
 }
 function renderNow(){
   if(!SAFE)return;
   USED={};
   var t9=VAL['XMEAS(9)'],t21=VAL['XMEAS(21)'],u=VAL['XMV(10)'],p=VAL['XMEAS(7)'];
-  var state='normal',title='reactor cooling 子系統在基準附近運轉，沒有超過門檻的偏差',stl='正常 · NORMAL';
+  var state='normal',title=t('now.tNormal'),stl=t('now.stNormal');
   if(DET){
-    var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'],uDev=DET.dev['XMV(10)'],el=SIM.t-DET.t0;
-    if(DET.removedT){state='dist';stl='擾動已移除 · RECOVERING';title='入口溫度回到基準，控制器正把 XMV(10) 拉回原位';}
-    else if(anyT){state='dist';stl='擾動中 · DISTURBED';
-      title=(DET.first['XMEAS(21)']!==undefined&&(DET.first['XMEAS(9)']===undefined||DET.first['XMEAS(21)']<DET.first['XMEAS(9)']))?
-        '冷卻水出口溫度先上升，反應器溫度延遲跟上；控制器正在加大 XMV(10)':'反應器溫度偏離基準；控制器正在調整 XMV(10)';}
-    else if(uDev){state='comp';stl='已補償 · COMPENSATED';title='溫度已回到基準；XMV(10) 停在新的操作點（'+u.toFixed(1)+' %，基準 '+DET.base['XMV(10)'].toFixed(1)+' %）';}
-    else if(el<0.08){state='dist';stl='已注入 · WAITING';title='IDV(4) 已注入，等待訊號反應（入口溫度無儀表，無法直接看到擾動）';}
-    else{state='comp';stl='擾動中 · MASKED';title='擾動存在，但主要訊號未超過門檻（閉迴路控制可能遮蔽）';}
-    if(SIM.mode==='MANUAL'&&!DET.removedT)title=title.replace(/；控制器正在(加大|調整) XMV\(10\)/,'')+'；XMV(10) 為 MANUAL，控制器不再修正';
+    var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'],uDev=DET.dev['XMV(10)'],el=SIM.t-DET.t0,man=SIM.mode==='MANUAL'&&!DET.removedT;
+    if(DET.removedT){state='dist';stl=t('now.stRecovering');title=t('now.tRecovering');}
+    else if(anyT){state='dist';stl=t('now.stDisturbed');
+      var cwFirst=DET.first['XMEAS(21)']!==undefined&&(DET.first['XMEAS(9)']===undefined||DET.first['XMEAS(21)']<DET.first['XMEAS(9)']);
+      title=cwFirst?t('now.tCwFirst')+(man?'':t('now.tCtrlOpen')):t('now.tReactorDev')+(man?'':t('now.tCtrlAdjust'));}
+    else if(uDev){state='comp';stl=t('now.stCompensated');title=t('now.tCompensated',{u:u.toFixed(1),b:DET.base['XMV(10)'].toFixed(1)});}
+    else if(el<0.08){state='dist';stl=t('now.stWaiting');title=t('now.tWaiting');}
+    else{state='comp';stl=t('now.stMasked');title=t('now.tMasked');}
+    if(man)title+=t('now.tManual');
   }
-  var o='<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+stl+'</div><div class="tt">'+esc(title)+'</div><div class="refs"><span class="ref snap">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>';
+  var o='<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+esc(stl)+'</div><div class="tt">'+esc(title)+'</div><div class="refs"><span class="ref snap">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>';
+  var C=t('now.colon');
   /* current condition */
-  o+='<div class="nowsec"><h3>目前狀態 · Current condition</h3><ul>';
+  o+='<div class="nowsec"><h3>'+esc(t('now.current'))+'</h3><ul>';
   var l9=limitText('XMEAS(9)',150,175),l7=limitText('XMEAS(7)',2895,3000);
-  o+=line('<b>XMEAS(9)</b> 反應器溫度 <b class="num">'+t9.toFixed(2)+' degC</b>：'+l9.txt,['XMEAS(9)'],['row2'],l9.ids);
-  o+=line('<b>XMEAS(7)</b> 反應器壓力 <b class="num">'+p.toFixed(1)+' kPa gauge</b>：'+l7.txt,['XMEAS(7)'],['row1'],l7.ids);
-  o+=line('<b>XMEAS(21)</b> 冷卻水出口溫度 <b class="num">'+t21.toFixed(2)+' degC</b>：沒有核准的 alarm / shutdown 限值，不推測',['XMEAS(21)'],['row3']);
-  o+=line('<b>XMV(10)</b> 冷卻水流量指令 <b class="num">'+u.toFixed(2)+' %</b>（0–100，指令值，不是製程限值）',['XMV(10)'],['row4']);
-  if(SIM.mode==='MANUAL')o+=line('<b>XMV(10)</b> 迴路為 <span class="w">MANUAL</span>（操作員輸出 '+u.toFixed(1)+' %）：反應器溫度不再由控制器維持；恢復自動須由人員操作',['XMV(10)','XMEAS(9)'],['ctrl']);
+  o+=line('<b>XMEAS(9)</b> '+esc(t('now.n.x9'))+' <b class="num">'+t9.toFixed(2)+' degC</b>'+C+l9.txt,['XMEAS(9)'],['row2'],l9.ids);
+  o+=line('<b>XMEAS(7)</b> '+esc(t('now.n.x7'))+' <b class="num">'+p.toFixed(1)+' kPa gauge</b>'+C+l7.txt,['XMEAS(7)'],['row1'],l7.ids);
+  o+=line('<b>XMEAS(21)</b> '+esc(t('now.n.x21'))+' <b class="num">'+t21.toFixed(2)+' degC</b>'+C+esc(t('now.x21NoLimit')),['XMEAS(21)'],['row3']);
+  o+=line('<b>XMV(10)</b> '+esc(t('now.n.u10'))+' <b class="num">'+u.toFixed(2)+' %</b>'+esc(t('now.u10Range')),['XMV(10)'],['row4']);
+  if(SIM.mode==='MANUAL')o+=line(t('now.manual',{u:u.toFixed(1)}),['XMV(10)','XMEAS(9)'],['ctrl']);
   o+='</ul></div>';
   /* observed changes */
-  o+='<div class="nowsec"><h3>觀察到的變化 · Observed changes</h3><ul>';
-  if(!DET){o+=line('相對於基準，四個訊號都沒有超過門檻（門檻 = 4σ 或最小變化量）',['XMEAS(9)','XMEAS(21)','XMV(10)','XMEAS(7)'],[]);}
+  o+='<div class="nowsec"><h3>'+esc(t('now.observed'))+'</h3><ul>';
+  if(!DET){o+=line(esc(t('now.noDev')),['XMEAS(9)','XMEAS(21)','XMV(10)','XMEAS(7)'],[]);}
   else{
     var order=KEYS.map(function(k){return k[1]}).filter(function(id){return DET.first[id]!==undefined}).sort(function(a,b){return DET.first[a]-DET.first[b]});
-    var nm={'XMEAS(9)':'反應器溫度','XMEAS(21)':'冷卻水出口溫度','XMV(10)':'冷卻水流量指令','XMEAS(7)':'反應器壓力'};
+    var nm={'XMEAS(9)':t('now.n.x9'),'XMEAS(21)':t('now.n.x21'),'XMV(10)':t('now.n.u10'),'XMEAS(7)':t('now.n.x7')};
     var un={'XMEAS(9)':'degC','XMEAS(21)':'degC','XMV(10)':'%','XMEAS(7)':'kPa'};
-    o+=line('<b>IDV(4)</b> 入口溫度 step '+(SIM.d>0?'+'+SIM.d+' °C':'已移除')+'，於 t = '+DET.t0.toFixed(2)+' h 注入（模擬事件；入口溫度本身沒有量測）',[],['rcw']);
-    if(!order.length)o+=line('尚未有訊號超過門檻（已過 '+((SIM.t-DET.t0)*60).toFixed(0)+' min）',['XMEAS(21)','XMEAS(9)','XMV(10)'],[]);
+    o+=line(t('now.idv',{s:SIM.d>0?'+'+SIM.d+' °C':esc(t('now.removed')),t:DET.t0.toFixed(2)}),[],['rcw']);
+    if(!order.length)o+=line(esc(t('now.noneYet',{m:((SIM.t-DET.t0)*60).toFixed(0)})),['XMEAS(21)','XMEAS(9)','XMV(10)'],[]);
     order.forEach(function(id,i){var d=id==='XMEAS(7)'?1:2,cur=DET.cur[id],pk=DET.peak[id];
-      o+=line((i+1)+'. <b>'+id+'</b> '+nm[id]+' 在 t = '+DET.first[id].toFixed(2)+' h 超過門檻（延遲 '+((DET.first[id]-DET.t0)*60).toFixed(0)+' min）；目前 <span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>，峰值 '+sgn(pk,d)+' '+un[id],[id],[]);});
-    if(DET.first['XMV(10)']!==undefined&&!DET.removedT&&SIM.mode==='AUTO')o+=line('首要反應是 <b>XMV(10)</b>（目前 '+sgn(DET.cur['XMV(10)'],1)+' %）：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值只有 '+sgn(DET.peak['XMEAS(9)']||0,2)+' degC）',['XMV(10)','XMEAS(9)'],['ctrl']);
-    if(order.length>1)o+=line('偵測順序 '+order.join(' → ')+'。時間順序與拓撲 hop 不必相同：圖可達只代表可能路徑，不是因果證據',order,['topo']);
+      o+=line(t('now.crossed',{i:i+1,id:id,nm:esc(nm[id]),t:DET.first[id].toFixed(2),lag:((DET.first[id]-DET.t0)*60).toFixed(0),cur:'<span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>',pk:sgn(pk,d)+' '+un[id]}),[id],[]);});
+    if(DET.first['XMV(10)']!==undefined&&!DET.removedT&&SIM.mode==='AUTO')o+=line(t('now.primary',{c:sgn(DET.cur['XMV(10)'],1),p:sgn(DET.peak['XMEAS(9)']||0,2)}),['XMV(10)','XMEAS(9)'],['ctrl']);
+    if(order.length>1)o+=line(esc(t('now.order',{o:order.join(' → ')})),order,['topo']);
   }
   o+='</ul></div>';
   /* engineering context */
-  o+='<div class="nowsec"><h3>相關工程脈絡 · Engineering context</h3><ul>';
-  o+=line('XMV(10) 調節反應器冷卻水流量；加大流量可增加移熱，但受熱狀態與公用流體條件限制',['XMV(10)'],['ctrl']);
+  o+='<div class="nowsec"><h3>'+esc(t('now.context'))+'</h3><ul>';
+  o+=line(esc(t('now.ctxCtrl')),['XMV(10)'],['ctrl']);
   if(DET){
-    o+=line('入口溫度沒有已知儀表（RCW-IN-TT 已駁回）：擾動來源只能由 XMEAS(21)、XMEAS(9) 與 XMV(10) 的反應推論',['XMEAS(21)','XMEAS(9)','XMV(10)'],['rcw']);
-    o+=line('SOP 原文：溫度上升時比對製程溫度與冷卻水出口讀值',['XMEAS(9)','XMEAS(21)'],['tsrev']);
+    o+=line(esc(t('now.ctxRcw')),['XMEAS(21)','XMEAS(9)','XMV(10)'],['rcw']);
+    o+=line(esc(t('now.ctxSop')),['XMEAS(9)','XMEAS(21)'],['tsrev']);
     var hv=bfs('e:reactor_cooling_water_in',6),nEl=Object.keys(hv).length;
-    o+=line('拓撲：自 reactor cooling water inlet 起，6 hop 內結構上可達 '+nEl+' 個元素，含 recycle loop 回流到反應器',[],['topo']);
+    o+=line(esc(t('now.ctxTopo',{n:nEl})),[],['topo']);
   }else{
-    o+=line('reactor temperature 的 normal upper 以 150 degC 為準；競爭的 145 degC 已駁回，引用保留',['XMEAS(9)'],['c145']);
+    o+=line(esc(t('now.ctx150')),['XMEAS(9)'],['c145']);
   }
   o+='</ul></div>';
   $('#now').innerHTML=o;
@@ -937,10 +1017,10 @@ function renderNow(){
 function renderStrip(){
   var used=Object.keys(USED);
   $('#strip').innerHTML=
-   '<div><div class="k">Context Layer · plant context revision <span class="badge built">已實作</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
-   '<div><div class="k">Knowledge revision <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">人工審查 12 筆：10 approve / remap，2 reject</div></div>'+
-   '<div><div class="k">Snapshot <span class="badge sim">'+(CONNECTED?'本機伺服器引擎產生':'本頁於瀏覽器內產生')+'</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
-   '<div><div class="k">Knowledge refs used · '+used.length+'</div><div class="refs" style="margin-top:0">'+used.map(function(k){return '<span class="ref">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">每一條陳述都釘在一個確切的 snapshot（T、K 與 revision）上，所以能被重現與追溯。</div></div>';
+   '<div><div class="k">Context Layer · plant context revision <span class="badge built">'+esc(t('st.built'))+'</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
+   '<div><div class="k">Knowledge revision <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">'+esc(t('st.reviews'))+'</div></div>'+
+   '<div><div class="k">Snapshot <span class="badge sim">'+esc(t(CONNECTED?'st.snapServer':'st.snapPage'))+'</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
+   '<div><div class="k">Knowledge refs used · '+used.length+'</div><div class="refs" style="margin-top:0">'+used.map(function(k){return '<span class="ref">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">'+esc(t('st.pinned'))+'</div></div>';
 }
 
 /* =====================================================================
@@ -960,8 +1040,8 @@ function tick(){
 }
 function showRunning(on){
   SIM.running=on;
-  $('#bRun').textContent=on?'❚❚ 暫停':'▶ 開始';
-  $('#cDot').className='dot '+(on?'live':'pause');$('#cLiveT').textContent=on?'LIVE · 串流中':'暫停';
+  $('#bRun').textContent=t(on?'run.pause':'run.start');
+  $('#cDot').className='dot '+(on?'live':'pause');$('#cLiveT').textContent=t(on?'live.on':'live.paused');
 }
 function setRunning(on){
   if(CONNECTED){ctl({action:'run',on:on});showRunning(on);return;}
@@ -984,7 +1064,7 @@ function onInjected(mag,K0,t0){
 }
 function onRemoved(){
   SIM.d=0;if(DET)DET.removedT=SIM.t;
-  MARKS.push({K:SIM.K,l:'▲ 移除 IDV(4)',c:'#8da1b5'});
+  MARKS.push({K:SIM.K,l:'',lk:'tr.removedMark',c:'#8da1b5'});
   if(HL.src==='dist')clearHL();
   $('#bClear').disabled=true;renderNow();dirty=true;
 }
@@ -1008,80 +1088,95 @@ function restoreAuto(){
 /* =====================================================================
    11. Safety bar (rules + PCA), adjustment proposal, gate log
    ===================================================================== */
-var STZ={NORMAL:'正常',ATTENTION:'注意',ALARM:'警報',TRIP:'跳車 · 交由人員處理'};
-var RZH={XMV_UNKNOWN:'不是 TEP 的操作變數',XMV_NOT_MODELLED:'模型未模擬此 XMV，無法驗證效果',TARGET_INVALID:'目標值不是數字',TARGET_OUT_OF_RANGE:'超出 0–100 %',RATIONALE_MISSING:'缺少理由',TRIP_ACTIVE:'TRIP 中禁止調整，請交由人員處理',STEP_TOO_LARGE:'單次步幅過大',RATE_LIMIT:'超過變化率上限',SIM_RULE_TRIP:'分支模擬會達 TRIP',SIM_RULE_ALARM:'分支模擬會達 ALARM',SIM_HEADROOM_LOSS:'分支模擬明顯吃掉限值餘裕',PCA_SPE_WORSENS:'分支模擬 PCA SPE 明顯變差'};
 var GATE=PCL.GATE_PARAMS;
 function setHTML(el,h){if(el._h!==h){el.innerHTML=h;el._h=h;}}
 function renderSafety(){
   if(!SAFE)return;
   var r=SAFE.rules,w=r.worst,p=SAFE.pca;
-  setHTML($('#sfRule'),'<span class="rst '+w.state+'">'+w.state+'</span><b>'+STZ[w.state]+'</b>'+(w.ruleId?'<span class="ref rule">'+esc(w.ruleId)+'</span>':''));
-  setHTML($('#sfRuleD'),r.signals.map(function(s){return esc(s.signal)+' '+fmt(s.signal,s.value)+' '+esc(s.unit.replace(' gauge',''))+' → '+s.state}).join(' · ')+' · 其餘 '+r.noReviewedLimit.length+' 個 XMEAS 無已審核限值（不推測）');
+  setHTML($('#sfRule'),'<span class="rst '+w.state+'">'+w.state+'</span><b>'+esc(t('stz.'+w.state))+'</b>'+(w.ruleId?'<span class="ref rule">'+esc(w.ruleId)+'</span>':''));
+  setHTML($('#sfRuleD'),r.signals.map(function(s){return esc(s.signal)+' '+fmt(s.signal,s.value)+' '+esc(s.unit.replace(' gauge',''))+' → '+s.state}).join(' · ')+esc(t('sf.others',{n:r.noReviewedLimit.length})));
   if(p){
     var ex=p.exceeded.any;
-    setHTML($('#sfPca'),'<span class="rst '+(ex?'EXC':'NORMAL')+'">'+(ex?'超出門檻':'門檻內')+'</span><span class="meter'+(ex?' hot':'')+'" title="1.0× = 99% 門檻（中線）"><i style="width:'+Math.min(100,p.score*50).toFixed(1)+'%"></i><b></b></span><span class="mono">'+p.score.toFixed(2)+'×</span>');
-    setHTML($('#sfPcaD'),'T² '+p.t2.toFixed(2)+' / '+p.t2Limit.toFixed(2)+' · SPE '+p.spe.toFixed(2)+' / '+p.speLimit.toFixed(2)+'（99% 門檻）');
-    setHTML($('#sfTop'),p.contributors.map(function(c){return '<span class="ctb" title="'+esc(SIG[c.signal][0])+'">'+esc(c.signal)+' '+Math.round(c.share*100)+'% '+(c.direction==='high'?'↑':'↓')+'</span>'}).join('')+(ex?'':'<span class="muted" style="font-size:11px">未超限，僅供參考</span>'));
+    setHTML($('#sfPca'),'<span class="rst '+(ex?'EXC':'NORMAL')+'">'+esc(t(ex?'sf.pcaExc':'sf.pcaOk'))+'</span><span class="meter'+(ex?' hot':'')+'" title="'+esc(t('sf.meterTip'))+'"><i style="width:'+Math.min(100,p.score*50).toFixed(1)+'%"></i><b></b></span><span class="mono">'+p.score.toFixed(2)+'×</span>');
+    setHTML($('#sfPcaD'),esc(t('sf.pcaD',{t2:p.t2.toFixed(2),t2l:p.t2Limit.toFixed(2),spe:p.spe.toFixed(2),spel:p.speLimit.toFixed(2)})));
+    setHTML($('#sfTop'),p.contributors.map(function(c){return '<span class="ctb" title="'+esc(SIG[c.signal][0])+'">'+esc(c.signal)+' '+Math.round(c.share*100)+'% '+(c.direction==='high'?'↑':'↓')+'</span>'}).join('')+(ex?'':'<span class="muted" style="font-size:11px">'+esc(t('sf.topRef'))+'</span>'));
   }
   var man=SAFE.loop.mode==='MANUAL';
-  setHTML($('#sfLoop'),'<span class="rst '+(man?'ATTENTION':'NORMAL')+'">'+SAFE.loop.mode+'</span><span class="mono">'+SAFE.loop.output.toFixed(1)+' %</span>'+(man?'<button type="button" class="btn" id="bAuto" style="padding:2px 8px;font-size:11px">恢復自動</button>':''));
-  setHTML($('#sfLoopD'),man?'操作員輸出固定，溫度不再由控制器維持；恢復自動由人員操作':'PI：XMEAS(9) → XMV(10)，設定值 120.40 degC');
-  var cur=VAL[$('#pXmv').value];$('#pCurV').textContent=cur!==undefined?'目前 '+(+cur).toFixed(2)+' %':'';
+  setHTML($('#sfLoop'),'<span class="rst '+(man?'ATTENTION':'NORMAL')+'">'+SAFE.loop.mode+'</span><span class="mono">'+SAFE.loop.output.toFixed(1)+' %</span>'+(man?'<button type="button" class="btn" id="bAuto" style="padding:2px 8px;font-size:11px">'+esc(t('sf.auto'))+'</button>':''));
+  setHTML($('#sfLoopD'),esc(t(man?'sf.loopMan':'sf.loopAuto')));
+  var cur=VAL[$('#pXmv').value];$('#pCurV').textContent=cur!==undefined?t('pp.current',{v:(+cur).toFixed(2)}):'';
 }
 function syncLog(){if(!CONNECTED){var changed=GSEQ!==ENG.gateSeq;GLOG=ENG.gateLog;GSEQ=ENG.gateSeq;if(changed)renderGateLog();}}
 function renderGateLog(){
   var L=(GLOG||[]).slice(-30).reverse();
-  $('#logCount').textContent=GSEQ+' 筆';
-  if(!L.length){setHTML($('#glog'),'<div class="pb"><div class="empty">尚無紀錄。頁面上的試算 / 套用與 MCP 的 propose_adjustment 都會記錄在這裡。</div></div>');return;}
+  $('#logCount').textContent=t('log.count',{n:GSEQ});
+  if(!L.length){setHTML($('#glog'),'<div class="pb"><div class="empty">'+esc(t('log.empty'))+'</div></div>');return;}
   setHTML($('#glog'),L.map(function(e){
-    var tm='';try{tm=new Date(e.ts).toLocaleTimeString('zh-TW',{hour12:false})}catch(x){tm=e.ts}
-    var src=e.source==='mcp'?'<span class="flag acc">MCP</span>':'<span class="flag plan">'+(e.source==='page'?'頁面':esc(e.source))+'</span>';
-    var md=e.mode==='apply'?(e.applied?'<span class="flag ok">已套用</span>':'<span class="flag">套用 · 未執行</span>'):'<span class="flag">試算</span>';
+    var tm='';try{tm=new Date(e.ts).toLocaleTimeString(LANG==='zh'?'zh-TW':'en-GB',{hour12:false})}catch(x){tm=e.ts}
+    var src=e.source==='mcp'?'<span class="flag acc">MCP</span>':'<span class="flag plan">'+(e.source==='page'?esc(t('log.page')):esc(e.source))+'</span>';
+    var md=e.mode==='apply'?(e.applied?'<span class="flag ok">'+esc(t('log.applied'))+'</span>':'<span class="flag">'+esc(t('log.notExec'))+'</span>'):'<span class="flag">'+esc(t('log.dry'))+'</span>';
     var vd=e.verdict==='ACCEPT'?'ACCEPT':'REJECT';
     return '<div class="gl"><span class="s">#'+(+e.seq)+'</span><div class="m"><span class="vd '+vd+'">'+vd+'</span><b class="mono">'+esc(e.input.xmv)+' → '+esc(e.input.target)+' %</b>'+src+md+'</div><div class="c">'+esc(tm)+' · '+esc(e.snapshot.id)+(e.reasons.length?' · '+e.reasons.map(function(x){return esc(x.code)}).join(', '):'')+'</div></div>';
   }).join(''));
 }
-var LASTOK=null;
+var LASTOK=null,LASTGATE=null;
 function propKey(){return $('#pXmv').value+'|'+$('#pTarget').value+'|'+$('#pWhy').value}
 function syncApply(){$('#pApply').disabled=LASTOK===null||LASTOK!==propKey();}
-function showGate(r,apply){
-  if(!r||!r.verdict){setHTML($('#pRes'),'<div class="gres"><span class="vd REJECT">ERROR</span> '+esc((r&&r.error)||'gate 無回應')+'</div>');return;}
-  var h='<div class="gres"><div class="gh"><span class="vd '+r.verdict+'">'+r.verdict+'</span><b class="mono">'+esc(r.input.xmv)+' → '+esc(r.input.target)+' %</b>'+(r.current!==null?'<span class="muted">目前 '+(+r.current).toFixed(2)+' %</span>':'')+
-    (apply?(r.applied?'<span class="flag ok">已套用 · 迴路轉 MANUAL</span>':'<span class="flag">未套用</span>'):'<span class="flag">試算 · 未改變工廠</span>')+'<span class="ref snap">'+esc(r.snapshot.id)+'</span></div>';
-  if(r.reasons.length)h+='<ul>'+r.reasons.map(function(x){return '<li><code>'+esc(x.code)+'</code> '+esc(RZH[x.code]||'')+'<div class="muted" style="font-size:11px">'+esc(x.message)+'</div></li>'}).join('')+'</ul>';
-  else h+='<div class="g" style="color:#8fdcb4">所有檢查通過'+(apply?'':'；可按「套用」（套用時會以當下狀態重新評估）')+'</div>';
+/* render only; called again on a language switch */
+function renderGate(r,apply){
+  if(!r||!r.verdict){setHTML($('#pRes'),'<div class="gres"><span class="vd REJECT">ERROR</span> '+esc((r&&r.error)||t('g.noResponse'))+'</div>');return;}
+  var h='<div class="gres"><div class="gh"><span class="vd '+esc(r.verdict)+'">'+esc(r.verdict)+'</span><b class="mono">'+esc(r.input.xmv)+' → '+esc(r.input.target)+' %</b>'+(r.current!==null?'<span class="muted">'+esc(t('pp.current',{v:(+r.current).toFixed(2)}))+'</span>':'')+
+    (apply?(r.applied?'<span class="flag ok">'+esc(t('g.applied'))+'</span>':'<span class="flag">'+esc(t('g.notApplied'))+'</span>'):'<span class="flag">'+esc(t('g.dry'))+'</span>')+'<span class="ref snap">'+esc(r.snapshot.id)+'</span></div>';
+  if(r.reasons.length)h+='<ul>'+r.reasons.map(function(x){var lab=t('rz.'+x.code);return '<li><code>'+esc(x.code)+'</code> '+(lab!=='rz.'+x.code?esc(lab):'')+'<div class="muted" style="font-size:11px">'+esc(x.message)+'</div></li>'}).join('')+'</ul>';
+  else h+='<div class="g" style="color:#8fdcb4">'+esc(t('g.pass'))+(apply?'':esc(t('g.passHint')))+'</div>';
   if(r.simulation){var a=r.simulation.withChange,b=r.simulation.noChange;
-    h+='<div class="sim">分支模擬 '+a.horizonMin+' min（調整 / 不調整）：XMEAS(9) 峰值 '+a.peak['XMEAS(9)'].toFixed(2)+' / '+b.peak['XMEAS(9)'].toFixed(2)+' degC · XMEAS(7) 峰值 '+a.peak['XMEAS(7)'].toFixed(1)+' / '+b.peak['XMEAS(7)'].toFixed(1)+' kPa · 最差規則 '+a.worstRuleState+' / '+b.worstRuleState+(a.meanSpe!==null?' · SPE 平均 '+a.meanSpe.toFixed(2)+' / '+b.meanSpe.toFixed(2):'')+'</div>';}
+    h+='<div class="sim">'+esc(t('g.sim',{h:a.horizonMin,a9:a.peak['XMEAS(9)'].toFixed(2),b9:b.peak['XMEAS(9)'].toFixed(2),a7:a.peak['XMEAS(7)'].toFixed(1),b7:b.peak['XMEAS(7)'].toFixed(1),aw:a.worstRuleState,bw:b.worstRuleState}))+(a.meanSpe!==null?esc(t('g.simSpe',{a:a.meanSpe.toFixed(2),b:b.meanSpe.toFixed(2)})):'')+'</div>';}
   h+='</div>';
   setHTML($('#pRes'),h);
+}
+function showGate(r,apply){
+  LASTGATE={r:r,apply:apply};renderGate(r,apply);
+  if(!r||!r.verdict)return;
   LASTOK=(!apply&&r.verdict==='ACCEPT')?propKey():null;syncApply();
 }
 function propose(apply){
   var body={xmv:$('#pXmv').value,target:parseFloat($('#pTarget').value),rationale:$('#pWhy').value};
-  if(CONNECTED){api('/api/propose',{xmv:body.xmv,target:body.target,rationale:body.rationale,apply:apply}).then(function(r){showGate(r,apply)},function(){showGate(null,apply)});return;}
+  if(CONNECTED){api('/api/propose',{xmv:body.xmv,target:body.target,rationale:body.rationale,apply:apply}).then(function(r){showGate(r,apply)},function(){showGate(null,apply)});return null;}
   var r=PCL.evaluateAdjustment(ENG,body,{apply:apply,source:'page'});
   showGate(r,apply);syncLog();
   if(r.applied){SAFE=ENG.safety();SIM.mode=ENG.plant.mode;renderSafety();renderNow();}
+  return r;
+}
+function renderXmvOptions(){
+  var sel=$('#pXmv').value||'XMV(10)';
+  $('#pXmv').innerHTML=PCL.XMV_IDS.map(function(id){var m=PCL.MODELLED_XMVS.indexOf(id)>=0;return '<option value="'+id+'"'+(id===sel?' selected':'')+'>'+id+' · '+esc(SIG[id][0])+(m?'':esc(t('pp.notModelled')))+'</option>'}).join('');
+}
+function renderGateNote(){
+  var m=function(v){return '<span class="mono">'+esc(v)+'</span>'};
+  $('#gNoteP').innerHTML=esc(t('pp.gateNote',{step:'\x01',win:'\x02',rate:'\x03',hor:'\x04'})).replace('\x01',m(GATE.maxStepPct)).replace('\x02',m(GATE.rateWindowMin)).replace('\x03',m(GATE.maxChangeInWindowPct)).replace('\x04',m(GATE.horizonMin));
 }
 function initProposal(){
-  $('#pXmv').innerHTML=PCL.XMV_IDS.map(function(id){var m=PCL.MODELLED_XMVS.indexOf(id)>=0;return '<option value="'+id+'"'+(id==='XMV(10)'?' selected':'')+'>'+id+' · '+esc(SIG[id][0])+(m?'':'（未建模）')+'</option>'}).join('');
+  renderXmvOptions();
   $('#pTarget').value=(+VAL['XMV(10)']).toFixed(1);
-  $('#gStep').textContent=GATE.maxStepPct;$('#gWin').textContent=GATE.rateWindowMin;$('#gRate').textContent=GATE.maxChangeInWindowPct;$('#gHor').textContent=GATE.horizonMin;
+  $('#pWhy').value=t('pp.whyDefault');
+  renderGateNote();
 }
 
 /* =====================================================================
    12. Connected mode: the page shows the local server's engine (same origin only)
    ===================================================================== */
 /* control calls: surface a refusal (e.g. expired token) in the mode chip instead of failing silently */
-function ctl(body){return api('/api/control',body).then(function(r){if(r&&r.error)$('#cMode').textContent='操作失敗 · '+r.error;return r;});}
+var MODE={k:'mode.offline',p:null};
+function setMode(k,p){MODE={k:k,p:p||null};$('#cMode').textContent=t(k,p);}
+function ctl(body){return api('/api/control',body).then(function(r){if(r&&r.error)setMode('mode.ctlFail',{err:r.error});return r;});}
 function api(path,body){
   /* never rejects: resolves to the server reply or to {error} so callers can show it */
   return fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-PCL-Token':TOKEN},body:JSON.stringify(body)})
     .then(function(r){
-      if(r.status===403)return {error:'伺服器拒絕（權杖已失效？請重新整理頁面）'};
+      if(r.status===403)return {error:t('api.forbidden')};
       return r.json().catch(function(){return {error:'HTTP '+r.status}}).then(function(j){return r.ok?j:{error:(j&&j.error)||('HTTP '+r.status)}});
     })
-    .catch(function(){return {error:'無法連線到本機伺服器'}});
+    .catch(function(){return {error:t('api.unreachable')}});
 }
 function serverControls(m){
   if(m.running!==SIM.running)showRunning(m.running);
@@ -1108,12 +1203,124 @@ function onTick(m){
 }
 function connect(){
   var es=new EventSource('/api/stream');
-  es.addEventListener('init',function(ev){$('#cMode').textContent='連線 · 本機引擎';onInit(JSON.parse(ev.data));});
+  es.addEventListener('init',function(ev){setMode('mode.connected');onInit(JSON.parse(ev.data));});
   es.addEventListener('tick',function(ev){onTick(JSON.parse(ev.data));});
-  es.onerror=function(){$('#cMode').textContent='連線中斷 · 重試中';};
+  es.onerror=function(){setMode('mode.lost');};
+}
+
+/* =====================================================================
+   13. Language switch, orientation shortcuts, guided run
+   ===================================================================== */
+function setLang(l,remember){
+  if(!okLang(l))return;
+  var prevWhy=t('pp.whyDefault'),oldKey=propKey();
+  LANG=l;
+  if(remember){
+    try{window.localStorage.setItem(LKEY,l)}catch(e){}
+    try{var u=new URL(location.href);if(u.searchParams.has('lang')){u.searchParams.set('lang',l);history.replaceState(null,'',u.href);}}catch(e){}
+  }
+  applyStatic();
+  if(CONNECTED)$('#simNote').textContent=t('tr.noteConn');
+  setMode(MODE.k,MODE.p);
+  showRunning(SIM.running);
+  var pn=$('#pidNote');if(pn)pn.textContent=t('pv.pidNote');
+  var gn=$('#gNote');if(gn)gn.textContent=t('pv.graphNote');
+  if($('#pWhy').value===prevWhy){$('#pWhy').value=t('pp.whyDefault');if(LASTOK===oldKey)LASTOK=propKey();}
+  renderXmvOptions();renderGateNote();syncApply();
+  buildTrends();renderSide();applyHL();lastCap='';drawAll();
+  renderNow();renderSafety();renderGateLog();
+  if(LASTGATE)renderGate(LASTGATE.r,LASTGATE.apply);
+  renderGuide();
+}
+function flash(el){if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(function(){el.classList.remove('flash')},1700);}
+function goTo(sel,focusSel){
+  var el=$(sel);if(!el)return;
+  try{el.scrollIntoView({behavior:RM?'auto':'smooth',block:'start'})}catch(x){el.scrollIntoView()}
+  var f=focusSel?$(focusSel):null;
+  if(f){try{f.focus({preventScroll:true})}catch(x){f.focus()}flash(f);}else flash(el);
+}
+var GOTO={inject:['#trendPanel','#bInject'],watch:['#safety',null],propose:['#propPanel','#pTarget']};
+
+/* Guided run: inject (or reuse) the disturbance, wait for the response, then two dry runs:
+   a step-size rejection and a small move. Captions report the verdicts the gate actually
+   returned. Dry runs only, so the plant is never changed; Stop cancels every pending step. */
+var GUIDE=null,GSTEPS=4;
+function renderGuide(){
+  var bar=$('#gbar');
+  $('#bGuide').textContent=t(GUIDE&&!GUIDE.done?'guide.stop':'guide.start');
+  if(!GUIDE){bar.hidden=true;return;}
+  bar.hidden=false;
+  $('#gbarK').textContent=GUIDE.stopped?t('guide.stoppedK'):t('guide.step',{i:GUIDE.i,n:GSTEPS});
+  $('#gbarT').textContent=t(GUIDE.key,GUIDE.p);
+  $('#gbarStop').textContent=t(GUIDE.done?'guide.close':'guide.stop');
+}
+function guideCaption(i,key,p){if(!GUIDE)return;GUIDE.i=i;GUIDE.key=key;GUIDE.p=p||null;renderGuide();}
+function gWait(ms,fn){if(!GUIDE)return;var g=GUIDE,id=setTimeout(function(){if(GUIDE===g)fn();},ms);g.timers.push(id);}
+/* note=true: a run still in progress was interrupted, so say what state it left behind */
+function stopGuide(note){
+  if(!GUIDE)return;
+  var wasRunning=!GUIDE.done;
+  GUIDE.timers.forEach(clearTimeout);GUIDE=null;
+  if(note&&wasRunning&&SIM.d>0){
+    GUIDE={timers:[],i:0,key:'guide.stopped',p:{m:SIM.d},done:true,stopped:true};
+    gWait(10000,function(){stopGuide(false)});
+  }
+  renderGuide();
+}
+function guideTry(target){
+  $('#pXmv').value='XMV(10)';$('#pTarget').value=(+target).toFixed(1);$('#pWhy').value=t('pp.whyDefault');
+  return propose(false);
+}
+function verdictParams(r){
+  if(!r||!r.verdict)return {from:'–',to:'–',d:'–',verdict:'ERROR',why:'',hor:GATE.horizonMin};
+  var cur=r.current!==null?+r.current:+VAL['XMV(10)'];
+  return {from:cur.toFixed(1),to:(+r.input.target).toFixed(1),d:Math.abs(r.input.target-cur).toFixed(1),verdict:r.verdict,why:r.reasons.length?' ('+r.reasons.map(function(x){return x.code}).join(', ')+')':'',hor:GATE.horizonMin};
+}
+function startGuide(){
+  if(CONNECTED)return;
+  stopGuide(false);
+  GUIDE={timers:[],i:1,key:'guide.s1',p:null,done:false,accepted:false};
+  var had=SIM.d>0;
+  if(!had){$('#selDist').value='5';inject();}else if(!SIM.running)setRunning(true);
+  guideCaption(1,had?'guide.s1had':'guide.s1',{m:SIM.d});
+  goTo('#safety');
+  var t0=Date.now();
+  (function poll(){gWait(400,function(){
+    var ready=DET&&DET.first['XMV(10)']!==undefined&&SAFE&&SAFE.pca&&SAFE.pca.exceeded.any;
+    if((ready&&Date.now()-t0>4000)||Date.now()-t0>12000)guideStep2();else poll();
+  });})();
+}
+function guideStep2(){
+  guideCaption(2,'guide.s2',{state:SAFE?SAFE.rules.worst.state:'NORMAL'});
+  goTo('#trendPanel');
+  gWait(7000,guideStep3);
+}
+function guideStep3(){
+  /* a step 5 %-points over the step limit, upward unless that would leave the valve range */
+  var u=+VAL['XMV(10)'],big=GATE.maxStepPct+5;
+  var r=guideTry(u+big<=GATE.xmvMax?u+big:u-big);
+  guideCaption(3,'guide.s3',verdictParams(r));
+  goTo('#propPanel');
+  gWait(7000,guideStep4);
+}
+function guideStep4(){
+  var u=+VAL['XMV(10)'];
+  var r=guideTry(u+1<=GATE.xmvMax?u+1:u-1);
+  if(!r||r.verdict!=='ACCEPT')r=guideTry(u);
+  var ok=!!(r&&r.verdict==='ACCEPT');GUIDE.accepted=ok;
+  guideCaption(4,ok?'guide.s4':'guide.s4no',verdictParams(r));
+  gWait(8000,function(){GUIDE.done=true;guideCaption(4,GUIDE.accepted?'guide.done':'guide.doneNo');gWait(15000,function(){stopGuide(false)});});
 }
 
 document.addEventListener('click',function(e){
+  var lb=e.target.closest('[data-lang]');
+  if(lb){setLang(lb.getAttribute('data-lang'),true);return;}
+  var go=e.target.closest('[data-goto]');
+  if(go){var gt=GOTO[go.getAttribute('data-goto')];if(gt)goTo(gt[0],gt[1]);return;}
+  if(e.target.closest('#bGuide')){if(GUIDE&&!GUIDE.done)stopGuide(true);else startGuide();return;}
+  if(e.target.closest('#gbarStop')){stopGuide(true);return;}
+  /* the visitor takes over: a real click on a plant or proposal control ends the guided run */
+  if(GUIDE&&!GUIDE.done&&e.isTrusted&&e.target.closest('#bInject,#bClear,#bRun,#bAuto,#pTry,#pApply,#pCur'))stopGuide(true);
   var v=e.target.closest('[data-view]');
   if(v){var g=v.dataset.view==='graph';$('#wrapPid').hidden=g;$('#wrapGraph').hidden=!g;setToggle('data-view',v.dataset.view);return;}
   var wv=e.target.closest('[data-win]');
@@ -1131,14 +1338,19 @@ document.addEventListener('click',function(e){
   if(el){select(el.dataset.k);}
 });
 document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&GUIDE&&!(e.target.closest&&e.target.closest('input,select,textarea'))){stopGuide(true);return;}
   if(e.key!=='Enter'&&e.key!==' ')return;var el=e.target.closest&&e.target.closest('svg .el');
   if(el){e.preventDefault();select(el.dataset.k);}
 });
+/* typing or choosing in the proposal or disturbance controls also hands control back to the visitor */
+function guideTakeover(e){if(GUIDE&&!GUIDE.done&&e.isTrusted&&e.target.closest&&e.target.closest('#pTarget,#pXmv,#pWhy,#selDist'))stopGuide(true);}
 document.addEventListener('input',function(e){
+  guideTakeover(e);
   if(e.target.id==='impDepth'){HL.depth=+e.target.value;$('#impDepthV').textContent=e.target.value;if(HL.src==='impact'){stopPlay();HL.shown=HL.depth;applyHL();}}
   if(e.target.id==='pTarget'||e.target.id==='pWhy')syncApply();
 });
 document.addEventListener('change',function(e){
+  guideTakeover(e);
   if(e.target.id==='pXmv'){var cv=VAL[e.target.value];if(cv!==undefined)$('#pTarget').value=(+cv).toFixed(1);syncApply();renderSafety();}
 });
 $('#bRun').addEventListener('click',function(){setRunning(!SIM.running)});
@@ -1148,20 +1360,25 @@ window.addEventListener('resize',function(){dirty=true});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)dirty=true});
 
 /* boot */
+applyStatic();
 setToggle('data-view','pid');setToggle('data-speed','1');setToggle('data-win','h1');
 $('#lgHops').innerHTML=HOPC.map(function(c,i){return '<i style="background:'+c+'">'+i+'</i>'}).join('');
 renderPID();renderGraph();buildTrends();
 if(CONNECTED){
-  $('#cMode').textContent='連線 · 本機引擎（連線中）';
-  $('.simnote b').textContent='本機引擎模擬資料（同一個 lumped model，示意，非實際模擬器輸出）';
+  setMode('mode.connecting');
+  $('#simNote').textContent=t('tr.noteConn');
+  $('#bGuide').hidden=true;
+  showRunning(false);
   initProposal();renderSide();applyHL();renderGateLog();
   connect();
 }else{
+  setMode('mode.offline');
   for(var i=0;i<CAP;i++)simStep();
   SAFE=ENG.safety();syncLog();
   initProposal();renderSide();applyHL();renderNow();renderSafety();renderGateLog();
   setRunning(!RM);
 }
+renderGuide();
 dirty=true;requestAnimationFrame(frame);
 })();
 </script>

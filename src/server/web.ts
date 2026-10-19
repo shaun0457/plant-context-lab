@@ -58,8 +58,9 @@ export function createWebApp(opt: WebAppOptions): WebApp {
   const { sim, controls } = opt;
   const log = opt.log || (() => {});
   const token = randomBytes(16).toString('hex');
-  const page = opt.html.replace('<html lang="zh-Hant">', '<html lang="zh-Hant" data-mode="connected" data-token="' + token + '">');
-  if (page === opt.html) throw new Error('index.html has no <html lang="zh-Hant"> tag: cannot enable connected mode');
+  // the page picks its display language itself (?lang= / remembered choice); only the mode marker is added here
+  const page = opt.html.replace(/<html lang="([a-zA-Z-]+)">/, (_m, lang: string) => '<html lang="' + lang + '" data-mode="connected" data-token="' + token + '">');
+  if (page === opt.html) throw new Error('index.html has no <html lang="..."> tag: cannot enable connected mode');
   const clients = new Set<ServerResponse>();
   let port = 0;
   let lastGate = -1;

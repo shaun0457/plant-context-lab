@@ -1,4 +1,4 @@
-// Build: typecheck, inline the engine into index.html, bundle the Node server,
+// Build: typecheck, inline the engine and the UI strings into index.html, bundle the Node server,
 // regenerate docs/rules.md from the engine, and record an input hash.
 //
 //   npm run build
@@ -12,6 +12,8 @@ import { build } from 'esbuild';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rel = (p) => join(root, p);
 const MARK = '/*__PCL_ENGINE__*/';
+const MARK_I18N = '/*__PCL_I18N__*/';
+const BS = String.fromCharCode(92); // backslash
 
 function walk(dir) {
   return readdirSync(dir).flatMap((f) => {
@@ -58,7 +60,11 @@ async function main() {
   if (/https?:/i.test(js)) throw new Error('engine bundle contains an http(s) URL');
   const tpl = readFileSync(rel('web/index.template.html'), 'utf8');
   if (tpl.split(MARK).length !== 2) throw new Error('template must contain exactly one ' + MARK);
-  const html = tpl.replace(MARK, () => js);
+  if (tpl.split(MARK_I18N).length !== 2) throw new Error('template must contain exactly one ' + MARK_I18N);
+  // UI strings (en / zh) as a JSON literal; '<' is escaped so no string can close the script tag
+  const S = await import(pathToFileURL(rel('src/page/strings.ts')).href);
+  const i18n = 'var PCL_I18N=' + JSON.stringify(S.STRINGS).split('<').join(BS + 'u003c') + ';';
+  const html = tpl.replace(MARK_I18N, () => i18n).replace(MARK, () => js);
   if (/https?:/i.test(html)) throw new Error('index.html would contain an http(s) URL');
   writeFileSync(rel('index.html'), html);
 

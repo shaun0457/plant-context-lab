@@ -18,13 +18,15 @@ export const TOPO: TopoData = {"n":[["feed_a_supply","FEED_SOURCE","A feed suppl
 export interface LoopDef {
   id: string;
   name: string;
+  /** Traditional Chinese name, read by the page only */
+  nameZh: string;
   path: string;
   e: string[];
 }
 
 export const LOOPS: LoopDef[] = [
-  { id: 'recycle', name: '循環回路 · recycle loop', path: 'reactor → condenser → separator → compressor → feed mixer → reactor', e: ['stream_7', 'condenser_outlet', 'separator_vapor', 'stream_8', 'stream_6'] },
-  { id: 'stripper', name: '汽提回路 · stripper loop', path: 'separator → stripper → feed mixer → reactor → condenser → separator', e: ['stream_10', 'stream_5', 'stream_6', 'stream_7', 'condenser_outlet'] },
+  { id: 'recycle', name: 'recycle loop', nameZh: '循環回路', path: 'reactor → condenser → separator → compressor → feed mixer → reactor', e: ['stream_7', 'condenser_outlet', 'separator_vapor', 'stream_8', 'stream_6'] },
+  { id: 'stripper', name: 'stripper loop', nameZh: '汽提回路', path: 'separator → stripper → feed mixer → reactor → condenser → separator', e: ['stream_10', 'stream_5', 'stream_6', 'stream_7', 'condenser_outlet'] },
 ];
 
 export const SHORT: Record<string, string> = { feed_a_supply: 'A feed', feed_d_supply: 'D feed', feed_e_supply: 'E feed', feed_ac_supply: 'A+C feed', reactor_feed_mixer: 'Feed mixer', reactor: 'Reactor', condenser: 'Condenser', separator: 'Separator', compressor: 'Compressor', stripper: 'Stripper', purge_outlet: 'Purge', product_outlet: 'Product', reactor_cooling_water_supply: 'Reactor CW supply', reactor_cooling_water_return: 'Reactor CW return', condenser_cooling_water_supply: 'Cond. CW supply', condenser_cooling_water_return: 'Cond. CW return', stripper_steam_supply: 'Steam supply' };
