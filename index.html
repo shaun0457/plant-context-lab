@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plant Context Lab</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Tennessee Eastman 製程的 P&amp;ID、拓撲影響傳播與瀏覽器內即時趨勢概念示範。">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b1117; --bg2:#0e151c; --panel:#121b23; --panel2:#17222c; --panel3:#1c2935;
+  --line:#213040; --line2:#2b3c4e;
+  --text:#d4dde5; --text2:#b3c0cb; --muted:#8495a4; --dim:#5d6e7d;
+  --acc:#2bc3c8; --acc2:#7fe0e3; --acc-bg:rgba(43,195,200,.10); --acc-bd:rgba(43,195,200,.38);
+  --ok:#45b981; --ok-bg:rgba(69,185,129,.12);
+  --warn:#e2a73c; --warn-bg:rgba(226,167,60,.12);
+  --alarm:#e05a50; --alarm-bg:rgba(224,90,80,.12);
+  --plan:#8da1b5; --plan-bg:rgba(141,161,181,.08);
+  --pipe:#7d93a5; --cw:#4a90c2; --steam:#c08a4a;
+  --sans:"Segoe UI","Microsoft JhengHei","Noto Sans TC","PingFang TC",sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit;color:inherit}
+.mono{font-family:var(--mono);font-size:12px}
+.dim{color:var(--dim)} .muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:9px 20px;background:rgba(11,17,23,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .t{font-weight:600;font-size:15px;letter-spacing:.2px;white-space:nowrap}
+.brand .s{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sp{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1px solid var(--line2);border-radius:999px;font-size:11.5px;color:var(--text2);background:var(--panel);white-space:nowrap}
+.chip.mono{font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none;background:var(--dim)}
+.dot.live{background:var(--ok);box-shadow:0 0 0 3px rgba(69,185,129,.18);animation:pulse 1.6s ease-in-out infinite}
+.dot.pause{background:var(--warn)}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(69,185,129,.05)}}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1500px;margin:0 auto;padding:16px 20px 8px;display:grid;gap:14px}
+.row1{display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:14px;align-items:start}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px;align-items:start}
+@media (max-width:1180px){.row2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1060px){.row1{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.ph h2{margin:0;font-size:13.5px;font-weight:600;letter-spacing:.2px}
+.ph .sp{flex:1}
+.pb{padding:12px 14px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:1px 7px;border-radius:4px;border:1px solid var(--line2);color:var(--text2);white-space:nowrap;font-weight:500}
+.badge.built{border-color:rgba(69,185,129,.45);color:#8fdcb4;background:var(--ok-bg)}
+.badge.wip{border-color:rgba(226,167,60,.45);color:#f0c97e;background:var(--warn-bg)}
+.badge.sim{border-color:rgba(141,161,181,.45);color:#c3d0dc;background:var(--plan-bg)}
+.flag{display:inline-block;font-size:10.5px;padding:0 6px;border-radius:3px;border:1px solid var(--line2);color:var(--text2);white-space:nowrap;line-height:17px}
+.flag.ok{border-color:rgba(69,185,129,.5);color:#8fdcb4}
+.flag.warn{border-color:rgba(226,167,60,.5);color:#f0c97e}
+.flag.alarm{border-color:rgba(224,90,80,.55);color:#f3a49d}
+.flag.plan{border-color:rgba(141,161,181,.4);color:var(--plan)}
+.flag.acc{border-color:var(--acc-bd);color:var(--acc2)}
+
+/* segmented + buttons */
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden;background:var(--bg2)}
+.seg button{all:unset;cursor:pointer;padding:4px 11px;font-size:12px;color:var(--text2)}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button.on,.seg button[aria-pressed="true"]{background:rgba(43,195,200,.24);color:#fff;font-weight:600;box-shadow:inset 0 0 0 1px var(--acc),inset 0 -3px 0 var(--acc)}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;font-size:12px;color:var(--text);white-space:nowrap}
+.btn:hover{border-color:var(--acc-bd)}
+.btn.pri{background:var(--acc-bg);border-color:var(--acc-bd);color:#e9f8f8}
+.btn.warnb{background:var(--warn-bg);border-color:rgba(226,167,60,.55);color:#f6d595}
+.btn:disabled{opacity:.45;cursor:default}
+select{font-family:inherit;font-size:12px;color:var(--text);background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:5px 8px;max-width:100%}
+
+/* ---------- plant ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:11px;color:var(--muted)}
+.legend .hops{display:inline-flex;gap:2px}
+.legend .hops i{display:inline-block;width:15px;height:15px;border-radius:50%;color:#0b1117;font-style:normal;font-size:9.5px;font-weight:700;text-align:center;line-height:15px}
+.legend .ln{display:inline-block;width:22px;height:0;border-top:2px solid var(--pipe);vertical-align:middle;margin-right:4px}
+.legend .ln.cw{border-top:2px dashed var(--cw)}
+.hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:7px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--text2);min-height:36px;background:var(--bg2)}
+.hlbar .k{color:var(--muted)}
+.svgwrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.svgwrap svg{display:block;width:100%;height:auto;min-width:640px}
+.swipe{display:none;font-size:11px;color:var(--dim);padding:4px 14px 0}
+@media (max-width:700px){.swipe{display:block}}
+
+svg text{font-family:var(--sans);fill:var(--text2);font-size:11px}
+svg .mono, svg text.mono{font-family:var(--mono)}
+svg .el{cursor:pointer;transition:opacity .3s ease}
+svg .el:focus{outline:none}
+svg .el:focus-visible .shape{stroke:var(--acc2);stroke-width:2.6}
+svg.hlon .el.dim{opacity:.26}
+svg.hlon .tag.dim{opacity:.35}
+/* pipes */
+.pipe .under{fill:none;stroke:var(--bg2);stroke-width:8;stroke-linejoin:round}
+.pipe .glow{fill:none;stroke:transparent;stroke-width:10;stroke-linejoin:round;stroke-linecap:round}
+.pipe .p{fill:none;stroke:var(--pipe);stroke-width:2.2;stroke-linejoin:round;transition:stroke .3s}
+.pipe.util .p{stroke:var(--cw);stroke-dasharray:6 4}
+.pipe.steam .p{stroke:var(--steam);stroke-dasharray:6 4}
+.pipe .arr{fill:var(--pipe);transition:fill .3s}
+.pipe.util .arr{fill:var(--cw)} .pipe.steam .arr{fill:var(--steam)}
+.pipe .hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke}
+.pipe .valve{fill:var(--bg2);stroke:var(--pipe);stroke-width:1.6}
+.pipe.util .valve{stroke:var(--cw)} .pipe.steam .valve{stroke:var(--steam)}
+.pipe .vstem{stroke:var(--muted);stroke-width:1.3;fill:none}
+.pipe .vlab{font-family:var(--mono);font-size:8.5px;fill:var(--muted)}
+.pipe .snum rect{fill:var(--panel3);stroke:var(--line2)}
+.pipe .snum text{font-family:var(--mono);font-size:9.5px;fill:var(--text2)}
+.pipe.hop .p{stroke:var(--hc);stroke-width:3.2;stroke-dasharray:none}
+.pipe.hop .arr{fill:var(--hc)}
+.pipe.hop .valve{stroke:var(--hc)}
+.pipe.loopon .glow{stroke:rgba(255,255,255,.14)}
+.pipe.sel .glow{stroke:rgba(127,224,227,.32)}
+/* units */
+.unit .shape{fill:var(--panel2);stroke:#8fa3b5;stroke-width:1.6;transition:stroke .3s,fill .3s}
+.unit .deco{fill:none;stroke:#5d7183;stroke-width:1.2}
+.unit .nm{font-size:11.5px;font-weight:600;fill:var(--text)}
+.unit .sm{font-size:9.5px;fill:var(--muted)}
+.unit.u-util .shape{stroke:var(--cw);stroke-dasharray:4 3;fill:rgba(74,144,194,.07)}
+.unit.u-steam .shape{stroke:var(--steam);stroke-dasharray:4 3;fill:rgba(192,138,74,.07)}
+.unit.u-src .shape,.unit.u-sink .shape{fill:var(--bg2)}
+.unit.hop .shape{stroke:var(--hc);stroke-width:2.6;stroke-dasharray:none;fill:rgba(255,255,255,.05)}
+.unit.sel .shape{stroke:var(--acc2);stroke-width:2.8;filter:drop-shadow(0 0 5px rgba(43,195,200,.55))}
+.unit.hop.sel .shape{stroke:var(--hc)}
+/* graph */
+.gnode .shape{fill:var(--panel2);stroke:#8fa3b5;stroke-width:1.8}
+.gnode.k-util .shape{stroke:var(--cw);fill:rgba(74,144,194,.08)}
+.gnode.k-steam .shape{stroke:var(--steam);fill:rgba(192,138,74,.08)}
+.gnode.k-src .shape,.gnode.k-sink .shape{fill:var(--bg2);stroke:#6f8396}
+.gnode .ic{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.gnode .nm{font-size:11px;fill:var(--text);font-weight:600}
+.gnode .sm{font-size:9.5px;fill:var(--muted)}
+/* live tags */
+.tag{cursor:pointer}
+.tag .bub{fill:var(--bg2);stroke:#9fb4c6;stroke-width:1.3}
+.tag .bl{stroke:#9fb4c6;stroke-width:1}
+.tag .lead{stroke:#6c8195;stroke-width:1;stroke-dasharray:2 2}
+.tag .t1{font-size:8.5px;font-weight:700;fill:var(--text)}
+.tag .t2{font-family:var(--mono);font-size:7.5px;fill:var(--muted)}
+.tag .vb{fill:#0d1a22;stroke:var(--acc-bd);stroke-width:1}
+.tag .vv{font-family:var(--mono);font-size:10.5px;fill:var(--acc2)}
+.tag.dev .bub{stroke:var(--warn);stroke-width:2}
+.tag.dev .vb{stroke:var(--warn);fill:rgba(226,167,60,.14)}
+.tag.dev .vv{fill:#f6d595}
+.badges{pointer-events:none}
+.badges text{font-family:var(--mono);font-size:9.5px;font-weight:700;fill:#0b1117}
+.badges circle{stroke:#0b1117;stroke-width:1.5}
+
+/* ---------- side panel ---------- */
+.side{max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:62px}
+@media (max-width:1060px){.side{max-height:none;position:static}}
+.side h2{margin:4px 0 0;font-size:16px;font-weight:600}
+.side h2 .zh{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:4px}
+.side h3{margin:16px 0 7px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.side h3 .cnt{font-family:var(--mono);color:var(--dim);letter-spacing:0}
+.kindrow{display:flex;flex-wrap:wrap;gap:5px}
+.kind{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px;background:var(--panel3);color:var(--text2);border:1px solid var(--line2)}
+.sig{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.sig:last-child{border-bottom:0}
+.sig .sid{font-family:var(--mono);font-size:11.5px;color:var(--text);white-space:nowrap}
+.sig .snm{font-size:11.5px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.sig .sv{font-family:var(--mono);font-size:12px;text-align:right;white-space:nowrap}
+.sig .sv b{color:var(--acc2);font-weight:500}
+.sig .sv i{font-style:normal;color:var(--dim);font-size:10.5px}
+.sig .sf{grid-column:2 / 4;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.sig .cv{grid-column:1 / 4;font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.7}
+.sig .cv b{color:var(--text2);font-weight:500}
+.sig.dev .sv b{color:#f6d595}
+.empty{font-size:12px;color:var(--muted);padding:8px 10px;border:1px dashed var(--line2);border-radius:6px;background:var(--bg2)}
+.kn{border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:5px;padding:7px 9px;margin-bottom:6px;background:var(--bg2)}
+.kn.APPROVED{border-left-color:var(--ok)} .kn.REJECTED{border-left-color:var(--alarm)} .kn.SOURCE{border-left-color:var(--plan)}
+.kn .kh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:3px}
+.kn .kt{font-size:12px;color:var(--text2);overflow-wrap:anywhere}
+.refs{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.ref{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:3px;line-height:16px;border:1px solid var(--line2);color:var(--muted);background:var(--panel);overflow-wrap:anywhere}
+.ref.rs{color:var(--acc2);border-color:var(--acc-bd)}
+.ref.snap{color:#c9b6f0;border-color:rgba(160,130,230,.45)}
+.ref.rv{color:#8fdcb4;border-color:rgba(69,185,129,.4)}
+.ref.rv.rej{color:#f3a49d;border-color:rgba(224,90,80,.45)}
+.ref.src{color:var(--plan)}
+.imp{border:1px solid var(--line2);border-radius:6px;padding:9px 10px;background:var(--bg2)}
+.imp .r{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+.imp input[type=range]{flex:1;min-width:120px;accent-color:var(--acc)}
+.hoprow{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px dashed var(--line)}
+.hoprow .hb{width:18px;height:18px;border-radius:50%;color:#0b1117;font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;line-height:18px}
+.hoprow .els{font-size:11.5px;color:var(--text2)}
+.hoprow .ms{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.loopc{border:1px solid rgba(226,167,60,.45);border-left:3px solid var(--warn);border-radius:6px;padding:6px 9px;background:var(--warn-bg);margin-top:7px;font-size:11.5px}
+.loopc.closed{border-color:rgba(224,90,80,.55);border-left-color:var(--alarm);background:var(--alarm-bg)}
+.loopc b{font-weight:600}
+.note{font-size:11.5px;color:var(--muted);margin-top:7px}
+
+/* ---------- trends ---------- */
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.ctrl .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ctrl .lbl{font-size:11px;color:var(--muted)}
+.simnote{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--plan-bg);border-bottom:1px solid var(--line);font-size:12px;color:#c3d0dc}
+.simnote b{font-weight:600}
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 14px}
+@media (max-width:640px){.tgrid{grid-template-columns:minmax(0,1fr)}}
+.tc{border:1px solid var(--line);border-radius:6px;background:var(--bg2);min-width:0}
+.tc .th{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;padding:6px 10px 2px}
+.tc .th .n{font-size:12px;color:var(--text2)}
+.tc .th .n b{font-family:var(--mono);font-weight:600;color:var(--text);margin-right:5px}
+.tc .tv{font-family:var(--mono);font-size:13px;color:var(--text)}
+.tc .tv small{color:var(--dim);font-size:10.5px}
+.tc .td{font-size:10.5px;margin-left:6px;color:var(--dim)}
+.tc .td.up{color:#f6d595}
+.tc canvas{display:block;width:100%;height:140px}
+.tc.primary{border-color:rgba(226,167,60,.6);box-shadow:0 0 0 1px rgba(226,167,60,.18)}
+.prim{font-size:10px;padding:0 6px;border-radius:3px;background:var(--warn-bg);border:1px solid rgba(226,167,60,.55);color:#f6d595;margin-left:6px;white-space:nowrap}
+.prim[hidden]{display:none}
+.seg button:disabled{opacity:.4;cursor:default}
+.tcap{padding:0 14px 12px;font-size:12px;color:var(--text2)}
+.tcap b{color:#f6d595;font-weight:600}
+.tc .tk{display:flex;justify-content:space-between;padding:0 10px 6px;font-size:10.5px;color:var(--muted);gap:8px}
+.tc .tk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tc .tk span:last-child{text-align:right}
+
+/* ---------- now panel ---------- */
+.status{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-bottom:1px solid var(--line)}
+.status .ic{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--ok)}
+.status.dist .ic{background:var(--warn);box-shadow:0 0 0 4px rgba(226,167,60,.18)}
+.status.comp .ic{background:var(--acc)}
+.status .st{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.status .tt{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.4}
+.nowsec{padding:8px 14px 10px;border-bottom:1px solid var(--line)}
+.nowsec:last-child{border-bottom:0}
+@media (min-width:1181px){#now{max-height:700px;overflow:auto}}
+.nowsec h3{margin:2px 0 6px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.nowsec ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.nowsec li .ln{font-size:12.5px;color:var(--text2)}
+.nowsec li .ln b{color:var(--text);font-weight:600}
+.nowsec li .ln .w{color:#f6d595}
+.nowsec li .ln .g{color:#8fdcb4}
+
+/* ---------- evidence strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+.strip > div{padding:10px 14px;border-right:1px solid var(--line);min-width:0}
+.strip > div:last-child{border-right:0}
+@media (max-width:980px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}.strip > div:nth-child(2){border-right:0}.strip > div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+@media (max-width:560px){.strip{grid-template-columns:minmax(0,1fr)}.strip > div{border-right:0;border-bottom:1px solid var(--line)}.strip > div:last-child{border-bottom:0}}
+.strip .k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.strip .v{font-family:var(--mono);font-size:11.5px;color:var(--acc2);overflow-wrap:anywhere}
+.strip .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+.foot{max-width:1500px;margin:0 auto;padding:6px 20px 28px;font-size:12px;color:var(--muted)}
+.foot .hon{border:1px solid var(--line2);border-radius:6px;padding:9px 12px;background:var(--panel);color:var(--text2)}
+.foot .hon b{color:var(--text)}
+.caps{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+
+@media (max-width:640px){
+  .top{padding:8px 12px;position:static}
+  .chip.rev{display:none}
+  .wrap{padding:12px 12px 6px;gap:12px}
+  .foot{padding:6px 12px 24px}
+  .brand .s{display:none}
+  .ph,.ctrl,.pb{padding-left:12px;padding-right:12px}
+  .tgrid{padding:10px 12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="#121b23" stroke="#2b3c4e"/><path d="M6 17h4l2-8 3 11 2-6h3" fill="none" stroke="#2bc3c8" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+    <div><div class="t">Plant Context Lab</div><div class="s">Tennessee Eastman process · reactor cooling</div></div>
+  </div>
+  <div class="sp"></div>
+  <div class="chips">
+    <span class="chip" id="cLive"><span class="dot" id="cDot"></span><span id="cLiveT">暫停</span></span>
+    <span class="chip mono num" id="cT">t = 0.00 h</span>
+    <span class="chip mono num" id="cK">K = 0</span>
+    <span class="chip mono rev">plant rev 0.2.0</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="row1">
+    <div class="panel" id="plantPanel">
+      <div class="ph">
+        <h2>製程畫面 · Plant view</h2>
+        <div class="seg" role="group" aria-label="切換視圖">
+          <button type="button" data-view="pid" aria-pressed="true">P&amp;ID</button>
+          <button type="button" data-view="graph" aria-pressed="false">Graph</button>
+        </div>
+        <span class="sp"></span>
+        <span class="badge built" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
+      </div>
+      <div class="hlbar" id="hlbar"></div>
+      <div class="swipe">← 左右滑動看完整圖面 →</div>
+      <div class="svgwrap" id="wrapPid"><svg id="pid" viewBox="0 0 1180 650" role="group" aria-label="Tennessee Eastman P&amp;ID"></svg></div>
+      <div class="svgwrap" id="wrapGraph" hidden><svg id="gsvg" viewBox="0 0 1180 600" role="group" aria-label="Process graph node-link view"></svg></div>
+      <div class="pb legend">
+        <span><span class="ln"></span>製程物流 material</span>
+        <span><span class="ln cw"></span>公用流體 utility</span>
+        <span>影響 hop <span class="hops" id="lgHops"></span></span>
+        <span>點選設備或管線查看訊號、工程知識與影響範圍</span>
+      </div>
+    </div>
+    <aside class="panel side" id="side" aria-live="polite"></aside>
+  </section>
+
+  <section class="row2">
+    <div class="panel" id="trendPanel">
+      <div class="ph">
+        <h2>即時趨勢 · Live trends</h2>
+        <span class="sp"></span>
+        <span class="badge sim">瀏覽器內模擬</span>
+      </div>
+      <div class="simnote"><b>瀏覽器內模擬資料（示意，非實際模擬器輸出）</b></div>
+      <div class="ctrl">
+        <div class="grp">
+          <button type="button" class="btn pri" id="bRun">▶ 開始</button>
+          <div class="seg" role="group" aria-label="速度"><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="4" aria-pressed="false">4×</button></div>
+          <div class="seg" role="group" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled title="注入擾動後可用">擾動事件</button></div>
+        </div>
+        <div class="grp">
+          <label class="lbl" for="selDist">擾動</label>
+          <select id="selDist">
+            <option value="5">IDV(4) 反應器冷卻水入口溫度 step +5 °C</option>
+            <option value="10">IDV(4) 反應器冷卻水入口溫度 step +10 °C</option>
+          </select>
+          <button type="button" class="btn warnb" id="bInject">⚡ 注入擾動</button>
+          <button type="button" class="btn" id="bClear" disabled>移除擾動</button>
+        </div>
+      </div>
+      <div class="tgrid" id="tgrid"></div>
+      <div class="tcap" id="tcap"></div>
+    </div>
+
+    <div class="panel" id="nowPanel">
+      <div class="ph"><h2>現在發生什麼 · reactor cooling</h2><span class="sp"></span><span class="badge wip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
+      <div id="now"></div>
+    </div>
+  </section>
+
+  <section class="panel strip" id="strip" aria-label="Context and evidence"></section>
+</main>
+
+<footer class="foot">
+  <div class="hon"><b>概念示範。</b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。
+    <div class="caps">
+      <span class="badge built">已實作 · 製程拓撲與訊號綁定（人工核對）</span>
+      <span class="badge built">已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）</span>
+      <span class="badge built">已實作 · 工程知識擷取與人工審查（staged revision）</span>
+      <span class="badge wip">開發中 · plant context composition</span>
+      <span class="badge wip">開發中 · UI 讀取 pinned snapshot</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+var RM=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* =====================================================================
+   1. Topology (tep-sim ProcessGraph 0.2.0, HUMAN_VERIFIED) - verbatim
+   ===================================================================== */
+var TOPO={"n":[["feed_a_supply","FEED_SOURCE","A feed supply"],["feed_d_supply","FEED_SOURCE","D feed supply"],["feed_e_supply","FEED_SOURCE","E feed supply"],["feed_ac_supply","FEED_SOURCE","A and C feed supply"],["reactor_feed_mixer","MIXER","Reactor feed mixing zone"],["reactor","REACTOR","Reactor"],["condenser","CONDENSER","Product condenser"],["separator","SEPARATOR","Vapor-liquid separator"],["compressor","COMPRESSOR","Recycle compressor"],["stripper","STRIPPER","Product stripper"],["purge_outlet","PRODUCT_SINK","Purge outlet"],["product_outlet","PRODUCT_SINK","Product outlet"],["reactor_cooling_water_supply","UTILITY_SOURCE","Reactor cooling water supply"],["reactor_cooling_water_return","UTILITY_SINK","Reactor cooling water return"],["condenser_cooling_water_supply","UTILITY_SOURCE","Condenser cooling water supply"],["condenser_cooling_water_return","UTILITY_SINK","Condenser cooling water return"],["stripper_steam_supply","UTILITY_SOURCE","Stripper steam supply"]],"e":[["stream_1","MATERIAL_STREAM","feed_a_supply","reactor_feed_mixer","A feed"],["stream_2","MATERIAL_STREAM","feed_d_supply","reactor_feed_mixer","D feed"],["stream_3","MATERIAL_STREAM","feed_e_supply","reactor_feed_mixer","E feed"],["stream_4","MATERIAL_STREAM","feed_ac_supply","stripper","A and C feed"],["stream_5","MATERIAL_STREAM","stripper","reactor_feed_mixer","Stripper overhead"],["stream_6","MATERIAL_STREAM","reactor_feed_mixer","reactor","Reactor feed"],["stream_7","MATERIAL_STREAM","reactor","condenser","Reactor product"],["condenser_outlet","MATERIAL_STREAM","condenser","separator","Condensed reactor product"],["separator_vapor","MATERIAL_STREAM","separator","compressor","Separator vapor to recycle"],["stream_8","MATERIAL_STREAM","compressor","reactor_feed_mixer","Recycle"],["stream_9","MATERIAL_STREAM","separator","purge_outlet","Purge"],["stream_10","MATERIAL_STREAM","separator","stripper","Separator underflow"],["stream_11","MATERIAL_STREAM","stripper","product_outlet","Product"],["reactor_cooling_water_in","UTILITY_STREAM","reactor_cooling_water_supply","reactor","Reactor cooling water inlet"],["reactor_cooling_water_out","UTILITY_STREAM","reactor","reactor_cooling_water_return","Reactor cooling water outlet"],["condenser_cooling_water_in","UTILITY_STREAM","condenser_cooling_water_supply","condenser","Condenser cooling water inlet"],["condenser_cooling_water_out","UTILITY_STREAM","condenser","condenser_cooling_water_return","Condenser cooling water outlet"],["stripper_steam","UTILITY_STREAM","stripper_steam_supply","stripper","Stripper steam"]],"b":[["XMEAS(1)","stream_1","MEASURES","flow"],["XMEAS(2)","stream_2","MEASURES","flow"],["XMEAS(3)","stream_3","MEASURES","flow"],["XMEAS(4)","stream_4","MEASURES","flow"],["XMEAS(5)","stream_8","MEASURES","flow"],["XMEAS(6)","stream_6","MEASURES","flow"],["XMEAS(7)","reactor","MEASURES","pressure"],["XMEAS(8)","reactor","MEASURES","level"],["XMEAS(9)","reactor","MEASURES","temperature"],["XMEAS(10)","stream_9","MEASURES","flow"],["XMEAS(11)","separator","MEASURES","temperature"],["XMEAS(12)","separator","MEASURES","level"],["XMEAS(13)","separator","MEASURES","pressure"],["XMEAS(14)","stream_10","MEASURES","flow"],["XMEAS(15)","stripper","MEASURES","level"],["XMEAS(16)","stripper","MEASURES","pressure"],["XMEAS(17)","stream_11","MEASURES","flow"],["XMEAS(18)","stripper","MEASURES","temperature"],["XMEAS(19)","stripper_steam","MEASURES","flow"],["XMEAS(20)","compressor","MEASURES","power"],["XMEAS(21)","reactor_cooling_water_out","MEASURES","temperature"],["XMEAS(22)","condenser_cooling_water_out","MEASURES","temperature"],["XMEAS(23)","stream_6","MEASURES","composition"],["XMEAS(24)","stream_6","MEASURES","composition"],["XMEAS(25)","stream_6","MEASURES","composition"],["XMEAS(26)","stream_6","MEASURES","composition"],["XMEAS(27)","stream_6","MEASURES","composition"],["XMEAS(28)","stream_6","MEASURES","composition"],["XMEAS(29)","stream_9","MEASURES","composition"],["XMEAS(30)","stream_9","MEASURES","composition"],["XMEAS(31)","stream_9","MEASURES","composition"],["XMEAS(32)","stream_9","MEASURES","composition"],["XMEAS(33)","stream_9","MEASURES","composition"],["XMEAS(34)","stream_9","MEASURES","composition"],["XMEAS(35)","stream_9","MEASURES","composition"],["XMEAS(36)","stream_9","MEASURES","composition"],["XMEAS(37)","stream_11","MEASURES","composition"],["XMEAS(38)","stream_11","MEASURES","composition"],["XMEAS(39)","stream_11","MEASURES","composition"],["XMEAS(40)","stream_11","MEASURES","composition"],["XMEAS(41)","stream_11","MEASURES","composition"],["XMV(1)","stream_2","ACTUATES","flow"],["XMV(2)","stream_3","ACTUATES","flow"],["XMV(3)","stream_1","ACTUATES","flow"],["XMV(4)","stream_4","ACTUATES","flow"],["XMV(5)","compressor","ACTUATES","valve_position"],["XMV(6)","stream_9","ACTUATES","valve_position"],["XMV(7)","stream_10","ACTUATES","flow"],["XMV(8)","stream_11","ACTUATES","flow"],["XMV(9)","stripper_steam","ACTUATES","valve_position"],["XMV(10)","reactor_cooling_water_in","ACTUATES","flow"],["XMV(11)","condenser_cooling_water_in","ACTUATES","flow"],["XMV(12)","reactor","ACTUATES","speed"]]};
+var LOOPS=[
+  {id:'recycle',name:'循環回路 · recycle loop',path:'reactor → condenser → separator → compressor → feed mixer → reactor',e:['stream_7','condenser_outlet','separator_vapor','stream_8','stream_6']},
+  {id:'stripper',name:'汽提回路 · stripper loop',path:'separator → stripper → feed mixer → reactor → condenser → separator',e:['stream_10','stream_5','stream_6','stream_7','condenser_outlet']}
+];
+var HOPC=['#e05a50','#ee7a3e','#e2a73c','#d8c35a','#a9c46a','#7fbf8f','#6fb3a8'];
+/* branch-comparison anchors measured in tep-agent-lab (reactor cooling incident, 0.1 h) */
+var ANCHOR={'XMEAS(9)':'MAE 0.0648 degC','XMEAS(21)':'MAE 0.1512 degC'};
+
+var SHORT={feed_a_supply:'A feed',feed_d_supply:'D feed',feed_e_supply:'E feed',feed_ac_supply:'A+C feed',reactor_feed_mixer:'Feed mixer',reactor:'Reactor',condenser:'Condenser',separator:'Separator',compressor:'Compressor',stripper:'Stripper',purge_outlet:'Purge',product_outlet:'Product',reactor_cooling_water_supply:'Reactor CW supply',reactor_cooling_water_return:'Reactor CW return',condenser_cooling_water_supply:'Cond. CW supply',condenser_cooling_water_return:'Cond. CW return',stripper_steam_supply:'Steam supply'};
+var ZH={feed_a_supply:'A 進料',feed_d_supply:'D 進料',feed_e_supply:'E 進料',feed_ac_supply:'A+C 進料',reactor_feed_mixer:'進料混合區',reactor:'反應器',condenser:'產物冷凝器',separator:'氣液分離器',compressor:'循環壓縮機',stripper:'產品汽提塔',purge_outlet:'排放口',product_outlet:'產品出口',reactor_cooling_water_supply:'反應器冷卻水供應',reactor_cooling_water_return:'反應器冷卻水回水',condenser_cooling_water_supply:'冷凝器冷卻水供應',condenser_cooling_water_return:'冷凝器冷卻水回水',stripper_steam_supply:'汽提蒸汽供應',
+  stream_1:'A 進料',stream_2:'D 進料',stream_3:'E 進料',stream_4:'A+C 進料',stream_5:'汽提塔塔頂',stream_6:'反應器進料',stream_7:'反應器產物',condenser_outlet:'冷凝後產物',separator_vapor:'分離器氣相',stream_8:'循環',stream_9:'排放',stream_10:'分離器底流',stream_11:'產品',reactor_cooling_water_in:'反應器冷卻水入口',reactor_cooling_water_out:'反應器冷卻水出口',condenser_cooling_water_in:'冷凝器冷卻水入口',condenser_cooling_water_out:'冷凝器冷卻水出口',stripper_steam:'汽提蒸汽'};
+var REFNAME={downs_vogel_1993:'Downs & Vogel (1993)',sim_fortran:'TEP Fortran model · teprob.f',bathelt_ricker_jelali_2015:'Bathelt, Ricker & Jelali (2015) Fig. 3',sim_python_backend:'TEP Python backend',upstream_constants:'simulator variable metadata'};
+var NODE_FORTRAN={reactor_feed_mixer:1,reactor:1,separator:1,stripper:1};
+/* signal metadata: [name, unit, nominal]. nominal values are illustrative base values (Mode 1 order of magnitude) */
+var SIG={
+ 'XMEAS(1)':['A feed','kscmh',0.25052],'XMEAS(2)':['D feed','kg/h',3664.0],'XMEAS(3)':['E feed','kg/h',4509.3],'XMEAS(4)':['A and C feed','kscmh',9.3477],
+ 'XMEAS(5)':['Recycle flow','kscmh',26.902],'XMEAS(6)':['Reactor feed rate','kscmh',42.339],'XMEAS(7)':['Reactor pressure','kPa gauge',2705.0],'XMEAS(8)':['Reactor level','%',75.0],
+ 'XMEAS(9)':['Reactor temperature','degC',120.40],'XMEAS(10)':['Purge rate','kscmh',0.33712],'XMEAS(11)':['Separator temperature','degC',80.109],'XMEAS(12)':['Separator level','%',50.0],
+ 'XMEAS(13)':['Separator pressure','kPa gauge',2633.7],'XMEAS(14)':['Separator underflow','m3/h',25.160],'XMEAS(15)':['Stripper level','%',50.0],'XMEAS(16)':['Stripper pressure','kPa gauge',3102.2],
+ 'XMEAS(17)':['Stripper underflow','m3/h',22.949],'XMEAS(18)':['Stripper temperature','degC',65.731],'XMEAS(19)':['Stripper steam flow','kg/h',230.31],'XMEAS(20)':['Compressor work','kW',341.43],
+ 'XMEAS(21)':['Reactor CW outlet temperature','degC',94.599],'XMEAS(22)':['Condenser CW outlet temperature','degC',77.297],
+ 'XMV(1)':['D feed flow','%',63.053],'XMV(2)':['E feed flow','%',53.980],'XMV(3)':['A feed flow','%',24.644],'XMV(4)':['A and C feed flow','%',61.302],
+ 'XMV(5)':['Compressor recycle valve','%',22.210],'XMV(6)':['Purge valve','%',40.064],'XMV(7)':['Separator liquid flow','%',38.100],'XMV(8)':['Stripper product flow','%',46.534],
+ 'XMV(9)':['Stripper steam valve','%',47.446],'XMV(10)':['Reactor CW flow','% command',41.106],'XMV(11)':['Condenser CW flow','%',18.114],'XMV(12)':['Agitator speed','%',50.0]
+};
+(function(){var comp={6:[23,'ABCDEF',[32.188,8.8933,26.383,6.882,18.776,1.6567]],9:[29,'ABCDEFGH',[32.958,13.823,23.978,1.2565,18.579,2.2633,4.8436,2.2986]],11:[37,'DEFGH',[0.01787,0.8357,0.09858,53.724,43.828]]};
+  Object.keys(comp).forEach(function(s){var c=comp[s];for(var i=0;i<c[1].length;i++){SIG['XMEAS('+(c[0]+i)+')']=['stream '+s+' composition '+c[1][i],'mol%',c[2][i],c[1][i]];}});})();
+
+/* engineering knowledge (staged knowledge revision; frag ids from the extraction run) */
+var KR={
+ row1:{id:'tags-and-limits/row-1 · frag-4999c3a9b6',rv:'review-02/03 APPROVE'},
+ row2:{id:'tags-and-limits/row-2 · frag-05f213cc29',rv:'review-05/06 APPROVE'},
+ row3:{id:'tags-and-limits/row-3 · frag-20b267aeb6',rv:'review-07 APPROVE'},
+ row4:{id:'tags-and-limits/row-4 · frag-5f243b087c',rv:'review-08 APPROVE'},
+ ctrl:{id:'subsystem/control-relation ¶1 · frag-1a009aaf08',rv:'review-10 APPROVE'},
+ c145:{id:'troubleshooting/competing-limit ¶1 · frag-225d0c88bb',rv:'review-11 REJECT'},
+ rcw:{id:'troubleshooting/unverified-instrumentation ¶1 · frag-13c00a2a06',rv:'review-12 REJECT'},
+ remap:{id:'operating-procedure/step-4 · frag-a6eeeb83f3',rv:'review-09 REMAP'},
+ sop1:{id:'operating-procedure/step-1 · frag-08e4924b61',rv:'原文 · 未編譯'},
+ sop2:{id:'operating-procedure/step-2 · frag-6e22886716',rv:'原文 · 未編譯'},
+ sop3:{id:'operating-procedure/step-3 · frag-cfadbe187e',rv:'原文 · 未編譯'},
+ tsrev:{id:'troubleshooting/temperature-review ¶1 · frag-3133c1a869',rv:'原文 · 未編譯'},
+ topo:{id:'tep-process-graph 0.2.0 · downstream BFS',rv:'HUMAN_VERIFIED'}
+};
+var KNOW={
+ 'n:reactor':[
+  {t:'LIMIT',s:'APPROVED',txt:'XMEAS(9) reactor temperature：normal upper 150 degC；shutdown high 175 degC。normal upper 不可當作 shutdown threshold。',r:['row2']},
+  {t:'LIMIT',s:'APPROVED',txt:'XMEAS(7) reactor pressure：normal upper 2895 kPa gauge；shutdown high 3000 kPa gauge。',r:['row1']},
+  {t:'CONFLICT',s:'REJECTED',txt:'競爭主張「normal upper 145 degC」（troubleshooting note）已 REJECT；150 與 145 兩份引用都保留供稽核。',r:['c145']},
+  {t:'SOP',s:'SOURCE',txt:'Read XMEAS(9) with its unit and exact source identity; distinguish the coolant outlet reading…',r:['sop2']},
+  {t:'SOP',s:'SOURCE',txt:'Compare the process temperature with the normal and shutdown constraints in the tag table…',r:['sop3']},
+  {t:'REMAP',s:'APPROVED',txt:'「reactor-side temperature」只在該 mention 對應 XMEAS(9)，不建立全域 alias。',r:['remap']}
+ ],
+ 'e:reactor_cooling_water_in':[
+  {t:'CONTROL',s:'APPROVED',txt:'XMV(10) manipulates reactor cooling-water flow. Increasing cooling flow is a means of increasing heat removal, subject to the thermal state and available utility conditions.',r:['ctrl']},
+  {t:'TAG',s:'APPROVED',txt:'XMV(10)：單位 % command；基準 41.106；指令範圍 0–100；不是製程 alarm / shutdown 限值。',r:['row4']},
+  {t:'GAP',s:'REJECTED',txt:'提議的入口溫度儀表 RCW-IN-TT 在 pinned plant context 中不存在 → 不建立 signal identity。入口溫度無法直接觀測。',r:['rcw']}
+ ],
+ 'e:reactor_cooling_water_out':[
+  {t:'TAG',s:'APPROVED',txt:'XMEAS(21) reactor cooling-water outlet temperature，degC；基準 94.599；alarm 與 shutdown 未指定 → 不推測限值。',r:['row3']},
+  {t:'SOP',s:'SOURCE',txt:'When process temperature rises, compare process and cooling-water outlet readings…',r:['tsrev']}
+ ],
+ 'n:reactor_cooling_water_supply':[{t:'SOP',s:'SOURCE',txt:'Identify the reactor and internal cooling bundle in the selected plant revision.',r:['sop1']}],
+ 'n:reactor_cooling_water_return':[{t:'SOP',s:'SOURCE',txt:'Identify the reactor and internal cooling bundle in the selected plant revision.',r:['sop1']}]
+};
+
+/* index */
+var TN={},TE={},TNODES=[],TEDGES=[],BIND={},SN={};
+TOPO.n.forEach(function(r){var o={id:r[0],kind:r[1],name:r[2]};TN[o.id]=o;TNODES.push(o)});
+TOPO.e.forEach(function(r){var o={id:r[0],kind:r[1],s:r[2],t:r[3],name:r[4]};TE[o.id]=o;TEDGES.push(o);var m=/^stream_(\d+)$/.exec(o.id);if(m)SN[o.id]=m[1];});
+TOPO.b.forEach(function(b){(BIND[b[1]]=BIND[b[1]]||[]).push({v:b[0],rel:b[2],q:b[3]})});
+function keyOf(att){return (TN[att]?'n:':'e:')+att}
+function elLabel(k){var id=k.slice(2);return k[0]==='n'?SHORT[id]:(SN[id]?'stream '+SN[id]:TE[id].name)}
+
+/* =====================================================================
+   2. P&ID geometry (hand laid out after the classic TEP flowsheet)
+   ===================================================================== */
+var PU={
+ feed_a_supply:{t:'src',x:80,y:255,w:96,h:26},
+ feed_d_supply:{t:'src',x:80,y:300,w:96,h:26},
+ feed_e_supply:{t:'src',x:80,y:345,w:96,h:26},
+ reactor_feed_mixer:{t:'mix',x:230,y:300,w:26,h:110},
+ reactor:{t:'reactor',x:400,y:360,w:90,h:180},
+ condenser:{t:'hx',x:600,y:150,w:110,h:44},
+ separator:{t:'drum',x:830,y:310,w:160,h:64},
+ compressor:{t:'comp',x:850,y:70,w:44,h:44},
+ stripper:{t:'col',x:960,y:470,w:60,h:170},
+ purge_outlet:{t:'sink',x:1110,y:200,w:96,h:26},
+ product_outlet:{t:'sink',x:1110,y:600,w:96,h:26},
+ feed_ac_supply:{t:'srcl',x:1110,y:420,w:96,h:26},
+ stripper_steam_supply:{t:'steam',x:1110,y:510,w:96,h:28},
+ reactor_cooling_water_supply:{t:'util',x:320,y:575,w:116,h:30},
+ reactor_cooling_water_return:{t:'util',x:480,y:575,w:116,h:30},
+ condenser_cooling_water_supply:{t:'util',x:570,y:250,w:104,h:28},
+ condenser_cooling_water_return:{t:'util',x:690,y:250,w:104,h:28}
+};
+var PP={
+ stream_1:{pts:[[128,255],[217,255]],lp:[192,246]},
+ stream_2:{pts:[[128,300],[217,300]],lp:[192,291]},
+ stream_3:{pts:[[128,345],[217,345]],lp:[192,336]},
+ stream_4:{pts:[[1062,420],[990,420]],lp:[1012,411]},
+ stream_5:{pts:[[960,385],[960,368],[700,368],[700,620],[230,620],[230,355]]},
+ stream_6:{pts:[[243,330],[355,330]],af:.45},
+ stream_7:{pts:[[425,276],[425,150],[545,150]]},
+ condenser_outlet:{pts:[[655,150],[790,150],[790,279]]},
+ separator_vapor:{pts:[[850,279],[850,92]]},
+ stream_8:{pts:[[828,70],[230,70],[230,245]]},
+ stream_9:{pts:[[895,283],[895,200],[1062,200]],af:.4},
+ stream_10:{pts:[[800,342],[800,470],[930,470]]},
+ stream_11:{pts:[[960,555],[960,600],[1062,600]],noMid:1,lp:[1000,591]},
+ reactor_cooling_water_in:{pts:[[320,560],[320,505],[383,505],[383,449]]},
+ reactor_cooling_water_out:{pts:[[417,449],[417,505],[480,505],[480,560]]},
+ condenser_cooling_water_in:{pts:[[570,236],[570,172]]},
+ condenser_cooling_water_out:{pts:[[630,172],[630,205],[690,205],[690,236]]},
+ stripper_steam:{pts:[[1062,510],[990,510]]}
+};
+var VALVES={stream_1:[150,255,'h','XMV(3)'],stream_2:[150,300,'h','XMV(1)'],stream_3:[150,345,'h','XMV(2)'],stream_4:[1040,420,'h','XMV(4)'],
+ stream_9:[1030,200,'h','XMV(6)'],stream_10:[800,425,'v','XMV(7)'],stream_11:[1035,600,'h','XMV(8)'],stripper_steam:[1035,510,'h','XMV(9)'],
+ reactor_cooling_water_in:[320,532,'v','XMV(10)'],condenser_cooling_water_in:[570,204,'v','XMV(11)']};
+/* live instrument tags drawn on the P&ID: [signal, attached element, ISA letters, bubble x,y, leader end x,y, value box side] */
+var PTAGS=[
+ ['XMEAS(7)','n:reactor','PI',482,296,445,296,'r'],
+ ['XMEAS(9)','n:reactor','TI',482,342,445,342,'r'],
+ ['XMEAS(21)','e:reactor_cooling_water_out','TI',530,532,480,532,'r'],
+ ['XMV(10)','e:reactor_cooling_water_in','FC',352,532,327,532,'r']
+];
+
+var ANCH={pid:{},graph:{}};
+function f1(v){return (+v).toFixed(1)}
+function polyD(pts){return 'M'+pts.map(function(p){return p[0]+' '+p[1]}).join('L')}
+function uv(a,b){var dx=b[0]-a[0],dy=b[1]-a[1],L=Math.sqrt(dx*dx+dy*dy)||1;return [dx/L,dy/L,L]}
+function arrowPts(x,y,dx,dy,s){var px=-dy,py=dx,bx=x-dx*s,by=y-dy*s;return [x,y,bx+px*s*.55,by+py*s*.55,bx-px*s*.55,by-py*s*.55].map(f1).join(' ')}
+
+function renderPID(){
+  var svg=$('#pid'),s='';
+  s+='<rect x="0" y="0" width="1180" height="650" fill="#0d151c"/>';
+  s+='<g opacity=".35" stroke="#1a2631" stroke-width="1">';
+  for(var gx=50;gx<1180;gx+=50)s+='<line x1="'+gx+'" y1="0" x2="'+gx+'" y2="650"/>';
+  for(var gy=50;gy<650;gy+=50)s+='<line x1="0" y1="'+gy+'" x2="1180" y2="'+gy+'"/>';
+  s+='</g>';
+  TEDGES.forEach(function(e){
+    var g=PP[e.id],pts=g.pts,d=polyD(pts),n=pts.length,ul=uv(pts[n-2],pts[n-1]);
+    var cls=e.kind==='UTILITY_STREAM'?(e.id==='stripper_steam'?' steam':' util'):'';
+    var arr='<polygon class="arr" points="'+arrowPts(pts[n-1][0],pts[n-1][1],ul[0],ul[1],9)+'"/>';
+    var bi=0,bl=0;for(var i=0;i<n-1;i++){var u=uv(pts[i],pts[i+1]);if(u[2]>bl){bl=u[2];bi=i}}
+    var ub=uv(pts[bi],pts[bi+1]),fr=g.af||.5,mx=pts[bi][0]+(pts[bi+1][0]-pts[bi][0])*fr,my=pts[bi][1]+(pts[bi+1][1]-pts[bi][1])*fr;
+    if(bl>=100&&!g.noMid)arr+='<polygon class="arr" points="'+arrowPts(mx+ub[0]*5,my+ub[1]*5,ub[0],ub[1],8)+'"/>';
+    ANCH.pid['e:'+e.id]=[mx,my];
+    var horiz=Math.abs(ub[0])>Math.abs(ub[1]);
+    var lp=g.lp||(horiz?[mx-18,my-10]:[mx+13,my-14]);
+    var num=SN[e.id],lab='';
+    if(num){var w=num.length>1?20:15;lab='<g class="snum"><rect x="'+f1(lp[0]-w/2)+'" y="'+f1(lp[1]-7)+'" width="'+w+'" height="14" rx="3"/><text x="'+f1(lp[0])+'" y="'+f1(lp[1]+3.5)+'" text-anchor="middle">'+num+'</text></g>';}
+    var v=VALVES[e.id],vs='';
+    if(v){var x=v[0],y=v[1];
+      if(v[2]==='h'){vs='<path class="vstem" d="M'+x+' '+y+'V'+(y-11)+'M'+(x-5)+' '+(y-11)+'H'+(x+5)+'"/><polygon class="valve" points="'+(x-7)+','+(y-6)+' '+(x+7)+','+(y+6)+' '+(x+7)+','+(y-6)+' '+(x-7)+','+(y+6)+'"/><text class="vlab" x="'+x+'" y="'+(y+16)+'" text-anchor="middle">'+v[3]+'</text>';}
+      else{vs='<path class="vstem" d="M'+x+' '+y+'H'+(x+11)+'M'+(x+11)+' '+(y-5)+'V'+(y+5)+'"/><polygon class="valve" points="'+(x-6)+','+(y-7)+' '+(x+6)+','+(y+7)+' '+(x-6)+','+(y+7)+' '+(x+6)+','+(y-7)+'"/><text class="vlab" x="'+(x+15)+'" y="'+(y+3)+'">'+v[3]+'</text>';}}
+    s+='<g class="el pipe'+cls+'" data-k="e:'+e.id+'" tabindex="0" role="button" aria-label="'+esc(e.name+(num?' (stream '+num+')':''))+'">'+
+       '<path class="under" d="'+d+'"/><path class="glow" d="'+d+'"/><path class="p" d="'+d+'"/>'+arr+vs+lab+'<path class="hit" d="'+d+'"/></g>';
+  });
+  TNODES.forEach(function(nd){s+=unitSVG(nd.id)});
+  PTAGS.forEach(function(t){
+    var id=t[0],x=t[3],y=t[4],num=id.match(/\d+/)[0],vbx=x+18;
+    s+='<g class="tag" data-k="'+t[1]+'" data-tag="'+id+'"><line class="lead" x1="'+(x-14)+'" y1="'+y+'" x2="'+t[5]+'" y2="'+t[6]+'"/>'+
+       '<circle class="bub" cx="'+x+'" cy="'+y+'" r="14"/><line class="bl" x1="'+(x-14)+'" y1="'+y+'" x2="'+(x+14)+'" y2="'+y+'"/>'+
+       '<text class="t1" x="'+x+'" y="'+(y-3)+'" text-anchor="middle">'+t[2]+'</text><text class="t2" x="'+x+'" y="'+(y+9)+'" text-anchor="middle">'+(id.indexOf('XMV')===0?'V':'')+num+'</text>'+
+       '<rect class="vb" x="'+vbx+'" y="'+(y-9)+'" width="80" height="18" rx="3"/><text class="vv" x="'+(vbx+6)+'" y="'+(y+4)+'"><tspan data-sv="'+id+'">–</tspan> '+esc(SIG[id][1].replace(' gauge','').replace(' command',''))+'</text></g>';
+  });
+  s+='<text x="16" y="26" class="mono" style="font-size:10.5px;fill:#5d6e7d">TEP flowsheet · 版面為自繪示意（拓撲依 ProcessGraph 0.2.0）</text>';
+  s+='<g class="badges" id="pidBadges"></g>';
+  svg.innerHTML=s;
+}
+function unitSVG(id){
+  var u=PU[id],x=u.x,y=u.y,w=u.w,h=u.h,L=SHORT[id],o='',t=u.t,cls='u-'+t,x0=x-w/2,y0=y-h/2;
+  ANCH.pid['n:'+id]=[x0+4,y0+2];
+  if(t==='src'||t==='sink'){o='<polygon class="shape" points="'+x0+','+y0+' '+(x0+w-11)+','+y0+' '+(x0+w)+','+y+' '+(x0+w-11)+','+(y0+h)+' '+x0+','+(y0+h)+'"/><text class="nm" x="'+(x-4)+'" y="'+(y+4)+'" text-anchor="middle">'+L+'</text>';}
+  else if(t==='srcl'){cls='u-src';o='<polygon class="shape" points="'+(x0+w)+','+y0+' '+(x0+11)+','+y0+' '+x0+','+y+' '+(x0+11)+','+(y0+h)+' '+(x0+w)+','+(y0+h)+'"/><text class="nm" x="'+(x+4)+'" y="'+(y+4)+'" text-anchor="middle">'+L+'</text>';}
+  else if(t==='util'||t==='steam'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="5"/><text class="sm" x="'+x+'" y="'+(y+3.5)+'" text-anchor="middle" style="fill:#b3c0cb;font-size:10px">'+L+'</text>';}
+  else if(t==='mix'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="4"/><text class="sm" x="'+x+'" y="'+(y+3)+'" text-anchor="middle" transform="rotate(-90 '+x+' '+y+')" style="font-size:9.5px">MIXER</text><text class="nm" x="'+(x0+w+8)+'" y="'+(y0-6)+'" style="font-size:10.5px">'+L+'</text>';}
+  else if(t==='reactor'){
+    o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="45" ry="22"/>'+
+      '<path class="deco" d="M383 449V438L417 426L383 414L417 402L383 390L417 378V449"/>'+
+      '<circle class="deco" cx="400" cy="256" r="8"/><path class="deco" d="M400 264V305M386 305H414"/>'+
+      '<text class="nm" x="400" y="336" text-anchor="middle">Reactor</text><text class="sm" x="400" y="350" text-anchor="middle">R</text>';}
+  else if(t==='hx'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="22"/><path class="deco" d="M570 172V140H580V160H590V140H600V160H610V140H620V160H630V172"/><text class="nm" x="'+x+'" y="'+(y0-8)+'" text-anchor="middle">Condenser</text>';}
+  else if(t==='drum'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="32"/><path class="deco" d="M'+(x0+20)+' '+(y+12)+'H'+(x0+w-20)+'"/><text class="nm" x="'+x+'" y="'+(y+2)+'" text-anchor="middle">Separator</text>';}
+  else if(t==='comp'){o='<circle class="shape" cx="'+x+'" cy="'+y+'" r="22"/><path class="deco" d="M'+(x+14)+' '+(y-17)+'L'+(x-14)+' '+(y-8)+'V'+(y+8)+'L'+(x+14)+' '+(y+17)+'"/><text class="nm" x="'+x+'" y="'+(y-30)+'" text-anchor="middle">Compressor</text>';}
+  else if(t==='col'){var tr='';for(var i=0;i<9;i++){var ty=y0+30+i*13;tr+='M'+(i%2?x0+10:x0+4)+' '+ty+'H'+(i%2?x0+w-4:x0+w-10);}
+    o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="30" ry="16"/><path class="deco" d="'+tr+'"/><text class="nm" x="'+(x0-8)+'" y="'+(y+62)+'" text-anchor="end">Stripper</text>';}
+  return '<g class="el unit '+cls+'" data-k="n:'+id+'" tabindex="0" role="button" aria-label="'+esc(TN[id].name)+'">'+o+'</g>';
+}
+
+/* =====================================================================
+   3. Graph view (abstract node-link layout of the same ids)
+   ===================================================================== */
+var GP={feed_a_supply:[70,140],feed_d_supply:[70,250],feed_e_supply:[70,360],reactor_feed_mixer:[230,250],reactor:[400,250],
+  reactor_cooling_water_supply:[320,410],reactor_cooling_water_return:[480,410],condenser:[570,250],condenser_cooling_water_supply:[510,110],
+  condenser_cooling_water_return:[630,110],separator:[740,250],compressor:[900,120],purge_outlet:[1090,180],stripper:[900,370],
+  product_outlet:[1090,370],feed_ac_supply:[1090,480],stripper_steam_supply:[990,520]};
+var GCURVE={stream_8:[[700,8],[300,8]],stream_5:[[800,575],[330,575]]};
+function gKind(n){if(/UTILITY/.test(n.kind))return n.id==='stripper_steam_supply'?'steam':'util';if(n.kind==='FEED_SOURCE')return 'src';if(n.kind==='PRODUCT_SINK')return 'sink';return 'unit';}
+function gR(id){return gKind(TN[id])==='unit'?25:16}
+function renderGraph(){
+  var s='<rect x="0" y="0" width="1180" height="600" fill="#0d151c"/>';
+  TEDGES.forEach(function(e){
+    var a=GP[e.s],b=GP[e.t],ra=gR(e.s),rb=gR(e.t)+4,d,end,dir,mid,c=GCURVE[e.id];
+    if(c){var u1=uv(a,c[0]),u2=uv(b,c[1]);var p0=[a[0]+u1[0]*ra,a[1]+u1[1]*ra],p3=[b[0]+u2[0]*rb,b[1]+u2[1]*rb];
+      d='M'+f1(p0[0])+' '+f1(p0[1])+'C'+c[0][0]+' '+c[0][1]+' '+c[1][0]+' '+c[1][1]+' '+f1(p3[0])+' '+f1(p3[1]);end=p3;dir=uv(c[1],p3);
+      mid=[.125*p0[0]+.375*c[0][0]+.375*c[1][0]+.125*p3[0],.125*p0[1]+.375*c[0][1]+.375*c[1][1]+.125*p3[1]];}
+    else{var u=uv(a,b);var p=[a[0]+u[0]*ra,a[1]+u[1]*ra],q=[b[0]-u[0]*rb,b[1]-u[1]*rb];d='M'+f1(p[0])+' '+f1(p[1])+'L'+f1(q[0])+' '+f1(q[1]);end=q;dir=u;mid=[(p[0]+q[0])/2,(p[1]+q[1])/2];}
+    ANCH.graph['e:'+e.id]=mid;
+    var cls=e.kind==='UTILITY_STREAM'?(e.id==='stripper_steam'?' steam':' util'):'';
+    var num=SN[e.id],lab='';
+    if(num){var w=num.length>1?20:15;lab='<g class="snum"><rect x="'+f1(mid[0]-w/2+12)+'" y="'+f1(mid[1]-17)+'" width="'+w+'" height="14" rx="3"/><text x="'+f1(mid[0]+12)+'" y="'+f1(mid[1]-6.5)+'" text-anchor="middle">'+num+'</text></g>';}
+    s+='<g class="el pipe'+cls+'" data-k="e:'+e.id+'" tabindex="0" role="button" aria-label="'+esc(e.name)+'"><path class="glow" d="'+d+'"/><path class="p" d="'+d+'"/><polygon class="arr" points="'+arrowPts(end[0],end[1],dir[0],dir[1],9)+'"/>'+lab+'<path class="hit" d="'+d+'"/></g>';
+  });
+  TNODES.forEach(function(n){
+    var p=GP[n.id],r=gR(n.id),k=gKind(n),bl=BIND[n.id]||[],nx=0,nv=0;
+    bl.forEach(function(b){if(b.rel==='ACTUATES')nv++;else nx++});
+    var below=n.id==='condenser_cooling_water_supply'||n.id==='condenser_cooling_water_return'||n.id==='compressor'||n.id==='reactor'?-1:1;
+    var ly=below>0?p[1]+r+14:p[1]-r-18;
+    ANCH.graph['n:'+n.id]=[p[0]-r*.72,p[1]-r*.72];
+    var sub=(nx||nv)?('XMEAS×'+nx+(nv?' · XMV×'+nv:'')):'';
+    var ic={REACTOR:'R',CONDENSER:'HX',SEPARATOR:'V',COMPRESSOR:'K',STRIPPER:'C',MIXER:'M'}[n.kind]||'';
+    s+='<g class="el unit gnode k-'+k+'" data-k="n:'+n.id+'" tabindex="0" role="button" aria-label="'+esc(n.name)+'"><circle class="shape" cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'"/>'+
+       (ic?'<text class="ic" x="'+p[0]+'" y="'+(p[1]+3.5)+'" text-anchor="middle">'+ic+'</text>':'')+
+       '<text class="nm" x="'+p[0]+'" y="'+ly+'" text-anchor="middle">'+SHORT[n.id]+'</text>'+(sub?'<text class="sm" x="'+p[0]+'" y="'+(ly+12)+'" text-anchor="middle">'+sub+'</text>':'')+'</g>';
+  });
+  s+='<text x="16" y="590" class="mono" style="font-size:10.5px;fill:#5d6e7d">node-link view · 同一組 node / edge ids · 抽象版面</text>';
+  s+='<g class="badges" id="gBadges"></g>';
+  $('#gsvg').innerHTML=s;
+}
+
+/* =====================================================================
+   4. Impact propagation (downstream BFS over the real topology)
+   ===================================================================== */
+function bfs(k,depth){
+  var hop={},q=[];
+  function vn(id,h){if(hop['n:'+id]===undefined){hop['n:'+id]=h;q.push([id,h])}}
+  if(k[0]==='n')vn(k.slice(2),0);else{var e0=TE[k.slice(2)];hop[k]=0;vn(e0.t,1);}
+  while(q.length){var it=q.shift(),u=it[0],h=it[1];if(h>=depth)continue;
+    TEDGES.forEach(function(e){if(e.s!==u)return;if(hop['e:'+e.id]===undefined)hop['e:'+e.id]=h+1;vn(e.t,h+1);});}
+  return hop;
+}
+var HL={src:null,start:null,depth:3,shown:3,timer:null};
+var SEL='n:reactor';
+function hopView(){
+  if(!HL.src)return {hop:{},loops:[]};
+  var raw=bfs(HL.start,HL.depth),hop={};
+  Object.keys(raw).forEach(function(k){if(raw[k]<=HL.shown)hop[k]=raw[k]});
+  var loops=LOOPS.map(function(L){var got=L.e.filter(function(id){return hop['e:'+id]!==undefined}).length;return {L:L,got:got,closed:got===L.e.length}});
+  return {hop:hop,loops:loops};
+}
+function applyHL(){
+  var hv=hopView(),hop=hv.hop,on=!!HL.src,loopE={};
+  hv.loops.forEach(function(s){if(s.closed)s.L.e.forEach(function(id){loopE['e:'+id]=1})});
+  [['pid','pidBadges'],['gsvg','gBadges']].forEach(function(pr){
+    var svg=document.getElementById(pr[0]),an=ANCH[pr[0]==='pid'?'pid':'graph'];
+    svg.classList.toggle('hlon',on);
+    $$('.el',svg).forEach(function(g){var k=g.dataset.k,v=hop[k];
+      g.classList.toggle('dim',on&&v===undefined);g.classList.toggle('hop',v!==undefined);
+      g.classList.toggle('loopon',!!loopE[k]);g.classList.toggle('sel',k===SEL);
+      if(v!==undefined)g.style.setProperty('--hc',HOPC[Math.min(v,6)]);else g.style.removeProperty('--hc');});
+    $$('.tag',svg).forEach(function(g){g.classList.toggle('dim',on&&hop[g.dataset.k]===undefined)});
+    var bs='';Object.keys(hop).forEach(function(k){var a=an[k];if(!a)return;var v=hop[k];
+      bs+='<circle cx="'+f1(a[0])+'" cy="'+f1(a[1])+'" r="8.5" fill="'+HOPC[Math.min(v,6)]+'"/><text x="'+f1(a[0])+'" y="'+f1(a[1]+3.4)+'" text-anchor="middle">'+v+'</text>';});
+    document.getElementById(pr[1]).innerHTML=bs;
+  });
+  renderHLBar(hv);
+  renderImpactResult(hv);
+}
+function renderHLBar(hv){
+  var b=$('#hlbar');
+  if(!HL.src){b.innerHTML='<span class="k">選取</span><b>'+esc(elLabel(SEL))+'</b><span class="mono dim">'+esc(SEL.slice(2))+'</span><span class="k">· 未顯示影響範圍</span>';return;}
+  var n=Object.keys(hv.hop).length,closed=hv.loops.filter(function(s){return s.closed});
+  var src=HL.src==='dist'?'<span class="flag warn">IDV(4) 擾動</span> 起點 <b>Reactor CW inlet</b>':'<span class="flag acc">影響分析</span> 起點 <b>'+esc(elLabel(HL.start))+'</b>';
+  b.innerHTML=src+'<span class="k">· 下游 hop ≤ '+HL.shown+(HL.shown<HL.depth?' / '+HL.depth:'')+' · '+n+' 個元素</span>'+
+    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(s.L.name.split(' · ')[1])}).join(', ')+' 閉合</span>':'')+
+    '<span class="k">· 結構上可達 = 假設空間，不是證據</span>'+(HL.src?'<button type="button" class="btn" id="hlClear" style="padding:2px 8px;font-size:11px">清除高亮</button>':'');
+}
+function stopPlay(){if(HL.timer){clearInterval(HL.timer);HL.timer=null}var b=$('#impPlay');if(b)b.textContent='▶ 逐層播放';}
+function runImpact(play){
+  stopPlay();HL.src='impact';HL.start=SEL;
+  if(play&&!RM){HL.shown=0;applyHL();var b=$('#impPlay');if(b)b.textContent='■ 停止';
+    HL.timer=setInterval(function(){HL.shown++;applyHL();if(HL.shown>=HL.depth)stopPlay();},750);}
+  else{HL.shown=HL.depth;applyHL();}
+}
+function clearHL(){stopPlay();HL.src=null;applyHL();}
+
+/* =====================================================================
+   5. Side panel (selection details)
+   ===================================================================== */
+function fmt(id,v){if(v===undefined||v===null||isNaN(v))return '–';var b=Math.abs(SIG[id][2]);var d=b>=1000?1:b>=100?2:b>=10?2:b>=1?3:4;return (+v).toFixed(d)}
+function sigFlag(id){return ANCHOR[id]?'<span class="flag ok" title="tep-agent-lab 實際模擬分支比對（reactor cooling incident, 0.1 h）'+esc(ANCHOR[id])+'">實測錨點 '+esc(ANCHOR[id])+'</span>':'<span class="flag plan" title="綁定已人工核對；傳播尚未實測">待驗證</span>';}
+function refChip(key){var r=KR[key];var rej=/REJECT/.test(r.rv);return '<span class="ref">'+esc(r.id)+'</span><span class="ref rv'+(rej?' rej':'')+'">'+esc(r.rv)+'</span>';}
+function renderSide(){
+  var k=SEL,id=k.slice(2),isN=k[0]==='n',el=isN?TN[id]:TE[id],h='<div class="pb">';
+  h+='<div class="kindrow"><span class="kind">'+(isN?'NODE':'EDGE')+' · '+esc(el.kind)+'</span>'+(SN[id]?'<span class="kind">stream '+SN[id]+'</span>':'')+'</div>';
+  h+='<h2>'+esc(isN?SHORT[id]:el.name)+'<span class="zh">'+esc(ZH[id]||'')+'</span></h2>';
+  h+='<div class="mono dim" style="font-size:11px">'+esc(id)+(isN?'':' · '+esc(SHORT[el.s])+' → '+esc(SHORT[el.t]))+'</div>';
+  /* signals */
+  var list=BIND[id]||[];
+  h+='<h3>訊號 · Signals <span class="cnt">'+list.length+'</span></h3>';
+  if(!list.length)h+='<div class="empty">TEP 在此元素沒有 XMEAS / XMV 儀表（fixture 列為 unbound entity），不推測量測。</div>';
+  else{
+    var comp=list.filter(function(b){return b.q==='composition'});
+    list.forEach(function(b){if(b.q==='composition')return;var m=SIG[b.v];
+      h+='<div class="sig" data-sig="'+b.v+'"><span class="sid">'+b.v+'</span><span class="snm">'+esc(m[0])+' · '+(b.rel==='ACTUATES'?'ACTUATES':'MEASURES')+'</span><span class="sv"><b data-sv="'+b.v+'">–</b> <i>'+esc(m[1])+'</i></span>'+
+         '<span class="sf">'+(b.rel==='ACTUATES'?'<span class="flag acc">操作變數 XMV</span>':sigFlag(b.v))+'</span></div>';});
+    if(comp.length){var ns=comp.map(function(b){return +b.v.match(/\d+/)[0]});
+      h+='<div class="sig"><span class="sid">XMEAS('+Math.min.apply(null,ns)+'–'+Math.max.apply(null,ns)+')</span><span class="snm">composition ×'+comp.length+' · mol%</span><span class="sv"></span>'+
+         '<div class="cv">'+comp.map(function(b){return SIG[b.v][3]+' <b data-sv="'+b.v+'">–</b>'}).join(' · ')+'</div><span class="sf">'+sigFlag(comp[0].v)+'</span></div>';}
+    h+='<div class="note">綁定 provenance：HUMAN_VERIFIED_MAPPING · '+esc(REFNAME.bathelt_ricker_jelali_2015)+' · '+esc(REFNAME.downs_vogel_1993)+'。數值為瀏覽器內模擬（示意）。</div>';
+  }
+  /* knowledge */
+  var kn=KNOW[k]||[];
+  h+='<h3>工程知識 · Engineering knowledge <span class="cnt">'+kn.length+'</span></h3>';
+  if(!kn.length)h+='<div class="empty">知識庫目前只涵蓋 reactor cooling 子系統；此元素沒有已擷取的限值、SOP 或控制描述。</div>';
+  kn.forEach(function(x){var st={APPROVED:'<span class="flag ok">已審核</span>',REJECTED:'<span class="flag alarm">已駁回</span>',SOURCE:'<span class="flag plan">原文引用</span>'}[x.s];
+    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+x.t+'</span>'+st+'</div><div class="kt">'+esc(x.txt)+'</div><div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
+  /* impact */
+  h+='<h3>影響 · Downstream impact</h3><div class="imp">'+
+     '<div class="r"><label for="impDepth" class="muted" style="font-size:12px">深度 hop ≤ <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
+     '<div class="r"><button type="button" class="btn pri" id="impShow">顯示下游影響</button><button type="button" class="btn" id="impPlay">▶ 逐層播放</button></div>'+
+     '<div id="impRes"></div></div>';
+  /* topology refs */
+  var refs=isN?(['downs_vogel_1993'].concat(NODE_FORTRAN[id]?['sim_fortran']:[])):['downs_vogel_1993','sim_fortran'];
+  h+='<h3>拓撲來源 · Topology refs</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div>';
+  h+='</div>';
+  $('#side').innerHTML=h;
+  cacheSV();updateLive();
+}
+function renderImpactResult(hv){
+  var box=$('#impRes');if(!box)return;
+  if(HL.src!=='impact'||HL.start!==SEL){box.innerHTML='<div class="note" style="margin-top:0">以此元素為起點，沿物流 / 公用流體方向做 BFS，在兩個視圖上依 hop 上色並標出回路。</div>';return;}
+  var byHop={};Object.keys(hv.hop).forEach(function(k){var v=hv.hop[k];if(v===0)return;(byHop[v]=byHop[v]||[]).push(k)});
+  var o='';
+  Object.keys(byHop).map(Number).sort(function(a,b){return a-b}).forEach(function(v){
+    var ks=byHop[v],ms='';
+    ks.forEach(function(k){(BIND[k.slice(2)]||[]).forEach(function(b){if(b.rel!=='MEASURES')return;if(b.q==='composition'){return}
+      ms+='<span class="ref'+(ANCHOR[b.v]?' rv':'')+'" title="'+esc(SIG[b.v][0])+'">'+b.v+(ANCHOR[b.v]?' · 實測':'')+'</span>';});
+      var nc=(BIND[k.slice(2)]||[]).filter(function(b){return b.q==='composition'}).length;if(nc)ms+='<span class="ref">composition ×'+nc+'</span>';});
+    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elLabel(k))}).join('、')+'</div>'+(ms?'<div class="ms">'+ms+'</div>':'')+'</div></div>';});
+  if(!o)o='<div class="note">此深度內沒有下游元素。</div>';
+  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(s.L.name)+'</b> <span class="mono">'+s.got+'/'+s.L.e.length+'</span><div>'+(s.closed?'回路閉合：擾動會再次回到起點附近':'傳播已進入回路（加深 hop 可看到閉合）')+'</div><div class="mono dim" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
+  o+='<div class="note">圖遍歷只說明擾動在結構上「可能」傳到哪裡；TEP 以閉迴路運轉，控制器可能遮蔽下游偏差。</div>';
+  box.innerHTML=o;
+}
+function select(k){SEL=k;renderSide();applyHL();}
+
+/* =====================================================================
+   6. Browser-side simulation (illustrative lumped model, NOT simulator output)
+   ===================================================================== */
+var CAP=480,STEP_H=0.01,SUB=10;
+function gauss(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+var M={Tr:120.40,To:94.599,Tin0:35,UA:1,Cc:0.02,Cr:0.25,u0:41.106,Kc:6,Ti:0.25,I:0,u:41.106,d:0,df:0,Pl:0,Sl:0,qn:0,mn:0,pn:0};
+M.Q0=M.UA*(M.Tr-M.To);M.kF=M.Q0/(M.To-M.Tin0)/M.u0;
+var SIM={t:0,K:0,running:false,speed:1,timer:null};
+var VAL={},OU={};
+Object.keys(SIG).forEach(function(id){OU[id]=0;VAL[id]=SIG[id][2]});
+var BUF={t:[],x9:[],x21:[],u10:[],x7:[]};
+var MARKS=[];
+var DET=null,HIST=[];
+function simStep(){
+  var dt=STEP_H/SUB;
+  M.mn=gauss()*0.012;
+  for(var i=0;i<SUB;i++){
+    M.df+=(M.d-M.df)*dt/0.01;
+    M.qn+=(-M.qn/0.4)*dt+0.0025*Math.sqrt(dt)*gauss();
+    var Tin=M.Tin0+M.df,Q=M.Q0*(1+M.qn);
+    var e=(M.Tr+M.mn)-120.40;M.I+=e*dt;
+    M.u=Math.max(0,Math.min(100,M.u0+M.Kc*e+M.Kc/M.Ti*M.I));
+    var F=M.kF*M.u;
+    var dTo=(F*(Tin-M.To)+M.UA*(M.Tr-M.To))/M.Cc, dTr=(Q-M.UA*(M.Tr-M.To))/M.Cr;
+    M.To+=dTo*dt;M.Tr+=dTr*dt;
+    M.Pl+=((M.Tr-120.40)-M.Pl)*dt/0.08;M.Sl+=((M.Tr-120.40)-M.Sl)*dt/0.25;
+  }
+  M.pn+=(-M.pn/0.15)*STEP_H+0.9*Math.sqrt(STEP_H)*gauss();
+  SIM.t+=STEP_H;SIM.K++;
+  Object.keys(SIG).forEach(function(id){OU[id]+=(-OU[id]/0.3)*STEP_H+0.0012*Math.sqrt(STEP_H)*gauss();VAL[id]=SIG[id][2]*(1+OU[id]+0.0006*gauss());});
+  VAL['XMEAS(9)']=M.Tr+M.mn;
+  VAL['XMEAS(21)']=M.To+gauss()*0.03;
+  VAL['XMV(10)']=M.u;
+  VAL['XMEAS(7)']=2705.0+7*M.Pl+M.pn+gauss()*0.35;
+  VAL['XMEAS(11)']=80.109+0.6*M.Sl+gauss()*0.02;
+  VAL['XMEAS(13)']=2633.7+0.95*(VAL['XMEAS(7)']-2705.0)+gauss()*0.3;
+  push('t',SIM.t);push('x9',VAL['XMEAS(9)']);push('x21',VAL['XMEAS(21)']);push('u10',VAL['XMV(10)']);push('x7',VAL['XMEAS(7)']);
+  if(EVT&&EVT.post.x9.length<POST)['x9','x21','u10','x7'].forEach(function(k){EVT.post[k].push(BUF[k][BUF[k].length-1])});
+  while(MARKS.length>8)MARKS.shift();
+  detect();
+}
+function push(k,v){var a=BUF[k];a.push(v);if(a.length>CAP)a.shift();}
+
+/* deviation detection against a pre-injection baseline window */
+var KEYS=[['x9','XMEAS(9)',0.08],['x21','XMEAS(21)',0.2],['u10','XMV(10)',0.45],['x7','XMEAS(7)',2.2]];
+function stats(arr,n){var a=arr.slice(-n),m=0,s=0;a.forEach(function(v){m+=v});m/=a.length||1;a.forEach(function(v){s+=(v-m)*(v-m)});return {m:m,sd:Math.sqrt(s/(a.length||1))}}
+function nominal(id){return id==='XMV(10)'?M.u0:SIG[id][2]}
+function startDET(){
+  var base={},thr={};
+  KEYS.forEach(function(k){var st=BUF[k[0]].length>=40?stats(BUF[k[0]],50):{m:nominal(k[1]),sd:0};base[k[1]]=st.m;thr[k[1]]=Math.max(4*st.sd,k[2]);});
+  return {t0:SIM.t,K0:SIM.K,base:base,thr:thr,first:{},peak:{},cur:{},dev:{},removedT:null,quietSince:null};
+}
+function detect(){
+  if(!DET)return;
+  KEYS.forEach(function(k){var id=k[1],a=BUF[k[0]],n=a.length,avg=(a[n-1]+(a[n-2]||a[n-1])+(a[n-3]||a[n-1]))/3,dv=avg-DET.base[id];
+    DET.cur[id]=dv;var on=Math.abs(dv)>DET.thr[id];DET.dev[id]=on;
+    if(on&&DET.first[id]===undefined&&!DET.removedT)DET.first[id]=SIM.t;
+    if(DET.peak[id]===undefined||Math.abs(dv)>Math.abs(DET.peak[id]))DET.peak[id]=dv;});
+  var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'];
+  if(!anyT){if(DET.quietSince===null)DET.quietSince=SIM.t;}else DET.quietSince=null;
+  if(DET.removedT&&!anyT&&!DET.dev['XMV(10)']&&SIM.t-DET.removedT>0.3){DET=null;}
+  if(HL.src==='dist'&&M.d>0&&DET){var sh=Math.min(6,Math.floor((SIM.t-DET.t0)/0.04));if(sh!==HL.shown){HL.shown=sh;HL._dirty=true;}}
+}
+
+/* =====================================================================
+   7. Trend charts (canvas, capped ring of CAP samples)
+   ===================================================================== */
+var CH=[
+ {k:'x9',id:'XMEAS(9)',nm:'Reactor temperature',u:'degC',c:'#ee7a3e',span:0.3,base:120.40,dp:2},
+ {k:'x21',id:'XMEAS(21)',nm:'Reactor CW outlet temp',u:'degC',c:'#4fb0e0',span:0.5,base:94.599,dp:2},
+ {k:'u10',id:'XMV(10)',nm:'Reactor CW flow valve',u:'% command',c:'#2bc3c8',span:1.2,base:41.106,dp:2},
+ {k:'x7',id:'XMEAS(7)',nm:'Reactor pressure',u:'kPa gauge',c:'#a9c46a',span:8,base:2705.0,dp:1}
+];
+/* views: 1 h live / 4.8 h live / event-anchored (-0.5 h .. +2.5 h around the injection, separately capped) */
+var VIEW='h1',WIN={h1:100,h48:CAP},PRE=50,POST=250,SHADE=80,EVT=null;
+function buildTrends(){
+  $('#tgrid').innerHTML=CH.map(function(c){return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n"><b>'+c.id+'</b>'+esc(c.nm)+(c.k==='u10'?'<span class="prim" id="prim" hidden>首要反應</span>':'')+'</div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>基準 '+c.base+' · 虛線</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
+  CH.forEach(function(c){c.cv=document.getElementById('cv-'+c.k);c.ctx=c.cv.getContext('2d');});
+}
+var dirty=true;
+function sizeCanvas(c){var dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(10,c.cv.clientWidth),h=Math.max(10,c.cv.clientHeight);
+  if(c.cv.width!==Math.round(w*dpr)||c.cv.height!==Math.round(h*dpr)){c.cv.width=Math.round(w*dpr);c.cv.height=Math.round(h*dpr);}c.w=w;c.h=h;c.dpr=dpr;}
+function series(k){
+  if(VIEW==='evt'&&EVT){var pre=EVT.pre[k];return {a:pre.concat(EVT.post[k]),slots:PRE+POST,left:true,idx:function(K){return (pre.length-1)+(K-EVT.K0)}};}
+  var m=WIN[VIEW]||100,full=BUF[k],a=full.length>m?full.slice(-m):full,n=a.length;
+  return {a:a,slots:m,left:false,idx:function(K){return n-1-(SIM.K-K)}};
+}
+function drawChart(c){
+  sizeCanvas(c);var x=c.ctx,W=c.w,H=c.h,S=series(c.k),a=S.a,n=a.length;
+  x.setTransform(c.dpr,0,0,c.dpr,0,0);x.clearRect(0,0,W,H);
+  var pl=48,pr=8,pt=20,pb=6,iw=W-pl-pr,ih=H-pt-pb,off=S.left?0:S.slots-n;
+  var lo=c.base,hi=c.base;for(var i=0;i<n;i++){if(a[i]<lo)lo=a[i];if(a[i]>hi)hi=a[i];}
+  var mid=(lo+hi)/2,sp=Math.max((hi-lo)*1.25,c.span);lo=mid-sp/2;hi=mid+sp/2;
+  function X(i){return pl+iw*(off+i)/(S.slots-1)}
+  function Y(v){return pt+ih*(1-(v-lo)/(hi-lo))}
+  x.font='10px Consolas, monospace';x.textBaseline='middle';x.textAlign='right';
+  for(var g=0;g<=3;g++){var v=lo+(hi-lo)*g/3,yy=Math.round(Y(v))+.5;x.strokeStyle='#1b2733';x.lineWidth=1;x.beginPath();x.moveTo(pl,yy);x.lineTo(W-pr,yy);x.stroke();x.fillStyle='#6f8090';x.fillText(v.toFixed(c.dp),pl-5,yy);}
+  x.setLineDash([4,4]);x.strokeStyle='#5d6e7d';x.beginPath();var by=Y(c.base);x.moveTo(pl,by);x.lineTo(W-pr,by);x.stroke();x.setLineDash([]);
+  /* injection / removal markers: line in plot, label in the reserved top margin (never on the curve or axis labels) */
+  var lastEnd=-1e9;
+  var offL=MARKS.filter(function(m){var i=S.idx(m.K)+0.5;return i<0&&!S.left&&SIM.K-m.K<BUF[c.k].length;});
+  if(offL.length){var mo=offL[offL.length-1];x.font='600 10px Consolas, monospace';x.fillStyle=mo.c;x.textAlign='left';x.fillText('◀ '+mo.l.replace(/^[▼▲] /,'')+' · −'+((SIM.K-mo.K)*STEP_H).toFixed(1)+' h',pl,8);lastEnd=pl+x.measureText('◀ '+mo.l+' · −0.0 h').width;}
+  MARKS.forEach(function(m){var i=S.idx(m.K)+0.5;if(i<0||i>n-1)return;var mx=Math.round(X(i))+.5;
+    if(m.inj){var i2=Math.min(S.idx(m.K+SHADE)+0.5,n-1);if(i2>i){x.fillStyle='rgba(226,167,60,.10)';x.fillRect(mx,pt,X(i2)-mx,ih);}}
+    x.strokeStyle=m.c;x.lineWidth=1.2;x.setLineDash([3,3]);x.beginPath();x.moveTo(mx,pt-6);x.lineTo(mx,H-pb);x.stroke();x.setLineDash([]);
+    x.font='600 10px Consolas, monospace';var tw=x.measureText(m.l).width,lx=mx+4;
+    if(lx+tw>W-pr)lx=mx-4-tw;if(lx<lastEnd+6)lx=lastEnd+6;if(lx+tw>W-pr)lx=W-pr-tw;if(lx<pl)lx=pl;
+    x.fillStyle=m.c;x.textAlign='left';x.fillText(m.l,lx,8);lastEnd=lx+tw;});
+  x.textAlign='right';x.font='10px Consolas, monospace';
+  if(n>1){x.strokeStyle=c.c;x.lineWidth=1.6;x.lineJoin='round';x.beginPath();for(var j=0;j<n;j++){var px=X(j),py=Y(a[j]);if(j)x.lineTo(px,py);else x.moveTo(px,py);}x.stroke();
+    x.fillStyle=c.c;x.beginPath();x.arc(X(n-1),Y(a[n-1]),2.8,0,Math.PI*2);x.fill();}
+}
+function primaryOn(){return !!(EVT&&DET&&!DET.removedT&&DET.first['XMV(10)']!==undefined)}
+function trendCaption(){
+  if(!EVT)return '尚未注入擾動。入口溫度沒有儀表，注入 IDV(4) 後只能從下游訊號看到反應。';
+  if(DET&&DET.removedT)return '擾動已於 t = '+DET.removedT.toFixed(2)+' h 移除；控制器正把 XMV(10) 拉回原位。';
+  if(primaryOn()){var du=DET.cur['XMV(10)'],p9=DET.peak['XMEAS(9)']||0,p21=DET.peak['XMEAS(21)']||0;
+    return '<b>首要反應：XMV(10) '+(du>=0?'+':'')+du.toFixed(1)+' %</b>：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值 '+(p9>=0?'+':'')+p9.toFixed(2)+' degC，XMEAS(21) 峰值 '+(p21>=0?'+':'')+p21.toFixed(2)+' degC，離 normal upper 150 仍有約 29 degC）。';}
+  if(!DET)return 'IDV(4) 事件已結束，訊號回到基準。切換「擾動事件」可回看當時的反應。';
+  return 'IDV(4) +'+EVT.mag+' °C 已於 t = '+EVT.t0.toFixed(2)+' h 注入，等待訊號反應。';
+}
+var lastCap='';
+function drawAll(){CH.forEach(drawChart);
+  CH.forEach(function(c){var el=document.getElementById('td-'+c.k);var a=BUF[c.k];if(!a.length)return;var dv=a[a.length-1]-c.base;
+    var big=DET&&DET.dev[c.id];el.textContent=(dv>=0?'+':'')+dv.toFixed(c.dp)+' vs 基準';el.classList.toggle('up',!!big);
+    var L,R;if(VIEW==='evt'&&EVT){L='−0.5 h';R=EVT.post.x9.length>=POST?'+2.5 h ✓':'+2.5 h';}else{L='−'+((WIN[VIEW]||100)*STEP_H).toFixed(1)+' h';R='now';}
+    document.getElementById('tkl-'+c.k).textContent=L;document.getElementById('tkr-'+c.k).textContent=R;});
+  var pr=primaryOn();$('#prim').hidden=!pr;$('#tc-u10').classList.toggle('primary',pr);
+  var cap=trendCaption();if(cap!==lastCap){$('#tcap').innerHTML=cap;lastCap=cap;}
+}
+function setToggle(attr,v){$$('['+attr+']').forEach(function(b){var on=b.getAttribute(attr)===String(v);b.setAttribute('aria-pressed',String(on));b.classList.toggle('on',on);if(on&&b.parentNode)b.parentNode.setAttribute('data-active',String(v));});}
+function setView(v){if(v==='evt'&&!EVT)return;VIEW=v;setToggle('data-win',v);dirty=true;}
+function frame(){if(dirty){dirty=false;drawAll();}requestAnimationFrame(frame);}
+
+/* =====================================================================
+   8. Live value binding
+   ===================================================================== */
+var SV=[];
+function cacheSV(){SV=$$('[data-sv]').map(function(el){return [el,el.getAttribute('data-sv')]})}
+function updateLive(){
+  for(var i=0;i<SV.length;i++){var el=SV[i][0],id=SV[i][1];var t=fmt(id,VAL[id]);if(el.textContent!==t)el.textContent=t;}
+  $$('#pid .tag').forEach(function(g){var id=g.dataset.tag;g.classList.toggle('dev',!!(DET&&DET.dev[id]))});
+  $$('#side .sig[data-sig]').forEach(function(r){var id=r.dataset.sig;r.classList.toggle('dev',!!(DET&&DET.dev[id]))});
+  $('#cT').textContent='t = '+SIM.t.toFixed(2)+' h';$('#cK').textContent='K = '+SIM.K;
+}
+
+/* =====================================================================
+   9. "現在發生什麼" structured summary + evidence strip
+   ===================================================================== */
+function snapId(){return 'snap@T'+SIM.t.toFixed(2)+'h/K'+SIM.K}
+var USED={};
+function line(txt,sigs,kr){var sn=snapId();(kr||[]).forEach(function(k){USED[k]=1});
+  return '<li><div class="ln">'+txt+'</div><div class="refs">'+(sigs||[]).map(function(s){return '<span class="ref rs">'+s+'</span>'}).join('')+(kr||[]).map(refChip).join('')+'<span class="ref snap">'+sn+'</span></div></li>';}
+function sgn(v,d){return (v>=0?'+':'')+v.toFixed(d)}
+function renderNow(){
+  USED={};
+  var t9=VAL['XMEAS(9)'],t21=VAL['XMEAS(21)'],u=VAL['XMV(10)'],p=VAL['XMEAS(7)'];
+  var state='normal',title='reactor cooling 子系統在基準附近運轉，沒有超過門檻的偏差',stl='正常 · NORMAL';
+  if(DET){
+    var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'],uDev=DET.dev['XMV(10)'],el=SIM.t-DET.t0;
+    if(DET.removedT){state='dist';stl='擾動已移除 · RECOVERING';title='入口溫度回到基準，控制器正把 XMV(10) 拉回原位';}
+    else if(anyT){state='dist';stl='擾動中 · DISTURBED';
+      title=(DET.first['XMEAS(21)']!==undefined&&(DET.first['XMEAS(9)']===undefined||DET.first['XMEAS(21)']<DET.first['XMEAS(9)']))?
+        '冷卻水出口溫度先上升，反應器溫度延遲跟上；控制器正在加大 XMV(10)':'反應器溫度偏離基準；控制器正在調整 XMV(10)';}
+    else if(uDev){state='comp';stl='已補償 · COMPENSATED';title='溫度已回到基準；XMV(10) 停在新的操作點（'+u.toFixed(1)+' %，基準 '+DET.base['XMV(10)'].toFixed(1)+' %）';}
+    else if(el<0.08){state='dist';stl='已注入 · WAITING';title='IDV(4) 已注入，等待訊號反應（入口溫度無儀表，無法直接看到擾動）';}
+    else{state='comp';stl='擾動中 · MASKED';title='擾動存在，但主要訊號未超過門檻（閉迴路控制可能遮蔽）';}
+  }
+  var o='<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+stl+'</div><div class="tt">'+esc(title)+'</div><div class="refs"><span class="ref snap">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>';
+  /* current condition */
+  o+='<div class="nowsec"><h3>目前狀態 · Current condition</h3><ul>';
+  o+=line('<b>XMEAS(9)</b> 反應器溫度 <b class="num">'+t9.toFixed(2)+' degC</b>：低於 normal upper 150（餘裕 '+(150-t9).toFixed(1)+'）與 shutdown 175 → <span class="g">WITHIN</span>',['XMEAS(9)'],['row2']);
+  o+=line('<b>XMEAS(7)</b> 反應器壓力 <b class="num">'+p.toFixed(1)+' kPa gauge</b>：低於 normal upper 2895 → <span class="g">WITHIN</span>',['XMEAS(7)'],['row1']);
+  o+=line('<b>XMEAS(21)</b> 冷卻水出口溫度 <b class="num">'+t21.toFixed(2)+' degC</b>：沒有核准的 alarm / shutdown 限值，不推測',['XMEAS(21)'],['row3']);
+  o+=line('<b>XMV(10)</b> 冷卻水流量指令 <b class="num">'+u.toFixed(2)+' %</b>（0–100，指令值，不是製程限值）',['XMV(10)'],['row4']);
+  o+='</ul></div>';
+  /* observed changes */
+  o+='<div class="nowsec"><h3>觀察到的變化 · Observed changes</h3><ul>';
+  if(!DET){o+=line('相對於基準，四個訊號都沒有超過門檻（門檻 = 4σ 或最小變化量）',['XMEAS(9)','XMEAS(21)','XMV(10)','XMEAS(7)'],[]);}
+  else{
+    var order=KEYS.map(function(k){return k[1]}).filter(function(id){return DET.first[id]!==undefined}).sort(function(a,b){return DET.first[a]-DET.first[b]});
+    var nm={'XMEAS(9)':'反應器溫度','XMEAS(21)':'冷卻水出口溫度','XMV(10)':'冷卻水流量指令','XMEAS(7)':'反應器壓力'};
+    var un={'XMEAS(9)':'degC','XMEAS(21)':'degC','XMV(10)':'%','XMEAS(7)':'kPa'};
+    o+=line('<b>IDV(4)</b> 入口溫度 step '+(M.d>0?'+'+M.d+' °C':'已移除')+'，於 t = '+DET.t0.toFixed(2)+' h 注入（模擬事件；入口溫度本身沒有量測）',[],['rcw']);
+    if(!order.length)o+=line('尚未有訊號超過門檻（已過 '+((SIM.t-DET.t0)*60).toFixed(0)+' min）',['XMEAS(21)','XMEAS(9)','XMV(10)'],[]);
+    order.forEach(function(id,i){var d=id==='XMEAS(7)'?1:2,cur=DET.cur[id],pk=DET.peak[id];
+      o+=line((i+1)+'. <b>'+id+'</b> '+nm[id]+' 在 t = '+DET.first[id].toFixed(2)+' h 超過門檻（延遲 '+((DET.first[id]-DET.t0)*60).toFixed(0)+' min）；目前 <span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>，峰值 '+sgn(pk,d)+' '+un[id],[id],[]);});
+    if(DET.first['XMV(10)']!==undefined&&!DET.removedT)o+=line('首要反應是 <b>XMV(10)</b>（目前 '+sgn(DET.cur['XMV(10)'],1)+' %）：控制器以冷卻水閥吸收擾動，反應器溫度維持（XMEAS(9) 峰值只有 '+sgn(DET.peak['XMEAS(9)']||0,2)+' degC）',['XMV(10)','XMEAS(9)'],['ctrl']);
+    if(order.length>1)o+=line('偵測順序 '+order.join(' → ')+'。時間順序與拓撲 hop 不必相同：圖可達只代表可能路徑，不是因果證據',order,['topo']);
+  }
+  o+='</ul></div>';
+  /* engineering context */
+  o+='<div class="nowsec"><h3>相關工程脈絡 · Engineering context</h3><ul>';
+  o+=line('XMV(10) 調節反應器冷卻水流量；加大流量可增加移熱，但受熱狀態與公用流體條件限制',['XMV(10)'],['ctrl']);
+  if(DET){
+    o+=line('入口溫度沒有已知儀表（RCW-IN-TT 已駁回）：擾動來源只能由 XMEAS(21)、XMEAS(9) 與 XMV(10) 的反應推論',['XMEAS(21)','XMEAS(9)','XMV(10)'],['rcw']);
+    o+=line('SOP 原文：溫度上升時比對製程溫度與冷卻水出口讀值',['XMEAS(9)','XMEAS(21)'],['tsrev']);
+    var hv=bfs('e:reactor_cooling_water_in',6),nEl=Object.keys(hv).length;
+    o+=line('拓撲：自 reactor cooling water inlet 起，6 hop 內結構上可達 '+nEl+' 個元素，含 recycle loop 回流到反應器',[],['topo']);
+  }else{
+    o+=line('reactor temperature 的 normal upper 以 150 degC 為準；競爭的 145 degC 已駁回，引用保留',['XMEAS(9)'],['c145']);
+  }
+  o+='</ul></div>';
+  $('#now').innerHTML=o;
+  renderStrip();
+}
+function renderStrip(){
+  var used=Object.keys(USED);
+  $('#strip').innerHTML=
+   '<div><div class="k">Context Layer · plant context revision <span class="badge built">已實作</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
+   '<div><div class="k">Knowledge revision <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">人工審查 12 筆：10 approve / remap，2 reject</div></div>'+
+   '<div><div class="k">Snapshot <span class="badge sim">本頁於瀏覽器內產生</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
+   '<div><div class="k">Knowledge refs used · '+used.length+'</div><div class="refs" style="margin-top:0">'+used.map(function(k){return '<span class="ref">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">每一條陳述都釘在一個確切的 snapshot（T、K 與 revision）上，所以能被重現與追溯。</div></div>';
+}
+
+/* =====================================================================
+   10. Controls & loop
+   ===================================================================== */
+var tickN=0;
+function tick(){
+  for(var i=0;i<SIM.speed;i++)simStep();
+  tickN++;dirty=true;updateLive();
+  if(HL._dirty){HL._dirty=false;applyHL();}
+  if(tickN%3===0)renderNow();
+}
+function setRunning(on){
+  SIM.running=on;
+  if(on&&!SIM.timer)SIM.timer=setInterval(tick,150);
+  if(!on&&SIM.timer){clearInterval(SIM.timer);SIM.timer=null;}
+  $('#bRun').textContent=on?'❚❚ 暫停':'▶ 開始';
+  $('#cDot').className='dot '+(on?'live':'pause');$('#cLiveT').textContent=on?'LIVE · 串流中':'暫停';
+}
+function inject(){
+  var mag=+$('#selDist').value;
+  if(M.d===mag&&DET&&!DET.removedT&&EVT){setView('evt');return;}
+  DET=startDET();M.d=mag;
+  MARKS.push({K:SIM.K,l:'▼ IDV(4) +'+mag+'°C',c:'#e2a73c',inj:1});
+  EVT={K0:SIM.K,t0:SIM.t,mag:mag,pre:{},post:{}};['x9','x21','u10','x7'].forEach(function(k){EVT.pre[k]=BUF[k].slice(-PRE);EVT.post[k]=[];});
+  $('[data-win="evt"]').disabled=false;setView('evt');
+  stopPlay();HL.src='dist';HL.start='e:reactor_cooling_water_in';HL.depth=6;HL.shown=0;applyHL();
+  $('#bClear').disabled=false;
+  if(!SIM.running)setRunning(true);
+  renderNow();
+}
+function removeDist(){
+  if(!M.d)return;M.d=0;if(DET)DET.removedT=SIM.t;
+  MARKS.push({K:SIM.K,l:'▲ 移除 IDV(4)',c:'#8da1b5'});
+  if(HL.src==='dist')clearHL();
+  $('#bClear').disabled=true;renderNow();dirty=true;
+}
+
+document.addEventListener('click',function(e){
+  var v=e.target.closest('[data-view]');
+  if(v){var g=v.dataset.view==='graph';$('#wrapPid').hidden=g;$('#wrapGraph').hidden=!g;setToggle('data-view',v.dataset.view);return;}
+  var wv=e.target.closest('[data-win]');
+  if(wv){setView(wv.dataset.win);return;}
+  var sp=e.target.closest('[data-speed]');
+  if(sp){SIM.speed=+sp.dataset.speed;setToggle('data-speed',sp.dataset.speed);return;}
+  if(e.target.closest('#hlClear')){clearHL();return;}
+  if(e.target.closest('#impShow')){runImpact(false);return;}
+  if(e.target.closest('#impPlay')){if(HL.timer){stopPlay();HL.shown=HL.depth;applyHL();}else runImpact(true);return;}
+  var el=e.target.closest('#pid [data-k], #gsvg [data-k]');
+  if(el){select(el.dataset.k);}
+});
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!==' ')return;var el=e.target.closest&&e.target.closest('svg .el');
+  if(el){e.preventDefault();select(el.dataset.k);}
+});
+document.addEventListener('input',function(e){
+  if(e.target.id==='impDepth'){HL.depth=+e.target.value;$('#impDepthV').textContent=e.target.value;if(HL.src==='impact'){stopPlay();HL.shown=HL.depth;applyHL();}}
+});
+$('#bRun').addEventListener('click',function(){setRunning(!SIM.running)});
+$('#bInject').addEventListener('click',inject);
+$('#bClear').addEventListener('click',removeDist);
+window.addEventListener('resize',function(){dirty=true});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)dirty=true});
+
+/* boot */
+setToggle('data-view','pid');setToggle('data-speed','1');setToggle('data-win','h1');
+$('#lgHops').innerHTML=HOPC.map(function(c,i){return '<i style="background:'+c+'">'+i+'</i>'}).join('');
+renderPID();renderGraph();buildTrends();
+for(var i=0;i<CAP;i++)simStep();
+renderSide();applyHL();renderNow();
+setRunning(!RM);
+dirty=true;requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
