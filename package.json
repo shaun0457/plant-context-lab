@@ -1,0 +1,36 @@
+{
+  "name": "plant-context-lab",
+  "version": "0.3.0",
+  "description": "Tennessee Eastman context-layer demo: P&ID, simulated trends, deterministic rules, PCA monitor and an adjustment gate, with an optional local MCP server.",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "plant-context-lab": "dist/server.js"
+  },
+  "files": [
+    "dist/",
+    "docs/",
+    "index.html",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "train:pca": "node scripts/train-pca.ts",
+    "test": "node --test --test-reporter=spec \"test/**/*.test.ts\"",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "format": "pca-monitor/1",
+  "variables": [
+    "XMEAS(7)",
+    "XMEAS(9)",
+    "XMEAS(11)",
+    "XMEAS(13)",
+    "XMEAS(21)",
+    "XMV(10)"
+  ],
+  "window": 5,
+  "mean": [
+    2705.344538,
+    120.4522295,
+    80.13751956,
+    2634.025844,
+    94.65570449,
+    41.07999626
+  ],
+  "scale": [
+    5.666974995,
+    0.8272710714,
+    0.4336213629,
+    5.386938765,
+    1.009254568,
+    1.476609952
+  ],
+  "loadings": [
+    [
+      0.4580233388,
+      0.1793703455
+    ],
+    [
+      0.4672921889,
+      0.02058461187
+    ],
+    [
+      0.4162821996,
+      0.3579144201
+    ],
+    [
+      0.4579466088,
+      0.1792944863
+    ],
+    [
+      0.3935175991,
+      -0.4585164169
+    ],
+    [
+      -0.1843653013,
+      0.7726033933
+    ]
+  ],
+  "eigenvalues": [
+    4.537307319,
+    1.405776726
+  ],
+  "allEigenvalues": [
+    4.537307319,
+    1.405776726,
+    0.05121119713,
+    0.004818219396,
+    0.0006045015312,
+    0.0002820367834
+  ],
+  "k": 2,
+  "explainedVariance": 0.9905140075,
+  "confidence": 0.99,
+  "t2Limit": 11.7387,
+  "speLimit": 0.461,
+  "training": {
+    "generator": "scripts/train-pca.ts (engine lumped model)",
+    "seeds": [
+      101,
+      202,
+      303,
+      404,
+      505,
+      606
+    ],
+    "holdoutSeeds": [
+      707,
+      808
+    ],
+    "warmupSteps": 480,
+    "stepsPerSeed": 3000,
+    "sampleHours": 0.01,
+    "rows": 17976,
+    "operatingMode": "XMV(10) loop AUTO, no disturbance, plus operator moves of up to +/-3 % held 18-54 min",
+    "preprocessing": "5-sample moving mean, autoscaled with training mean and standard deviation",
+    "componentRule": "smallest k with cumulative explained variance >= 0.9",
+    "limits": "empirical 99 % quantile of training T² and SPE",
+    "labels": "none; the monitor outputs scores and contributors only",
+    "holdoutFalseAlarm": {
+      "t2": 0.0067,
+      "spe": 0.0017,
+      "any": 0.0083
+    },
+    "holdoutFalseAlarmAutoOnly": {
+      "t2": 0,
+      "spe": 0,
+      "any": 0
+    }
+  }
+}
