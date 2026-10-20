@@ -2,15 +2,18 @@
  * Local web server (127.0.0.1 only) serving the same page in connected mode.
  *
  *   GET  /               page, marked data-mode="connected" with a per-process token
- *   GET  /api/state      current state + chart history
- *   GET  /api/stream     Server-Sent Events: init, then tick batches
+ *   GET  /api/state      current state + chart history + LLM activity (token required)
+ *   GET  /api/stream     Server-Sent Events: init, tick batches, activity records (token required)
  *   POST /api/control    human scenario controls: inject / remove / auto / run / speed
  *   POST /api/propose    gate evaluation from the page (dry-run or apply)
  *   *    /mcp            optional Streamable HTTP MCP endpoint (--http-mcp)
  *
  * Hardening: Host header must be this loopback origin (blocks DNS rebinding);
- * POSTs need JSON, a same-origin Origin when present, and the page token (blocks
- * cross-site requests); bodies are capped; SSE clients are capped.
+ * every /api request needs the page token (X-PCL-Token header, or ?token= for
+ * EventSource, which cannot set headers) and a same-origin Origin when present;
+ * POSTs also need JSON; bodies are capped; SSE clients are capped. The state and
+ * the stream carry human events (such as the scenario injection), so a process
+ * that has not loaded the page cannot read them with a plain GET.
  *
  * Trust boundary: the loopback interface. Browsers on other sites cannot drive or
  * read this server, but any local process can load the page (and its token). Do
@@ -20,6 +23,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { evaluateAdjustment, type GateLogEntry, type Sample, type SimEvent, type Simulation } from '../engine/index.ts';
+import type { ActivityLog } from './activity.ts';
 
 export const MAX_BODY_BYTES = 8 * 1024;
 export const MAX_SSE_CLIENTS = 8;
@@ -34,6 +38,8 @@ export interface WebAppOptions {
   controls: Controls;
   /** optional Streamable HTTP MCP handler */
   mcpHttp?: (req: IncomingMessage, res: ServerResponse, body: unknown) => Promise<void>;
+  /** LLM activity feed (MCP calls), included in /api/state and pushed over SSE */
+  activity?: ActivityLog;
   log?: (msg: string) => void;
 }
 
@@ -97,6 +103,7 @@ export function createWebApp(opt: WebAppOptions): WebApp {
       eventSeq: sim.eventSeq,
       gateLog: (sim.gateLog as GateLogEntry[]).slice(-LOG_TAIL),
       events: (sim.events as SimEvent[]).slice(-LOG_TAIL),
+      activity: opt.activity ? opt.activity.state() : null,
       ...(full ? { history: history() } : {}),
     };
   }
@@ -136,8 +143,8 @@ export function createWebApp(opt: WebAppOptions): WebApp {
     return o === undefined || allowedOrigins().includes(String(o).toLowerCase());
   }
 
-  function tokenOk(req: IncomingMessage): boolean {
-    const got = Buffer.from(String(req.headers['x-pcl-token'] || ''));
+  function tokenOk(req: IncomingMessage, url?: URL): boolean {
+    const got = Buffer.from(String(req.headers['x-pcl-token'] || url?.searchParams.get('token') || ''));
     const want = Buffer.from(token);
     return got.length === want.length && timingSafeEqual(got, want);
   }
@@ -210,6 +217,9 @@ export function createWebApp(opt: WebAppOptions): WebApp {
       res.end(page);
       return;
     }
+    if (method === 'GET' && (path === '/api/state' || path === '/api/stream')) {
+      if (!originOk(req) || !tokenOk(req, url)) { send(res, 403, { error: 'forbidden: open the viewer page; the API needs its token' }); return; }
+    }
     if (method === 'GET' && path === '/api/state') { send(res, 200, statePayload(true)); return; }
     if (method === 'GET' && path === '/api/stream') {
       if (clients.size >= MAX_SSE_CLIENTS) { send(res, 503, { error: 'too many viewers' }); return; }
@@ -233,17 +243,23 @@ export function createWebApp(opt: WebAppOptions): WebApp {
       if (!body || typeof body !== 'object' || Array.isArray(body)) { send(res, 400, { error: 'object body required' }); return; }
       if (path === '/api/control') {
         const r = control(body);
+        // the plant (or its run state) changed: an earlier LLM simulation no longer describes it
+        if (r.ok) opt.activity?.invalidateSim();
         send(res, r.ok ? 200 : 400, r);
         if (r.ok) broadcast([]);
         return;
       }
       const r = evaluateAdjustment(sim, { xmv: String(body.xmv ?? ''), target: typeof body.target === 'number' ? body.target : NaN, rationale: String(body.rationale ?? '') }, { apply: body.apply === true, source: 'page' });
+      if (r.applied) opt.activity?.invalidateSim();
       send(res, 200, r);
       broadcast([]);
       return;
     }
     send(res, 404, { error: 'not found' });
   }
+
+  // activity records go out as soon as they happen, not on the next tick
+  const unsubscribe = opt.activity ? opt.activity.subscribe((u) => { for (const c of clients) writeEvent(c, 'activity', u); }) : () => {};
 
   const server = createServer((req, res) => {
     handle(req, res).catch((e) => {
@@ -281,6 +297,7 @@ export function createWebApp(opt: WebAppOptions): WebApp {
       });
     },
     close(): Promise<void> {
+      unsubscribe();
       for (const c of clients) c.end();
       clients.clear();
       server.closeAllConnections();

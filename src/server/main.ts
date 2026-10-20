@@ -12,6 +12,7 @@ import { parseArgs } from 'node:util';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createSimulation } from '../engine/index.ts';
+import { ActivityLog } from './activity.ts';
 import { loadDocs, packageRoot } from './docs.ts';
 import { createMcpServer, SERVER_VERSION } from './mcp.ts';
 import type { ToolContext } from './tools.ts';
@@ -59,7 +60,11 @@ async function main() {
   const sim = createSimulation({ seed });
   if (SCENARIOS[scenario] > 0) sim.injectIdv4(SCENARIOS[scenario], 'cli');
   const docs = loadDocs();
-  const ctx: ToolContext = { sim, viewerUrl: null };
+  // every MCP request (stdio or HTTP) is reported to the viewer's LLM activity feed
+  const activity = new ActivityLog({ snapshot: () => sim.snapshot().id });
+  const ctx: ToolContext = { sim, activity };
+  // the viewer URL is for the human (stderr); tool results never point the LLM at the viewer port
+  let viewerUrl: string | null = null;
   const controls: Controls = { running: true, speed: 1 };
 
   let web: ReturnType<typeof createWebApp> | null = null;
@@ -67,7 +72,7 @@ async function main() {
     const html = readFileSync(join(packageRoot(), 'index.html'), 'utf8');
     const mcpHttp = values['http-mcp']
       ? async (req: IncomingMessage, res: ServerResponse, body: unknown) => {
-          const server = createMcpServer(ctx, docs);
+          const server = createMcpServer(ctx, docs, { statelessHttp: true });
           const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
           res.on('close', () => { transport.close().catch(() => {}); server.close().catch(() => {}); });
           await server.connect(transport);
@@ -75,10 +80,10 @@ async function main() {
         }
       : undefined;
     try {
-      web = createWebApp({ sim, html, controls, mcpHttp, log });
+      web = createWebApp({ sim, html, controls, mcpHttp, activity, log });
       const bound = await web.listen(port, '127.0.0.1');
-      ctx.viewerUrl = 'http://127.0.0.1:' + bound + '/';
-      log('viewer (connected mode): ' + ctx.viewerUrl);
+      viewerUrl = 'http://127.0.0.1:' + bound + '/';
+      log('viewer (connected mode): ' + viewerUrl);
       if (mcpHttp) log('MCP Streamable HTTP: http://127.0.0.1:' + bound + '/mcp');
     } catch (e) {
       // The viewer is optional: keep serving MCP over stdio without it.
@@ -115,7 +120,7 @@ async function main() {
     transport.onclose = () => { void shutdown('MCP stdio closed'); };
     process.stdin.on('end', () => { void shutdown('stdin ended'); });
     await server.connect(transport);
-    log('MCP server on stdio');
+    log('MCP server on stdio' + (viewerUrl ? '; watch at ' + viewerUrl + ' (every tool call appears in its LLM activity panel)' : ''));
   } else {
     log('stdin is a terminal: MCP stdio not started (an MCP client starts this command itself). Ctrl+C to stop.');
   }

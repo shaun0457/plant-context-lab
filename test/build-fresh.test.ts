@@ -21,5 +21,5 @@ test('static page is self-contained and offline', () => {
   assert.doesNotMatch(html, /<script[^>]+src=|<link[^>]+href="(?!data:)/i);
   // names that must never appear in the page UI (base64 so they do not appear in the repo either)
   for (const b of ["Y29udGV4dC9mYWI=","Q29udGV4dCBGYWI=","T3Blcm9u"]) { const s = Buffer.from(b, 'base64').toString('utf8'); assert.ok(!html.includes(s), 'forbidden name present'); }
-  for (const s of ['概念示範', '瀏覽器內模擬', '現在發生什麼', '調整提案', 'Gate 紀錄']) assert.ok(html.includes(s), s);
+  for (const s of ['概念示範', '瀏覽器內模擬', '現在發生什麼', '調整提案', '檢查紀錄']) assert.ok(html.includes(s), s);
 });

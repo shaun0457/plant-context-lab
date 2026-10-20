@@ -24,7 +24,7 @@ function walk(dir) {
 
 /** sha256 over the build inputs; test/build-fresh.test.ts recomputes it. */
 export function inputHash() {
-  const files = [...walk(rel('src')), rel('web/index.template.html')]
+  const files = [...walk(rel('src')), rel('web/index.template.html'), rel('package.json')]
     .filter((p) => /\.(ts|json|html)$/.test(p))
     .map((p) => relative(root, p).split('\\').join('/'))
     .sort();
@@ -64,7 +64,11 @@ async function main() {
   // UI strings (en / zh) as a JSON literal; '<' is escaped so no string can close the script tag
   const S = await import(pathToFileURL(rel('src/page/strings.ts')).href);
   const i18n = 'var PCL_I18N=' + JSON.stringify(S.STRINGS).split('<').join(BS + 'u003c') + ';';
-  const html = tpl.replace(MARK_I18N, () => i18n).replace(MARK, () => js);
+  // the MCP setup snippets pin the release tag taken from package.json (single source of the version)
+  const REF_MARK = '__PCL_REF__';
+  const ref = 'v' + JSON.parse(readFileSync(rel('package.json'), 'utf8')).version;
+  if (tpl.split(REF_MARK).length !== 4) throw new Error('template must contain exactly three ' + REF_MARK);
+  const html = tpl.split(REF_MARK).join(ref).replace(MARK_I18N, () => i18n).replace(MARK, () => js);
   if (/https?:/i.test(html)) throw new Error('index.html would contain an http(s) URL');
   writeFileSync(rel('index.html'), html);
 

@@ -1092,6 +1092,393 @@ function createSimulation(opt = {}) {
   return new Simulation({ pcaModel: PCA_MODEL, ...opt });
 }
 
+// src/server/activity.ts
+var ACTIVITY_CAP = 200;
+var MAX_ARGS_LEN = 160;
+var MAX_ARG_VALUE_LEN = 40;
+var MAX_ARG_KEYS = 8;
+var MAX_ARG_DEPTH = 2;
+var MAX_SUMMARY_LEN = 200;
+var MAX_RATIONALE_LEN = 300;
+var MAX_NAME_LEN = 64;
+var MAX_CLIENT_FIELD_LEN = 64;
+var SIM_OVERLAY_TTL_MS = 12e4;
+var SESSION_RELOG_MS = 10 * 6e4;
+var MAX_PENDING = 64;
+var UNSAFE_RANGES = [
+  [0, 31],
+  [127, 159],
+  [173, 173],
+  [1564, 1564],
+  [6158, 6158],
+  [8203, 8207],
+  [8232, 8238],
+  [8288, 8297],
+  [65279, 65279],
+  [65529, 65531],
+  [917504, 917631]
+];
+var UNSAFE = new RegExp("[" + UNSAFE_RANGES.map(([a, b]) => String.fromCodePoint(a) + (b > a ? "-" + String.fromCodePoint(b) : "")).join("") + "]", "gu");
+function cleanText(v, max) {
+  let s = typeof v === "string" ? v : v === void 0 || v === null ? "" : String(v);
+  if (s.length > max * 4) s = s.slice(0, max * 4);
+  s = s.replace(UNSAFE, " ").replace(/\s+/g, " ").trim();
+  if (s.length <= max) return s;
+  let cut = s.slice(0, Math.max(0, max - 1));
+  const last = cut.charCodeAt(cut.length - 1);
+  if (last >= 55296 && last <= 56319) cut = cut.slice(0, -1);
+  return cut + "…";
+}
+function argValue(v, depth = 0) {
+  if (Array.isArray(v)) {
+    if (depth >= MAX_ARG_DEPTH) return "[…]";
+    return "[" + v.slice(0, 8).map((x) => argValue(x, depth + 1)).join(",") + (v.length > 8 ? ",…" : "") + "]";
+  }
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (v && typeof v === "object") return "{…}";
+  return cleanText(v, MAX_ARG_VALUE_LEN);
+}
+function summarizeArgs(args, skip = []) {
+  if (!args || typeof args !== "object" || Array.isArray(args)) return args === void 0 ? "" : cleanText(argValue(args), MAX_ARGS_LEN);
+  const parts = [];
+  for (const k in args) {
+    if (!Object.prototype.hasOwnProperty.call(args, k) || skip.includes(k)) continue;
+    parts.push(cleanText(k, 24) + "=" + argValue(args[k]));
+    if (parts.length >= MAX_ARG_KEYS) break;
+  }
+  return cleanText(parts.join(" "), MAX_ARGS_LEN);
+}
+var num = (v, d = 2) => typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "–";
+var short = (v) => String(+v.toFixed(2));
+var sigDigits = (id) => id === "XMEAS(7)" ? 1 : 2;
+function pcaText(p) {
+  if (!p) return "PCA n/a";
+  if (p.exceeded?.any) {
+    const spe = !!p.exceeded.spe;
+    return "PCA " + (spe ? "SPE " + num(p.spe) + " > " + num(p.speLimit) : "T² " + num(p.t2) + " > " + num(p.t2Limit));
+  }
+  return "PCA within limits (score " + num(p.score) + "×)";
+}
+function summarizeToolResult(name, args, r) {
+  const snapshot = typeof r?.snapshot?.id === "string" ? r.snapshot.id : null;
+  if (!r || r.ok !== true) return { outcome: "error", summary: cleanText(r?.error ?? "error", MAX_SUMMARY_LEN), snapshot };
+  const out = (summary, extra = {}) => ({ outcome: "ok", summary: cleanText(summary, MAX_SUMMARY_LEN), snapshot, ...extra });
+  switch (name) {
+    case "get_plant_overview": {
+      const s = r.safetySummary || {};
+      const pca = s.pcaScore === null || s.pcaScore === void 0 ? "PCA n/a" : "PCA score " + num(s.pcaScore) + "×" + (s.pcaExceeded ? " (above limit)" : "");
+      return out("rules " + s.worstRuleState + ", " + pca + ", loop " + r.loop?.mode + " " + num(r.loop?.output, 1) + " %, " + (r.modelled?.signals?.length ?? 0) + " modelled signals");
+    }
+    case "get_signals": {
+      const sigs = Array.isArray(r.signals) ? r.signals : [];
+      let s = sigs.slice(0, 4).map((x) => x.id + " " + num(x.latest, sigDigits(x.id))).join(", ") + (sigs.length > 4 ? ", +" + (sigs.length - 4) : "");
+      s = (s || "no known signals") + " (latest, " + num(r.windowMinutes, 1) + " min window)";
+      if (r.unknownIds?.length) s += "; unknown " + r.unknownIds.length;
+      if (r.droppedIds?.length) s += "; dropped " + r.droppedIds.length;
+      return out(s);
+    }
+    case "get_safety_state": {
+      const w = r.rules?.worst || {};
+      const top = r.pca?.contributors?.[0]?.signal;
+      return out("rules " + w.state + (w.ruleId ? " (" + w.ruleId + ")" : "") + ", " + pcaText(r.pca) + (top ? ", top " + top : "") + ", loop " + r.loop?.mode + " " + num(r.loop?.output, 1) + " %");
+    }
+    case "get_topology_impact": {
+      const im = r.impact || {};
+      const start = String(im.start || "");
+      const reach = [];
+      for (const h of im.hops || []) for (const e of h.elements || []) reach.push(String(e.key));
+      const closed = (im.loops || []).filter((l) => l.closed).map((l) => l.name);
+      return out("from " + start + ", " + im.maxHops + " hops: " + Math.max(0, (im.reachableCount ?? 1) - 1) + " elements reachable" + (closed.length ? ", closed loop: " + closed.join(", ") : ""), { focus: start ? [start] : [], reach });
+    }
+    case "get_engineering_context": {
+      const c = r.context || {};
+      const key = String(c.element?.key || "");
+      return out((c.element?.label || key) + " (" + key + "): " + (c.signals?.length ?? 0) + " signals, " + (c.rules?.length ?? 0) + " rules, " + (c.knowledge?.length ?? 0) + " knowledge items", { focus: key ? [key] : [] });
+    }
+    case "simulate_adjustment": {
+      const inp = r.input || {};
+      const w = r.withChange || {};
+      const n = r.noChange || {};
+      const pick = (t) => Array.isArray(t) ? t.slice(0, 64).map((p) => ({ min: +p.min, "XMEAS(9)": +p["XMEAS(9)"], "XMEAS(7)": +p["XMEAS(7)"], "XMEAS(21)": +p["XMEAS(21)"], "XMV(10)": +p["XMV(10)"] })) : [];
+      const xmv = cleanText(inp.xmv, 16);
+      const summary = "simulate " + xmv + " " + num(inp.current, 1) + " -> " + short(Number(inp.target)) + " % (" + short(Number(w.horizonMin ?? inp.minutes)) + " min): worst " + w.worstRuleState + (n.worstRuleState && n.worstRuleState !== w.worstRuleState ? " (no change " + n.worstRuleState + ")" : "") + ", end XMEAS(9) " + num(w.end?.["XMEAS(9)"], 1) + " vs " + num(n.end?.["XMEAS(9)"], 1) + " without" + (w.meanSpe !== null && w.meanSpe !== void 0 ? ", mean SPE " + num(w.meanSpe) + " vs " + num(n.meanSpe) : "");
+      const snap = r.snapshot && typeof r.snapshot.K === "number" ? { id: cleanText(r.snapshot.id, 48), T_h: +r.snapshot.T_h, K: +r.snapshot.K } : null;
+      return out(summary, snap ? {
+        sim: { snapshot: snap, xmv, target: Number(inp.target), current: typeof inp.current === "number" ? inp.current : null, minutes: Number(w.horizonMin ?? inp.minutes), withChange: pick(w.trajectory), noChange: pick(n.trajectory) }
+      } : {});
+    }
+    case "propose_adjustment": {
+      const codes = (r.reasons || []).map((x) => x.code).join(", ");
+      const xmv = cleanText(args?.xmv, 16) || "?";
+      const target = typeof args?.target === "number" ? short(args.target) : cleanText(args?.target, 16);
+      const verdict = r.verdict === "ACCEPT" ? "ACCEPT" : "REJECT";
+      const tail = verdict === "ACCEPT" ? r.applied ? ", applied (loop MANUAL)" : ", not applied" : codes ? " " + codes : "";
+      return { outcome: verdict, summary: cleanText("propose " + xmv + " -> " + target + " %: " + verdict + tail, MAX_SUMMARY_LEN), snapshot, applied: !!r.applied };
+    }
+    case "get_gate_log": {
+      const e = Array.isArray(r.entries) ? r.entries : [];
+      return out(e.length + " of " + r.total + " entries" + (e[0] ? ", newest #" + e[0].seq + " " + e[0].verdict : ""));
+    }
+    default:
+      return out("ok");
+  }
+}
+function pendingOf(method, params) {
+  const p = params && typeof params === "object" ? params : {};
+  if (method === "tools/call") {
+    const name = cleanText(p.name, MAX_NAME_LEN) || "?";
+    const a = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
+    return {
+      method,
+      name,
+      args: summarizeArgs(a, ["rationale"]),
+      toolArgs: { xmv: typeof a.xmv === "string" ? cleanText(a.xmv, 32) : void 0, target: typeof a.target === "number" ? a.target : cleanText(a.target, 16) },
+      ...name === "propose_adjustment" && a.rationale !== void 0 ? { rationale: cleanText(a.rationale, MAX_RATIONALE_LEN) } : {}
+    };
+  }
+  if (method === "resources/read") return { method, name: cleanText(p.uri, MAX_NAME_LEN) || "?", args: "" };
+  if (method === "prompts/get") return { method, name: cleanText(p.name, MAX_NAME_LEN) || "?", args: summarizeArgs(p.arguments) };
+  return { method, name: cleanText(method, MAX_NAME_LEN), args: "" };
+}
+var LIST_NOUN = {
+  "tools/list": ["tools", "tools"],
+  "resources/list": ["resources", "resources"],
+  "resources/templates/list": ["resourceTemplates", "resource templates"],
+  "prompts/list": ["prompts", "prompts"]
+};
+var IGNORED = /* @__PURE__ */ new Set(["ping", "initialize"]);
+var ActivityLog = class {
+  cap;
+  records = [];
+  seq = 0;
+  client = null;
+  lastSim = null;
+  now;
+  snap;
+  listeners = /* @__PURE__ */ new Set();
+  observed = /* @__PURE__ */ new WeakSet();
+  connSeq = 0;
+  /** connection that owns `client` (only for connections with trackClose) */
+  clientConn = 0;
+  lastSession = null;
+  constructor(opt = {}) {
+    this.cap = Math.max(1, opt.cap ?? ACTIVITY_CAP);
+    this.now = opt.now ?? (() => Date.now());
+    this.snap = opt.snapshot ?? (() => null);
+  }
+  subscribe(fn) {
+    this.listeners.add(fn);
+    return () => {
+      this.listeners.delete(fn);
+    };
+  }
+  emit(u) {
+    for (const fn of this.listeners) {
+      try {
+        fn(u);
+      } catch {
+      }
+    }
+  }
+  add(rec, sim) {
+    const t = this.now();
+    const r = {
+      seq: ++this.seq,
+      ts: new Date(t).toISOString(),
+      kind: rec.kind,
+      name: cleanText(rec.name, MAX_NAME_LEN),
+      args: cleanText(rec.args, MAX_ARGS_LEN),
+      snapshot: rec.snapshot === void 0 || rec.snapshot === null ? this.snap() : cleanText(rec.snapshot, 48),
+      outcome: rec.outcome,
+      summary: cleanText(rec.summary, MAX_SUMMARY_LEN),
+      ...rec.rationale !== void 0 ? { rationale: cleanText(rec.rationale, MAX_RATIONALE_LEN) } : {},
+      ...rec.applied !== void 0 ? { applied: rec.applied } : {},
+      ...rec.focus?.length ? { focus: rec.focus.slice(0, 4).map((k) => cleanText(k, 64)) } : {},
+      ...rec.reach?.length ? { reach: rec.reach.slice(0, 40).map((k) => cleanText(k, 64)) } : {}
+    };
+    this.records.push(r);
+    while (this.records.length > this.cap) this.records.shift();
+    let overlay;
+    if (sim) {
+      overlay = { ...sim, seq: r.seq, at: t };
+      this.lastSim = overlay;
+    }
+    this.emit({ record: r, client: this.client, ...overlay ? { sim: overlay } : {} });
+    return r;
+  }
+  /**
+   * The live plant changed (an applied proposal, a human control, a scenario
+   * change): a simulation from before no longer describes what will happen.
+   */
+  invalidateSim() {
+    if (!this.lastSim) return;
+    this.lastSim = null;
+    this.emit({ record: null, client: this.client, simCleared: true });
+  }
+  /** initialize request seen: remember the client (untrusted fields are capped). */
+  clientInitializing(params, conn = 0) {
+    const info = params?.clientInfo || {};
+    const name = cleanText(info.name, MAX_CLIENT_FIELD_LEN) || "unknown client";
+    const version = cleanText(info.version, MAX_CLIENT_FIELD_LEN);
+    const protocol = cleanText(params?.protocolVersion, 32);
+    const same = this.client && this.client.name === name && this.client.version === version;
+    this.client = { name, version, protocol, initialized: false, connected: true, since: same ? this.client.since : new Date(this.now()).toISOString() };
+    this.clientConn = conn;
+  }
+  /** the client finished the handshake (notifications/initialized, or any later request). */
+  clientInitialized() {
+    if (!this.client) this.client = { name: "unknown client", version: "", protocol: "", initialized: false, connected: true, since: new Date(this.now()).toISOString() };
+    if (this.client.initialized) return;
+    this.client.initialized = true;
+    this.client.connected = true;
+    const c = this.client;
+    const key = c.name + "|" + c.version + "|" + c.protocol;
+    const t = this.now();
+    if (this.lastSession && this.lastSession.key === key && t - this.lastSession.at < SESSION_RELOG_MS) {
+      this.emit({ record: null, client: c });
+      return;
+    }
+    this.lastSession = { key, at: t };
+    this.add({ kind: "session", name: "initialize", args: "", outcome: "ok", summary: "MCP client " + c.name + (c.version ? " " + c.version : "") + " connected" + (c.protocol ? " (protocol " + c.protocol + ")" : "") });
+  }
+  /** a tracked connection closed; if it owned the client, the client is gone. */
+  connectionClosed(conn) {
+    if (!this.client || !this.client.connected || conn === 0 || conn !== this.clientConn) return;
+    this.client.connected = false;
+    this.lastSession = null;
+    const c = this.client;
+    this.add({ kind: "session", name: "close", args: "", outcome: "ok", summary: "MCP client " + c.name + (c.version ? " " + c.version : "") + " disconnected" });
+  }
+  state() {
+    const age = this.lastSim ? this.now() - this.lastSim.at : Infinity;
+    return {
+      cap: this.cap,
+      seq: this.seq,
+      client: this.client,
+      records: this.records.slice(),
+      sim: this.lastSim && age <= SIM_OVERLAY_TTL_MS ? { ...this.lastSim, ageMs: age } : null
+    };
+  }
+  /** Record a finished request from its JSON-RPC response. */
+  recordResponse(p, msg) {
+    const { method } = p;
+    const err = msg.error ? cleanText(msg.error.message ?? "error", MAX_SUMMARY_LEN) : null;
+    const result = msg.result || {};
+    if (method === "tools/call") {
+      const base = { kind: "tool", name: p.name, args: p.args, ...p.rationale !== void 0 ? { rationale: p.rationale } : {} };
+      const text = Array.isArray(result.content) && typeof result.content[0]?.text === "string" ? result.content[0].text : "";
+      if (err || result.isError) {
+        this.add({ ...base, outcome: "error", summary: err || cleanText(text || "error", MAX_SUMMARY_LEN) });
+        return;
+      }
+      let parsed = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        parsed = null;
+      }
+      if (!parsed) {
+        this.add({ ...base, outcome: "ok", summary: cleanText(text, MAX_SUMMARY_LEN) });
+        return;
+      }
+      const s = summarizeToolResult(p.name, p.toolArgs || {}, parsed);
+      this.add({ ...base, outcome: s.outcome, summary: s.summary, snapshot: s.snapshot, focus: s.focus, reach: s.reach, ...s.applied !== void 0 ? { applied: s.applied } : {} }, s.sim);
+      if (s.applied) this.invalidateSim();
+      return;
+    }
+    if (method === "resources/read") {
+      const chars = Array.isArray(result.contents) ? result.contents.reduce((a, c) => a + (typeof c?.text === "string" ? c.text.length : 0), 0) : 0;
+      this.add({ kind: "resource", name: p.name, args: "", outcome: err ? "error" : "ok", summary: err || "read " + (chars >= 1024 ? (chars / 1024).toFixed(1) + " K" : chars) + " chars" });
+      return;
+    }
+    if (method === "prompts/get") {
+      const n = Array.isArray(result.messages) ? result.messages.length : 0;
+      this.add({ kind: "prompt", name: p.name, args: p.args, outcome: err ? "error" : "ok", summary: err || n + " message" + (n === 1 ? "" : "s") });
+      return;
+    }
+    const noun = LIST_NOUN[method];
+    if (noun) {
+      const n = Array.isArray(result[noun[0]]) ? result[noun[0]].length : 0;
+      this.add({ kind: "list", name: p.name, args: "", outcome: err ? "error" : "ok", summary: err || n + " " + noun[1] });
+      return;
+    }
+    this.add({ kind: "session", name: p.name, args: "", outcome: err ? "error" : "ok", summary: err || "ok" });
+  }
+  /** A response could not be delivered to the client. */
+  recordSendFailure(p, e) {
+    this.add({ kind: p.method === "tools/call" ? "tool" : p.method === "resources/read" ? "resource" : p.method === "prompts/get" ? "prompt" : "session", name: p.name, args: p.args, outcome: "error", summary: "response not delivered: " + cleanText(e?.message ?? e, 120) });
+  }
+  /**
+   * Observe a transport before the MCP server connects to it (see the SDK notes
+   * at the top). Observing the same transport twice is a no-op.
+   */
+  observe(transport, opt = {}) {
+    if (this.observed.has(transport)) return;
+    this.observed.add(transport);
+    const conn = opt.trackClose ? ++this.connSeq : 0;
+    const pending = /* @__PURE__ */ new Map();
+    const prevOnMessage = transport.onmessage;
+    transport.onmessage = (message, extra) => {
+      try {
+        this.onIncoming(pending, message, conn);
+      } catch {
+      }
+      prevOnMessage?.(message, extra);
+    };
+    if (conn) {
+      const prevOnClose = transport.onclose;
+      transport.onclose = () => {
+        try {
+          this.connectionClosed(conn);
+        } catch {
+        }
+        prevOnClose?.();
+      };
+    }
+    const send = transport.send.bind(transport);
+    transport.send = (message, options) => {
+      let p;
+      try {
+        p = this.onOutgoing(pending, message);
+      } catch {
+        p = void 0;
+      }
+      const sent = send(message, options);
+      if (p) {
+        const failed = p;
+        sent.catch((e) => {
+          try {
+            this.recordSendFailure(failed, e);
+          } catch {
+          }
+        });
+      }
+      return sent;
+    };
+  }
+  onIncoming(pending, m, conn) {
+    if (!m || typeof m !== "object" || typeof m.method !== "string") return;
+    if (m.id === void 0) {
+      if (m.method === "notifications/initialized") this.clientInitialized();
+      return;
+    }
+    if (m.method === "initialize") this.clientInitializing(m.params, conn);
+    else if (!this.client?.initialized && m.method !== "ping") this.clientInitialized();
+    if (IGNORED.has(m.method)) return;
+    pending.set(m.id, pendingOf(m.method, m.params));
+    while (pending.size > MAX_PENDING) pending.delete(pending.keys().next().value);
+  }
+  /** records the response and returns its request, so a failed send can be reported too */
+  onOutgoing(pending, m) {
+    if (!m || typeof m !== "object" || m.method !== void 0 || m.id === void 0) return void 0;
+    const p = pending.get(m.id);
+    if (!p) return void 0;
+    pending.delete(m.id);
+    this.recordResponse(p, m);
+    return p;
+  }
+};
+
 // src/server/docs.ts
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -1171,7 +1558,6 @@ function createToolHandlers(ctx) {
         },
         safetySummary: { worstRuleState: s.rules.worst.state, worstRuleId: s.rules.worst.ruleId, pcaScore: s.pca ? s.pca.score : null, pcaExceeded: s.pca ? s.pca.exceeded.any : null },
         timebase: { minutesPerSample: MINUTES_PER_STEP, simTime_h: round(sim.t, 2) },
-        viewer: ctx.viewerUrl || null,
         nextStep: "Call get_safety_state first, then get_signals / get_engineering_context. Use simulate_adjustment before propose_adjustment."
       };
     },
@@ -1261,19 +1647,66 @@ function createToolHandlers(ctx) {
   };
 }
 
+// package.json
+var package_default = {
+  name: "plant-context-lab",
+  version: "0.4.0",
+  description: "Tennessee Eastman context-layer demo: P&ID, simulated trends, deterministic rules, PCA monitor and an adjustment gate, with an optional local MCP server.",
+  license: "UNLICENSED",
+  private: true,
+  type: "module",
+  bin: {
+    "plant-context-lab": "dist/server.js"
+  },
+  files: [
+    "dist/",
+    "docs/",
+    "index.html",
+    "README.md"
+  ],
+  engines: {
+    node: ">=22.18"
+  },
+  scripts: {
+    build: "node scripts/build.mjs",
+    typecheck: "tsc --noEmit",
+    "train:pca": "node scripts/train-pca.ts",
+    test: 'node --test --test-reporter=spec "test/**/*.test.ts"',
+    start: "node dist/server.js"
+  },
+  dependencies: {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    zod: "4.6.5"
+  },
+  devDependencies: {
+    "@types/node": "22.20.5",
+    esbuild: "0.28.2",
+    typescript: "5.9.3"
+  }
+};
+
 // src/server/mcp.ts
 var SERVER_NAME = "plant-context-lab";
-var SERVER_VERSION = "0.3.0";
+var SERVER_VERSION = package_default.version;
 function asContent(result) {
   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
 }
+var ObservedMcpServer = class extends McpServer {
+  observer = null;
+  async connect(transport) {
+    this.observer?.(transport);
+    return super.connect(transport);
+  }
+};
 var READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
-function createMcpServer(ctx, docs) {
+function createMcpServer(ctx, docs, opt = {}) {
   const h = createToolHandlers(ctx);
-  const server = new McpServer(
+  const server = new ObservedMcpServer(
     { name: SERVER_NAME, version: SERVER_VERSION },
     { instructions: "Simulated Tennessee Eastman reactor-cooling demo for education only. Read resource docs://system-prompt (or prompt operator-assistant) first. Always call get_safety_state before advising. The gate decides; you only propose." }
   );
+  const activity = ctx.activity;
+  if (activity) server.observer = (t) => activity.observe(t, { trackClose: !opt.statelessHttp });
   server.registerTool("get_plant_overview", {
     title: "Plant overview",
     description: "Read-only overview of the SIMULATED plant: topology counts, modelled signals with current values, the XMV(10) loop mode, a safety summary and the snapshot id.",
@@ -1424,6 +1857,7 @@ function createWebApp(opt) {
       eventSeq: sim.eventSeq,
       gateLog: sim.gateLog.slice(-LOG_TAIL),
       events: sim.events.slice(-LOG_TAIL),
+      activity: opt.activity ? opt.activity.state() : null,
       ...full ? { history: history() } : {}
     };
   }
@@ -1468,8 +1902,8 @@ function createWebApp(opt) {
     const o = req.headers.origin;
     return o === void 0 || allowedOrigins().includes(String(o).toLowerCase());
   }
-  function tokenOk(req) {
-    const got = Buffer.from(String(req.headers["x-pcl-token"] || ""));
+  function tokenOk(req, url) {
+    const got = Buffer.from(String(req.headers["x-pcl-token"] || url?.searchParams.get("token") || ""));
     const want = Buffer.from(token);
     return got.length === want.length && timingSafeEqual(got, want);
   }
@@ -1569,6 +2003,12 @@ function createWebApp(opt) {
       res.end(page);
       return;
     }
+    if (method === "GET" && (path === "/api/state" || path === "/api/stream")) {
+      if (!originOk(req) || !tokenOk(req, url)) {
+        send(res, 403, { error: "forbidden: open the viewer page; the API needs its token" });
+        return;
+      }
+    }
     if (method === "GET" && path === "/api/state") {
       send(res, 200, statePayload(true));
       return;
@@ -1617,17 +2057,23 @@ function createWebApp(opt) {
       }
       if (path === "/api/control") {
         const r2 = control(body);
+        if (r2.ok) opt.activity?.invalidateSim();
         send(res, r2.ok ? 200 : 400, r2);
         if (r2.ok) broadcast([]);
         return;
       }
       const r = evaluateAdjustment(sim, { xmv: String(body.xmv ?? ""), target: typeof body.target === "number" ? body.target : NaN, rationale: String(body.rationale ?? "") }, { apply: body.apply === true, source: "page" });
+      if (r.applied) opt.activity?.invalidateSim();
       send(res, 200, r);
       broadcast([]);
       return;
     }
     send(res, 404, { error: "not found" });
   }
+  const unsubscribe = opt.activity ? opt.activity.subscribe((u) => {
+    for (const c of clients) writeEvent(c, "activity", u);
+  }) : () => {
+  };
   const server = createServer((req, res) => {
     handle(req, res).catch((e) => {
       log2("web error: " + e.message);
@@ -1669,6 +2115,7 @@ function createWebApp(opt) {
       });
     },
     close() {
+      unsubscribe();
       for (const c of clients) c.end();
       clients.clear();
       server.closeAllConnections();
@@ -1721,13 +2168,15 @@ async function main() {
   const sim = createSimulation({ seed });
   if (SCENARIOS[scenario] > 0) sim.injectIdv4(SCENARIOS[scenario], "cli");
   const docs = loadDocs();
-  const ctx = { sim, viewerUrl: null };
+  const activity = new ActivityLog({ snapshot: () => sim.snapshot().id });
+  const ctx = { sim, activity };
+  let viewerUrl = null;
   const controls = { running: true, speed: 1 };
   let web = null;
   if (!values["no-web"]) {
     const html = readFileSync2(join2(packageRoot(), "index.html"), "utf8");
     const mcpHttp = values["http-mcp"] ? async (req, res, body) => {
-      const server = createMcpServer(ctx, docs);
+      const server = createMcpServer(ctx, docs, { statelessHttp: true });
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: void 0, enableJsonResponse: true });
       res.on("close", () => {
         transport.close().catch(() => {
@@ -1739,10 +2188,10 @@ async function main() {
       await transport.handleRequest(req, res, body);
     } : void 0;
     try {
-      web = createWebApp({ sim, html, controls, mcpHttp, log });
+      web = createWebApp({ sim, html, controls, mcpHttp, activity, log });
       const bound = await web.listen(port, "127.0.0.1");
-      ctx.viewerUrl = "http://127.0.0.1:" + bound + "/";
-      log("viewer (connected mode): " + ctx.viewerUrl);
+      viewerUrl = "http://127.0.0.1:" + bound + "/";
+      log("viewer (connected mode): " + viewerUrl);
       if (mcpHttp) log("MCP Streamable HTTP: http://127.0.0.1:" + bound + "/mcp");
     } catch (e) {
       web = null;
@@ -1789,7 +2238,7 @@ async function main() {
       void shutdown("stdin ended");
     });
     await server.connect(transport);
-    log("MCP server on stdio");
+    log("MCP server on stdio" + (viewerUrl ? "; watch at " + viewerUrl + " (every tool call appears in its LLM activity panel)" : ""));
   } else {
     log("stdin is a terminal: MCP stdio not started (an MCP client starts this command itself). Ctrl+C to stop.");
   }

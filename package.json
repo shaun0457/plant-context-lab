@@ -1,6 +1,6 @@
 {
   "name": "plant-context-lab",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Tennessee Eastman context-layer demo: P&ID, simulated trends, deterministic rules, PCA monitor and an adjustment gate, with an optional local MCP server.",
   "license": "UNLICENSED",
   "private": true,

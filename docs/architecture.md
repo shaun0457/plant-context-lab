@@ -14,20 +14,21 @@ src/page/strings.ts  page UI strings, English (default) and Traditional Chinese
 
 web/index.template.html + engine IIFE + strings  ->  index.html (static page, works offline)
 src/server/    Node: one process, one engine instance
-  web.ts   127.0.0.1 viewer, the same page in connected mode (SSE)
-  mcp.ts   MCP tools / resources / prompt over stdio (optional Streamable HTTP)
+  web.ts       127.0.0.1 viewer, the same page in connected mode (SSE)
+  mcp.ts       MCP tools / resources / prompt over stdio (optional Streamable HTTP)
+  activity.ts  LLM activity feed: one short record per MCP request, shown live in the viewer
 ```
 
 ## Authority
 
 - **The model proposes; the gate decides.** `propose_adjustment` runs the gate, and only an ACCEPT changes the plant.
 - **Scenarios are harness authority.** Disturbance injection, removal and the return to AUTO are human controls on the page or command-line flags. No MCP tool exists for them, and tool results do not reveal the active scenario.
-- **The trust boundary is loopback.** The viewer accepts loopback Host headers only, and its controls need a same-origin request plus a per-process token, so other websites cannot drive it. A local process can still open the page. Give the agent MCP tools only, never a shell or fetch tool aimed at the viewer port.
+- **The trust boundary is loopback.** The viewer accepts loopback Host headers only, and its controls, state and stream need a same-origin request plus a per-process token, so other websites cannot drive or read it. A local process can still open the page. Give the agent MCP tools only, never a shell or fetch tool aimed at the viewer port.
 - **Simulate-before-act runs on copies.** `branch()` copies the plant state and the RNG, so a branch replays the same noise. The live plant is never touched.
 
 ## Bounds
 
-The engine keeps a history of 480 samples. Logs are capped: 200 gate entries, 100 events and 50 applied changes. `get_signals` returns at most 8 ids and 60 points each, `simulate_adjustment` runs at most 120 minutes, and impact queries go at most 6 hops. The viewer accepts 8 SSE clients and request bodies up to 8 KB.
+The engine keeps a history of 480 samples. Logs are capped: 200 gate entries, 100 events and 50 applied changes. `get_signals` returns at most 8 ids and 60 points each, `simulate_adjustment` runs at most 120 minutes, and impact queries go at most 6 hops. The viewer accepts 8 SSE clients and request bodies up to 8 KB. The LLM activity feed keeps the last 200 records; client-supplied text in it is capped (arguments 160, rationale 300, client name 64 characters).
 
 ## Honesty
 

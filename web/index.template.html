@@ -23,14 +23,14 @@
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.65;overflow-x:hidden}
 button{font-family:inherit;color:inherit}
 .mono{font-family:var(--mono);font-size:12px}
 .dim{color:var(--dim)} .muted{color:var(--muted)}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- top bar ---------- */
-.top{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:9px 20px;background:rgba(11,17,23,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.top{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 28px;background:rgba(11,17,23,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand .t{font-weight:600;font-size:15px;letter-spacing:.2px;white-space:nowrap}
 .brand .s{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -44,16 +44,16 @@ button{font-family:inherit;color:inherit}
 @keyframes pulse{50%{box-shadow:0 0 0 5px rgba(69,185,129,.05)}}
 
 /* ---------- layout ---------- */
-.wrap{max-width:1500px;margin:0 auto;padding:16px 20px 8px;display:grid;gap:14px}
-.row1{display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:14px;align-items:start}
-.row2{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px;align-items:start}
+.wrap{max-width:1440px;margin:0 auto;padding:28px 28px 12px;display:grid;gap:28px}
+.row1{display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:24px;align-items:start}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:start}
 @media (max-width:1180px){.row2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:1060px){.row1{grid-template-columns:minmax(0,1fr)}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0}
-.ph{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 14px;border-bottom:1px solid var(--line)}
-.ph h2{margin:0;font-size:13.5px;font-weight:600;letter-spacing:.2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:16px 22px 6px}
+.ph h2{margin:0;font-size:15px;font-weight:600;letter-spacing:.2px}
 .ph .sp{flex:1}
-.pb{padding:12px 14px}
+.pb{padding:14px 22px 20px}
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:1px 7px;border-radius:4px;border:1px solid var(--line2);color:var(--text2);white-space:nowrap;font-weight:500}
 .badge.built{border-color:rgba(69,185,129,.45);color:#8fdcb4;background:var(--ok-bg)}
 .badge.wip{border-color:rgba(226,167,60,.45);color:#f0c97e;background:var(--warn-bg)}
@@ -84,7 +84,7 @@ select{font-family:inherit;font-size:12px;color:var(--text);background:var(--bg2
 .legend .hops i{display:inline-block;width:15px;height:15px;border-radius:50%;color:#0b1117;font-style:normal;font-size:9.5px;font-weight:700;text-align:center;line-height:15px}
 .legend .ln{display:inline-block;width:22px;height:0;border-top:2px solid var(--pipe);vertical-align:middle;margin-right:4px}
 .legend .ln.cw{border-top:2px dashed var(--cw)}
-.hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:7px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--text2);min-height:36px;background:var(--bg2)}
+.hlbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 22px 10px;font-size:13px;color:var(--text2);min-height:36px}
 .hlbar .k{color:var(--muted)}
 .svgwrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .svgwrap svg{display:block;width:100%;height:auto;min-width:640px}
@@ -154,30 +154,32 @@ svg.hlon .tag.dim{opacity:.35}
 .badges circle{stroke:#0b1117;stroke-width:1.5}
 
 /* ---------- side panel ---------- */
-.side{max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:62px}
-@media (max-width:1060px){.side{max-height:none;position:static}}
-.side h2{margin:4px 0 0;font-size:16px;font-weight:600}
-.side h2 .zh{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:4px}
-.side h3{margin:16px 0 7px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+/* two columns: the side panel adds no height of its own (contain:size) and stretches to the
+   plant panel, so both end on the same line; its content scrolls inside. One column: natural height. */
+@media (min-width:1061px){.row1{align-items:stretch}.side{contain:size;overflow:auto;overscroll-behavior:contain}}
+.side h2{margin:4px 0 0;font-size:18px;font-weight:600}
+.side h2 .zh{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:6px}
+.side h3{margin:26px 0 8px;font-size:12.5px;letter-spacing:.3px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
 .side h3 .cnt{font-family:var(--mono);color:var(--dim);letter-spacing:0}
 .kindrow{display:flex;flex-wrap:wrap;gap:5px}
-.kind{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px;background:var(--panel3);color:var(--text2);border:1px solid var(--line2)}
-.sig{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kind{font-size:11px;padding:1px 7px;border-radius:3px;background:var(--panel3);color:var(--text2)}
+.kindrow .kind{font-family:var(--mono);font-size:10px}
+.sig{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(33,48,64,.6)}
 .sig:last-child{border-bottom:0}
-.sig .sid{font-family:var(--mono);font-size:11.5px;color:var(--text);white-space:nowrap}
-.sig .snm{font-size:11.5px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
-.sig .sv{font-family:var(--mono);font-size:12px;text-align:right;white-space:nowrap}
+.sig .snm{font-size:13px;color:var(--text2);min-width:0;overflow-wrap:anywhere}
+.sig .sv{font-family:var(--mono);font-size:13px;text-align:right;white-space:nowrap}
 .sig .sv b{color:var(--acc2);font-weight:500}
-.sig .sv i{font-style:normal;color:var(--dim);font-size:10.5px}
-.sig .sf{grid-column:2 / 4;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
-.sig .cv{grid-column:1 / 4;font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.7}
+.sig .sv i{font-style:normal;color:var(--dim);font-size:11px}
+.sig .sf{grid-column:1 / 3;display:flex;gap:5px;flex-wrap:wrap}
+.sig .sf:empty{display:none}
+.sig .cv{grid-column:1 / 3;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8}
 .sig .cv b{color:var(--text2);font-weight:500}
 .sig.dev .sv b{color:#f6d595}
-.empty{font-size:12px;color:var(--muted);padding:8px 10px;border:1px dashed var(--line2);border-radius:6px;background:var(--bg2)}
-.kn{border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:5px;padding:7px 9px;margin-bottom:6px;background:var(--bg2)}
+.empty{font-size:13px;color:var(--muted);padding:10px 12px;border-radius:6px;background:var(--bg2)}
+.kn{border-left:3px solid var(--line2);border-radius:4px;padding:8px 12px;margin-bottom:10px;background:var(--bg2)}
 .kn.APPROVED{border-left-color:var(--ok)} .kn.REJECTED{border-left-color:var(--alarm)} .kn.SOURCE{border-left-color:var(--plan)}
-.kn .kh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:3px}
-.kn .kt{font-size:12px;color:var(--text2);overflow-wrap:anywhere}
+.kn .kh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.kn .kt{font-size:13px;color:var(--text2);overflow-wrap:anywhere}
 .refs{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .ref{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:3px;line-height:16px;border:1px solid var(--line2);color:var(--muted);background:var(--panel);overflow-wrap:anywhere}
 .ref.rs{color:var(--acc2);border-color:var(--acc-bd)}
@@ -185,7 +187,7 @@ svg.hlon .tag.dim{opacity:.35}
 .ref.rv{color:#8fdcb4;border-color:rgba(69,185,129,.4)}
 .ref.rv.rej{color:#f3a49d;border-color:rgba(224,90,80,.45)}
 .ref.src{color:var(--plan)}
-.imp{border:1px solid var(--line2);border-radius:6px;padding:9px 10px;background:var(--bg2)}
+.imp{border-radius:6px;padding:12px 14px;background:var(--bg2)}
 .imp .r{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
 .imp input[type=range]{flex:1;min-width:120px;accent-color:var(--acc)}
 .hoprow{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;padding:5px 0;border-top:1px dashed var(--line)}
@@ -195,78 +197,94 @@ svg.hlon .tag.dim{opacity:.35}
 .loopc{border:1px solid rgba(226,167,60,.45);border-left:3px solid var(--warn);border-radius:6px;padding:6px 9px;background:var(--warn-bg);margin-top:7px;font-size:11.5px}
 .loopc.closed{border-color:rgba(224,90,80,.55);border-left-color:var(--alarm);background:var(--alarm-bg)}
 .loopc b{font-weight:600}
-.note{font-size:11.5px;color:var(--muted);margin-top:7px}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
 
 /* ---------- trends ---------- */
-.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
-.ctrl .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.ctrl .lbl{font-size:11px;color:var(--muted)}
-.simnote{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--plan-bg);border-bottom:1px solid var(--line);font-size:12px;color:#c3d0dc}
-.simnote b{font-weight:600}
-.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 14px}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;padding:10px 22px 4px}
+.ctrl .grp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctrl .lbl{font-size:12px;color:var(--muted)}
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px 22px}
 @media (max-width:640px){.tgrid{grid-template-columns:minmax(0,1fr)}}
-.tc{border:1px solid var(--line);border-radius:6px;background:var(--bg2);min-width:0}
-.tc .th{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;padding:6px 10px 2px}
-.tc .th .n{font-size:12px;color:var(--text2)}
-.tc .th .n b{font-family:var(--mono);font-weight:600;color:var(--text);margin-right:5px}
+.tc{border-radius:8px;background:var(--bg2);min-width:0}
+.tc .th{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;padding:10px 12px 2px}
+.tc .th .n{font-size:13px;color:var(--text);font-weight:500}
 .tc .tv{font-family:var(--mono);font-size:13px;color:var(--text)}
 .tc .tv small{color:var(--dim);font-size:10.5px}
 .tc .td{font-size:10.5px;margin-left:6px;color:var(--dim)}
 .tc .td.up{color:#f6d595}
 .tc canvas{display:block;width:100%;height:140px}
-.tc.primary{border-color:rgba(226,167,60,.6);box-shadow:0 0 0 1px rgba(226,167,60,.18)}
+.tc.primary{box-shadow:0 0 0 1px rgba(226,167,60,.55)}
 .prim{font-size:10px;padding:0 6px;border-radius:3px;background:var(--warn-bg);border:1px solid rgba(226,167,60,.55);color:#f6d595;margin-left:6px;white-space:nowrap}
 .prim[hidden]{display:none}
 .seg button:disabled{opacity:.4;cursor:default}
-.tcap{padding:0 14px 12px;font-size:12px;color:var(--text2)}
+.tcap{padding:0 22px 20px;font-size:13.5px;color:var(--text2)}
 .tcap b{color:#f6d595;font-weight:600}
 .tc .tk{display:flex;justify-content:space-between;padding:0 10px 6px;font-size:10.5px;color:var(--muted);gap:8px}
 .tc .tk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .tc .tk span:last-child{text-align:right}
 
 /* ---------- now panel ---------- */
-.status{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-bottom:1px solid var(--line)}
-.status .ic{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--ok)}
+.status{display:flex;gap:12px;align-items:flex-start;padding:12px 22px 18px}
+.status .ic{flex:none;width:11px;height:11px;border-radius:50%;margin-top:7px;background:var(--ok)}
 .status.dist .ic{background:var(--warn);box-shadow:0 0 0 4px rgba(226,167,60,.18)}
 .status.comp .ic{background:var(--acc)}
-.status .st{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-.status .tt{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.4}
-.nowsec{padding:8px 14px 10px;border-bottom:1px solid var(--line)}
-.nowsec:last-child{border-bottom:0}
-@media (min-width:1181px){#now{max-height:700px;overflow:auto}}
-.nowsec h3{margin:2px 0 6px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:600}
-.nowsec ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
-.nowsec li .ln{font-size:12.5px;color:var(--text2)}
+.status .st{font-size:12.5px;color:var(--muted);font-weight:600}
+.status .tt{font-size:15.5px;font-weight:600;color:var(--text);line-height:1.5;margin-top:2px}
+.status .m2{font-size:14px;color:var(--text2);margin-top:10px}
+.nowsec{padding:12px 0 6px}
+.nowsec h3{margin:2px 0 8px;font-size:12.5px;color:var(--muted);font-weight:600}
+.nowsec ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.nowsec li .ln{font-size:13px;color:var(--text2)}
 .nowsec li .ln b{color:var(--text);font-weight:600}
 .nowsec li .ln .w{color:#f6d595}
 .nowsec li .ln .g{color:#8fdcb4}
 
 /* ---------- evidence strip ---------- */
-.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
-.strip > div{padding:10px 14px;border-right:1px solid var(--line);min-width:0}
-.strip > div:last-child{border-right:0}
-@media (max-width:980px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}.strip > div:nth-child(2){border-right:0}.strip > div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
-@media (max-width:560px){.strip{grid-template-columns:minmax(0,1fr)}.strip > div{border-right:0;border-bottom:1px solid var(--line)}.strip > div:last-child{border-bottom:0}}
-.strip .k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.strip .v{font-family:var(--mono);font-size:11.5px;color:var(--acc2);overflow-wrap:anywhere}
-.strip .d{font-size:11.5px;color:var(--muted);margin-top:2px}
-.foot{max-width:1500px;margin:0 auto;padding:6px 20px 28px;font-size:12px;color:var(--muted)}
-.foot .hon{border:1px solid var(--line2);border-radius:6px;padding:9px 12px;background:var(--panel);color:var(--text2)}
-.foot .hon b{color:var(--text)}
-.caps{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
-.caps .badge{white-space:normal;max-width:100%;line-height:1.45}
+.strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 28px;margin-top:18px}
+@media (max-width:640px){.strip{grid-template-columns:minmax(0,1fr)}}
+.strip > div{min-width:0}
+.strip .k{font-size:12.5px;color:var(--muted);margin-bottom:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.strip .v{font-family:var(--mono);font-size:12px;color:var(--acc2);overflow-wrap:anywhere}
+.strip .d{font-size:12.5px;color:var(--muted);margin-top:3px}
+.foot{max-width:1440px;margin:0 auto;padding:8px 28px 40px;font-size:13px;color:var(--muted)}
+.ftline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:16px 2px;border-top:1px solid var(--line)}
+.ftline b{color:var(--text2);font-weight:600}
+.ftline .sp{flex:1}
+.ftline a{color:var(--acc2);text-decoration:none}
+.ftline a:hover,.ftline a:focus-visible{text-decoration:underline}
+.about .aboutb{padding:6px 2px 4px;color:var(--text2)}
+.about .aboutb p{margin:0 0 12px;max-width:900px}
+.caps{display:flex;flex-wrap:wrap;gap:8px}
+.caps .badge{white-space:normal;max-width:100%;line-height:1.5;font-size:11.5px;padding:2px 8px}
+
+/* ---------- folds, info buttons, sources ---------- */
+details.fold > summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none;display:inline-flex;align-items:center;gap:6px;padding:4px 0;user-select:none}
+details.fold > summary::-webkit-details-marker{display:none}
+details.fold > summary::before{content:"▸";font-size:11px;color:var(--dim);transition:transform .15s}
+details.fold[open] > summary::before{transform:rotate(90deg)}
+details.fold > summary:hover{color:var(--text2)}
+details.fold > summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:3px}
+.nowmore{padding:0 22px 16px}
+.ib{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--muted);font-size:11px;font-style:normal;line-height:1;flex:none}
+.ib:hover,.ib[aria-expanded="true"]{border-color:var(--acc-bd);color:var(--acc2)}
+.ib:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.more{margin-top:8px;padding:9px 12px;border-radius:6px;background:var(--bg2);font-size:12.5px;color:var(--text2);overflow-wrap:anywhere}
+.more .mono{font-size:11.5px;color:var(--muted);margin-top:4px}
+.tid{font-family:var(--mono);font-size:.8em;color:var(--dim);margin-left:5px;font-weight:400}
+body:not(.src-on) .src,body:not(.src-on) .tid,body:not(.src-on) .ref:not(.keep){display:none!important}
+body:not(.src-on) .refs:not(:has(.keep)){display:none}
+body.src-on .srcbtn{background:rgba(160,130,230,.16);border-color:rgba(160,130,230,.6);color:#e3d8fb}
 
 /* ---------- safety bar ---------- */
-.safety{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,1.25fr) minmax(0,.9fr);gap:0}
-.safety > div{padding:9px 14px;border-right:1px solid var(--line);min-width:0}
+.safety{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
+.safety > div{padding:18px 22px;border-right:1px solid var(--line);min-width:0}
 .safety > div:last-child{border-right:0}
-@media (max-width:1180px){.safety{grid-template-columns:repeat(2,minmax(0,1fr))}.safety > div:nth-child(2){border-right:0}.safety > div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
-@media (max-width:560px){.safety{grid-template-columns:minmax(0,1fr)}.safety > div{border-right:0;border-bottom:1px solid var(--line)}.safety > div:last-child{border-bottom:0}}
-.safety .k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.safety .v{font-size:12.5px;color:var(--text2);display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}
+@media (max-width:900px){.safety{grid-template-columns:minmax(0,1fr)}.safety > div{border-right:0;border-bottom:1px solid var(--line)}.safety > div:last-child{border-bottom:0}}
+.safety .k{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.safety .v{font-size:13.5px;color:var(--text2);display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-width:0}
 .safety .v b{color:var(--text);font-weight:600}
-.safety .d{font-size:11px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
-.rst{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;font-weight:700;padding:1px 8px;border-radius:4px;border:1px solid var(--line2);letter-spacing:.3px}
+.safety .d{font-size:13px;color:var(--muted);margin-top:8px;overflow-wrap:anywhere}
+.rst{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:2px 10px;border-radius:4px;border:1px solid var(--line2)}
 .rst::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
 .rst.NORMAL{color:#8fdcb4;border-color:rgba(69,185,129,.5);background:var(--ok-bg)}
 .rst.ATTENTION{color:#f0c97e;border-color:rgba(226,167,60,.55);background:var(--warn-bg)}
@@ -281,26 +299,29 @@ svg.hlon .tag.dim{opacity:.35}
 .ctb{font-family:var(--mono);font-size:11px;padding:0 6px;border-radius:3px;border:1px solid var(--acc-bd);color:var(--acc2);white-space:nowrap}
 
 /* ---------- proposal + gate log ---------- */
-.row3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.row3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
 @media (max-width:980px){.row3{grid-template-columns:minmax(0,1fr)}}
-.form{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px;align-items:center}
-.form label{font-size:11.5px;color:var(--muted)}
+.form{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px 14px;align-items:center}
+.form label{font-size:13px;color:var(--muted)}
+.gshort{margin:0 0 14px;font-size:13.5px;color:var(--text2)}
+.gfold{margin-top:14px}
+.gfold .note{margin-top:6px}
 .form input[type=number],.form input[type=text]{font-family:inherit;font-size:12px;color:var(--text);background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:5px 8px;min-width:0;width:100%}
 .form input[type=number]{font-family:var(--mono);max-width:140px}
 .form .inl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
 .form select{width:100%;max-width:340px}
-.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
-.gres{margin-top:10px;border:1px solid var(--line2);border-radius:6px;padding:8px 10px;background:var(--bg2);font-size:12px}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.gres{margin-top:16px;border-radius:8px;padding:12px 14px;background:var(--bg2);font-size:13px}
 .gres .gh{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-bottom:4px}
 .gres ul{margin:4px 0 0;padding-left:16px;color:var(--text2)}
 .gres li{margin:2px 0;overflow-wrap:anywhere}
 .gres li code{font-family:var(--mono);font-size:11px;color:#f3a49d}
 .gres .sim{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
-.vd{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:0 7px;border-radius:3px;line-height:18px;border:1px solid}
+.vd{font-size:12.5px;font-weight:600;padding:0 8px;border-radius:3px;line-height:20px;border:1px solid}
 .vd.ACCEPT{color:#8fdcb4;border-color:rgba(69,185,129,.55);background:var(--ok-bg)}
 .vd.REJECT{color:#f3a49d;border-color:rgba(224,90,80,.6);background:var(--alarm-bg)}
 .glog{max-height:300px;overflow:auto}
-.gl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;padding:7px 14px;border-bottom:1px dashed var(--line);font-size:11.5px}
+.gl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;padding:10px 22px;border-bottom:1px solid rgba(33,48,64,.6);font-size:13px}
 .gl:last-child{border-bottom:0}
 .gl .s{font-family:var(--mono);color:var(--dim)}
 .gl .m{color:var(--text2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
@@ -309,20 +330,33 @@ svg.hlon .tag.dim{opacity:.35}
 /* ---------- orientation strip, language toggle, guided run ---------- */
 .panel{scroll-margin-top:64px}
 .langseg button{padding:3px 9px;font-size:11.5px}
-.orient{display:grid;gap:9px;padding:12px 14px}
-.or-what{margin:0;font-size:13.5px;color:var(--text2);line-height:1.55}
+.orient{display:grid;gap:16px;padding:22px 24px 16px}
+.or-what{margin:0;font-size:15px;color:var(--text2);line-height:1.65}
 .or-what b{color:var(--text);font-weight:600}
-.or-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
-.or-k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--acc2);font-weight:600;white-space:nowrap}
-.or-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1 1 560px;min-width:0}
+.or-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px}
+.or-k{font-size:13px;color:var(--acc2);font-weight:600;white-space:nowrap}
+.or-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1 1 560px;min-width:0}
 .or-steps li{display:flex;min-width:0}
-.or-step{all:unset;box-sizing:border-box;display:flex;gap:8px;align-items:flex-start;width:100%;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--bg2);cursor:pointer;font-size:12.5px;color:var(--text2);line-height:1.45;overflow-wrap:anywhere}
+.or-step{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);cursor:pointer;font-size:13.5px;color:var(--text2);line-height:1.5;overflow-wrap:anywhere}
 .or-step:hover{border-color:var(--acc-bd)}
 .or-step:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
 .or-step .n{flex:none;width:18px;height:18px;border-radius:50%;background:var(--acc-bg);border:1px solid var(--acc-bd);color:var(--acc2);font-family:var(--mono);font-size:11px;font-weight:700;text-align:center;line-height:16px;margin-top:1px}
 .or-step b{color:var(--text);font-weight:600}
-.or-mcp{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
-.or-mcp code{font-family:var(--mono);font-size:11.5px;color:var(--acc2);background:var(--bg2);border:1px solid var(--line2);border-radius:4px;padding:1px 6px;overflow-wrap:anywhere;user-select:all;min-width:0}
+.orient > *{min-width:0}
+.or-mcp{font-size:13px;color:var(--muted);display:grid;gap:8px;min-width:0;max-width:760px;padding:8px 0 2px}
+.or-mcp p{margin:0;line-height:1.6}
+.or-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line)}
+.or-tab{all:unset;box-sizing:border-box;cursor:pointer;padding:6px 12px;font-size:13px;color:var(--muted);border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;margin-bottom:-1px}
+.or-tab:hover{color:var(--text2)}
+.or-tab[aria-selected="true"]{color:var(--text);background:var(--bg2);border-color:var(--line)}
+.or-tab:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.or-pane{display:grid;gap:6px;min-width:0}
+.or-pane[hidden]{display:none}
+.or-pre{margin:0;max-width:100%;overflow-x:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--acc2);background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:8px 10px}
+.or-pre:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.or-cp{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.or-cp .btn{padding:3px 12px;font-size:12px}
+.cphint{font-size:12px;color:var(--text2)}
 @media (max-width:900px){.or-steps{grid-template-columns:minmax(0,1fr);flex-basis:100%}}
 .gbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;width:min(680px,calc(100% - 24px));display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--acc-bd);border-radius:8px;background:rgba(14,21,28,.97);box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:12.5px;color:var(--text2)}
 .gbar[hidden]{display:none}
@@ -331,14 +365,51 @@ svg.hlon .tag.dim{opacity:.35}
 .flash{animation:flash 1.6s ease-out 1}
 @keyframes flash{0%{box-shadow:0 0 0 3px rgba(43,195,200,.9)}100%{box-shadow:0 0 0 3px rgba(43,195,200,0)}}
 
+/* ---------- LLM activity (connected mode) ---------- */
+[hidden]{display:none!important}
+.panel.llm{border-color:rgba(160,130,230,.45)}
+.lstat{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);min-width:0;overflow-wrap:anywhere}
+.dot.llmon{background:#b59cf0;box-shadow:0 0 0 3px rgba(160,130,230,.22)}
+.alog{max-height:340px;overflow:auto}
+.al{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;padding:7px 14px;border-bottom:1px dashed var(--line);font-size:12px}
+.al:last-child{border-bottom:0}
+.al .s{font-family:var(--mono);font-size:10.5px;color:var(--dim);line-height:1.5;white-space:nowrap}
+.al .m{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
+.al .m b{font-family:var(--mono);font-weight:600;color:var(--text);font-size:12px;overflow-wrap:anywhere;min-width:0}
+.al .a{font-family:var(--mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere;min-width:0}
+.al .c{grid-column:2;color:var(--text2);overflow-wrap:anywhere;min-width:0}
+.al .why{grid-column:2;border-left:2px solid rgba(160,130,230,.6);padding:2px 8px;color:var(--text2);background:rgba(160,130,230,.06);border-radius:0 4px 4px 0;overflow-wrap:anywhere;min-width:0;white-space:pre-wrap}
+.al .why .k{font-size:10.5px;color:#c9b6f0;margin-right:6px}
+.al.new{animation:alnew 2.4s ease-out 1}
+@keyframes alnew{0%{background:rgba(160,130,230,.22)}100%{background:transparent}}
+.flag.llmk{border-color:rgba(160,130,230,.5);color:#c9b6f0}
+.aempty{padding:12px 14px;display:grid;gap:6px;font-size:12.5px;color:var(--text2)}
+.aempty ul{margin:0;padding-left:18px;color:var(--muted)}
+.aempty li{margin:2px 0}
+.or-llm{color:var(--dim)}
+/* what the LLM looked at, briefly marked on the P&ID and the graph */
+.unit.llmhit .shape{stroke:#c9b6f0;stroke-width:3.2;stroke-dasharray:none;filter:drop-shadow(0 0 6px rgba(160,130,230,.85))}
+.pipe.llmhit .p{stroke:#c9b6f0;stroke-width:3.6;stroke-dasharray:none}
+.pipe.llmhit .arr{fill:#c9b6f0}
+.unit.llmreach .shape{stroke:rgba(201,182,240,.8);stroke-width:2.2}
+.pipe.llmreach .p{stroke:rgba(201,182,240,.8)}
+svg.hlon .el.llmhit,svg.hlon .el.llmreach{opacity:1}
+/* LLM simulation overlay on the trend charts (never live data) */
+.simtag{font-size:10px;padding:0 6px;border-radius:3px;border:1px dashed rgba(160,130,230,.7);color:#c9b6f0;margin-left:6px;white-space:nowrap}
+.simcap{margin:0 14px 12px;padding:6px 10px;border:1px dashed rgba(160,130,230,.55);border-radius:6px;background:rgba(160,130,230,.06);font-size:12px;color:var(--text2);overflow-wrap:anywhere}
+
+.al{padding:10px 22px}
+.simcap{margin:0 22px 16px}
 @media (max-width:640px){
-  .top{padding:8px 12px;position:static}
+  .top{padding:10px 16px;position:static}
   .chip.rev{display:none}
-  .wrap{padding:12px 12px 6px;gap:12px}
-  .foot{padding:6px 12px 24px}
+  .wrap{padding:16px 16px 8px;gap:20px}
+  .foot{padding:8px 16px 28px}
   .brand .s{display:none}
-  .ph,.ctrl,.pb{padding-left:12px;padding-right:12px}
-  .tgrid{padding:10px 12px}
+  .ph,.ctrl,.pb,.hlbar,.status,.nowmore,.tcap,.safety > div,.gl,.al{padding-left:16px;padding-right:16px}
+  .orient{padding:18px 16px 14px}
+  .tgrid{padding:12px 16px;gap:12px}
+  .simcap{margin:0 16px 14px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -347,16 +418,18 @@ svg.hlon .tag.dim{opacity:.35}
 <header class="top">
   <div class="brand">
     <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="#121b23" stroke="#2b3c4e"/><path d="M6 17h4l2-8 3 11 2-6h3" fill="none" stroke="#2bc3c8" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-    <div><div class="t">Plant Context Lab</div><div class="s">Tennessee Eastman process · reactor cooling</div></div>
+    <div><div class="t">Plant Context Lab</div><div class="s" data-i18n="hd.sub">Tennessee Eastman 教學製程 · 反應器冷卻</div></div>
   </div>
   <div class="sp"></div>
   <div class="chips">
     <span class="chip" id="cLive"><span class="dot" id="cDot"></span><span id="cLiveT" data-i18n="live.paused">暫停</span></span>
-    <span class="chip mono num" id="cT">t = 0.00 h</span>
-    <span class="chip mono num" id="cK">K = 0</span>
-    <span class="chip" id="cMode" data-i18n-title="mode.title" title="離線：引擎在瀏覽器內執行；連線：顯示本機伺服器上的同一個引擎" data-i18n="mode.offline">離線 · 瀏覽器內引擎</span>
-    <span class="chip mono rev">plant rev 0.2.0</span>
+    <span class="chip mono num src" id="cT">t = 0.00 h</span>
+    <span class="chip mono num src" id="cK">K = 0</span>
+    <span class="chip" id="cMode" data-i18n-title="mode.title" title="離線：全部在瀏覽器內執行；連線：顯示你本機伺服器上的同一個引擎" data-i18n="mode.offline">在瀏覽器內執行</span>
+    <span class="chip" id="cLlm" hidden><span class="dot" id="cLlmDot"></span><span id="cLlmT"></span></span>
+    <span class="chip mono rev src">plant rev 0.2.0</span>
   </div>
+  <button type="button" class="btn srcbtn" id="bSrc" data-i18n-title="src.tip" title="顯示每一條陳述的出處：資料版本、審查紀錄與技術代號" data-i18n="src.show">顯示來源</button>
   <div class="seg langseg" role="group" data-i18n-aria="lang.label" aria-label="語言">
     <button type="button" data-lang="en" lang="en" aria-pressed="false">EN</button>
     <button type="button" data-lang="zh" lang="zh-Hant" aria-pressed="true">中文</button>
@@ -364,25 +437,66 @@ svg.hlon .tag.dim{opacity:.35}
 </header>
 
 <main class="wrap">
+  <section class="panel llm" id="llmPanel" hidden data-i18n-aria="act.aria" aria-label="LLM 活動">
+    <div class="ph"><h2 data-i18n="act.title">LLM 活動 · LLM activity</h2><span class="lstat" id="actStat"></span><span class="sp"></span><span class="badge sim" id="actCount"></span><span class="badge built src" data-i18n="act.badge" data-i18n-title="act.badgeTip" title="已連線 MCP client 的工具呼叫、resource 讀取與 prompt 取得，最新在上。參數與理由是 LLM 自己寫的文字，以純文字顯示。">此伺服器收到的每個 MCP 呼叫</span></div>
+    <div class="alog" id="alog"></div>
+  </section>
   <section class="panel orient" id="orient" aria-label="Plant Context Lab">
-    <p class="or-what" data-i18n-html="or.what"><b>工業工廠的 context layer。</b>P&amp;ID 拓撲、訊號綁定與已審核的工程知識，全部釘在確切的 snapshot 上；由規則、PCA 異常監測與「先模擬再執行」的 gate 決定提議的調整能不能執行。</p>
+    <p class="or-what" data-i18n-html="or.what"><b>給 AI 助手用的工廠知識層。</b>流程圖、即時讀值和審核過的工程知識都整理在這裡；AI 提出的任何調整，都要先通過安全檢查。</p>
     <div class="or-row">
       <div class="or-k" data-i18n="or.try">30 秒上手</div>
       <ol class="or-steps">
-        <li><button type="button" class="or-step" data-goto="inject"><span class="n" aria-hidden="true">1</span><span data-i18n-html="or.s1">注入 <b>IDV(4)</b> 擾動：反應器冷卻水入口溫度 step。</span></button></li>
-        <li><button type="button" class="or-step" data-goto="watch"><span class="n" aria-hidden="true">2</span><span data-i18n-html="or.s2">觀察規則、PCA 分數與冷卻迴路的反應：<b>XMV(10)</b> 開大以維持反應器溫度。</span></button></li>
-        <li><button type="button" class="or-step" data-goto="propose"><span class="n" aria-hidden="true">3</span><span data-i18n-html="or.s3">對 <b>XMV(10)</b> 提出目標值並按<b>試算</b>：gate 會接受或拒絕，並說明原因。</span></button></li>
+        <li><button type="button" class="or-step" data-goto="inject"><span class="n" aria-hidden="true">1</span><span data-i18n-html="or.s1"><b>製造擾動</b>：讓冷卻水變熱</span></button></li>
+        <li><button type="button" class="or-step" data-goto="watch"><span class="n" aria-hidden="true">2</span><span data-i18n-html="or.s2"><b>觀察</b>：控制器開大冷卻水閥</span></button></li>
+        <li><button type="button" class="or-step" data-goto="propose"><span class="n" aria-hidden="true">3</span><span data-i18n-html="or.s3"><b>提出調整</b>：按試算，看安全檢查放不放行</span></button></li>
       </ol>
       <button type="button" class="btn pri" id="bGuide" data-i18n="guide.start">▶ 導覽執行</button>
     </div>
-    <div class="or-mcp"><span data-i18n="or.mcp">用本機 MCP server 接上你自己的 LLM：</span><code>npx -y github:shaun0457/plant-context-lab</code><span data-i18n="or.mcp2">再開 127.0.0.1:8787 觀看</span></div>
+    <details class="fold" id="orFold"><summary data-i18n="or.llmFold">用你自己的 LLM 操作</summary>
+      <div class="or-mcp">
+        <p data-i18n="or.mcpIntro">這會在你自己的電腦上跑一份模擬，只會改到你自己那一份。接著打開 127.0.0.1:8787，就能看到你的 LLM 做的每個呼叫。需要電腦上裝有 Node.js 22.18 以上。</p>
+        <div class="or-tabs" role="tablist" data-i18n-aria="or.tabsAria" aria-label="選擇你的 LLM 工具">
+          <button type="button" class="or-tab" role="tab" data-tab id="tabCc" aria-controls="paneCc" aria-selected="true" tabindex="0">Claude Code</button>
+          <button type="button" class="or-tab" role="tab" data-tab id="tabCx" aria-controls="paneCx" aria-selected="false" tabindex="-1">Codex</button>
+          <button type="button" class="or-tab" role="tab" data-tab id="tabJs" aria-controls="paneJs" aria-selected="false" tabindex="-1" data-i18n="or.tabJson">通用 JSON</button>
+        </div>
+        <div class="or-pane" role="tabpanel" id="paneCc" aria-labelledby="tabCc">
+          <span data-i18n="or.ccWhere">在終端機執行一次：</span>
+          <pre class="or-pre" id="snCc" tabindex="0">claude mcp add plant-context-lab -- npx -y github:shaun0457/plant-context-lab#__PCL_REF__</pre>
+          <div class="or-cp"><button type="button" class="btn" data-copy="snCc" data-i18n="or.copy" data-i18n-aria="or.copyCc" aria-label="複製 Claude Code 指令">複製</button><span class="cphint" id="snCcH" role="status" aria-live="polite"></span></div>
+        </div>
+        <div class="or-pane" role="tabpanel" id="paneCx" aria-labelledby="tabCx" hidden>
+          <span data-i18n="or.cxWhere">加進 ~/.codex/config.toml：</span>
+          <pre class="or-pre" id="snCx" tabindex="0">[mcp_servers.plant-context-lab]
+command = "npx"
+args = ["-y", "github:shaun0457/plant-context-lab#__PCL_REF__", "--scenario", "idv4-step5"]
+startup_timeout_sec = 60</pre>
+          <div class="or-cp"><button type="button" class="btn" data-copy="snCx" data-i18n="or.copy" data-i18n-aria="or.copyCx" aria-label="複製 Codex 設定">複製</button><span class="cphint" id="snCxH" role="status" aria-live="polite"></span></div>
+        </div>
+        <div class="or-pane" role="tabpanel" id="paneJs" aria-labelledby="tabJs" hidden>
+          <span data-i18n="or.jsWhere">加進你的工具的 MCP 設定（stdio）：</span>
+          <pre class="or-pre" id="snJs" tabindex="0">{
+  "mcpServers": {
+    "plant-context-lab": {
+      "command": "npx",
+      "args": ["-y", "github:shaun0457/plant-context-lab#__PCL_REF__", "--scenario", "idv4-step5"]
+    }
+  }
+}</pre>
+          <span data-i18n="or.jsWin">Windows 上如果找不到 npx：把 "command" 改成 "cmd"，並在 "args" 最前面加上 "/c", "npx"。</span>
+          <div class="or-cp"><button type="button" class="btn" data-copy="snJs" data-i18n="or.copy" data-i18n-aria="or.copyJs" aria-label="複製 JSON 設定">複製</button><span class="cphint" id="snJsH" role="status" aria-live="polite"></span></div>
+        </div>
+      </div>
+    </details>
   </section>
 
   <section class="panel safety" id="safety" data-i18n-aria="sf.aria" aria-label="安全狀態" aria-live="polite">
-    <div><div class="k"><span data-i18n="sf.rules">規則 · Rules</span> <span class="badge built" data-i18n="sf.rulesBadge" data-i18n-title="sf.rulesTip" title="限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs &amp; Vogel (1993)">已審核限值</span></div><div class="v" id="sfRule"></div><div class="d" id="sfRuleD"></div></div>
-    <div><div class="k"><span data-i18n="sf.pca">PCA 異常分數 · monitor</span> <span class="badge sim" data-i18n="sf.pcaBadge" data-i18n-title="sf.pcaTip" title="離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型">不輸出故障標籤</span></div><div class="v" id="sfPca"></div><div class="d" id="sfPcaD"></div></div>
-    <div><div class="k" data-i18n="sf.top">主要貢獻變數 · contributors</div><div class="v" id="sfTop"></div><div class="d" data-i18n="sf.topNote">貢獻變數 ≠ 原因；只說明哪些訊號偏離正常相關結構</div></div>
-    <div><div class="k" data-i18n="sf.loop">XMV(10) 迴路 · loop</div><div class="v" id="sfLoop"></div><div class="d" id="sfLoopD"></div></div>
+    <div><div class="k"><span data-i18n="sf.rules">安全上限 · Limits</span><button type="button" class="ib" data-more="mRule" aria-controls="mRule" aria-expanded="false" data-i18n-aria="ui.moreRule" aria-label="說明：安全上限">i</button><span class="badge built src" data-i18n="sf.rulesBadge" data-i18n-title="sf.rulesTip" title="限值取自已審核的工程知識（tags-and-limits row-1 / row-2）與 Downs &amp; Vogel (1993)">已審核限值</span></div><div class="v" id="sfRule"></div><div class="d" id="sfRuleD"></div>
+      <div class="more" id="mRule" hidden><div id="sfRuleMore"></div></div></div>
+    <div><div class="k"><span data-i18n="sf.pca">異常偵測 · Anomaly check</span><button type="button" class="ib" data-more="mPca" aria-controls="mPca" aria-expanded="false" data-i18n-aria="ui.morePca" aria-label="說明：異常偵測">i</button><span class="badge sim src" data-i18n="sf.pcaBadge" data-i18n-title="sf.pcaTip" title="離線以模擬的正常操作資料訓練；只輸出分數與貢獻變數，不判斷故障類型">不輸出故障標籤</span></div><div class="v" id="sfPca"></div><div class="d" id="sfTop"></div>
+      <div class="more" id="mPca" hidden><div data-i18n="sf.pcaMore">用正常運轉的模擬資料訓練的統計模型（PCA）。分數到 1.0× 以上，代表這幾個讀值之間的關係跟平常不一樣。它只指出哪些讀值不尋常，不判斷原因，也不說是哪種故障。</div><div data-i18n="sf.topNote">「主要來自」不等於原因，只說明哪些讀值跟平常的關係不一樣。</div><div class="mono" id="sfPcaD"></div></div></div>
+    <div><div class="k"><span data-i18n="sf.loop">冷卻水閥 · Cooling valve</span><button type="button" class="ib" data-more="mLoop" aria-controls="mLoop" aria-expanded="false" data-i18n-aria="ui.moreLoop" aria-label="說明：冷卻水閥">i</button></div><div class="v" id="sfLoop"></div><div class="d" id="sfLoopD"></div>
+      <div class="more" id="mLoop" hidden><div data-i18n="sf.loopMore">PI 控制器：量測反應器溫度 XMEAS(9)，調整冷卻水閥 XMV(10)，設定值 120.40 °C。</div></div></div>
   </section>
 
   <section class="row1">
@@ -390,21 +504,22 @@ svg.hlon .tag.dim{opacity:.35}
       <div class="ph">
         <h2 data-i18n="pv.title">製程畫面 · Plant view</h2>
         <div class="seg" role="group" data-i18n-aria="pv.switch" aria-label="切換視圖">
-          <button type="button" data-view="pid" aria-pressed="true">P&amp;ID</button>
-          <button type="button" data-view="graph" aria-pressed="false">Graph</button>
+          <button type="button" data-view="pid" aria-pressed="true" data-i18n="pv.pid">流程圖</button>
+          <button type="button" data-view="graph" aria-pressed="false" data-i18n="pv.graph">關係圖</button>
         </div>
+        <span class="flag llmk" id="pvLlm" hidden></span>
         <span class="sp"></span>
-        <span class="badge built" data-i18n="pv.topo" data-i18n-title="pv.topoTip" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
+        <span class="badge built src" data-i18n="pv.topo" data-i18n-title="pv.topoTip" title="tep-sim ProcessGraph 0.2.0，人工核對">拓撲 17 nodes · 18 edges · 53 bindings</span>
       </div>
       <div class="hlbar" id="hlbar"></div>
       <div class="swipe" data-i18n="pv.swipe">← 左右滑動看完整圖面 →</div>
       <div class="svgwrap" id="wrapPid"><svg id="pid" viewBox="0 0 1180 650" role="group" aria-label="Tennessee Eastman P&amp;ID"></svg></div>
       <div class="svgwrap" id="wrapGraph" hidden><svg id="gsvg" viewBox="0 0 1180 600" role="group" aria-label="Process graph node-link view"></svg></div>
       <div class="pb legend">
-        <span><span class="ln"></span><span data-i18n="pv.material">製程物流 material</span></span>
-        <span><span class="ln cw"></span><span data-i18n="pv.utility">公用流體 utility</span></span>
-        <span><span data-i18n="pv.hop">影響 hop</span> <span class="hops" id="lgHops"></span></span>
-        <span data-i18n="pv.hint">點選設備或管線查看訊號、工程知識與影響範圍</span>
+        <span><span class="ln"></span><span data-i18n="pv.material">製程管線</span></span>
+        <span><span class="ln cw"></span><span data-i18n="pv.utility">冷卻水 / 蒸汽</span></span>
+        <span><span data-i18n="pv.hop">影響步數</span> <span class="hops" id="lgHops"></span></span>
+        <span data-i18n="pv.hint">點設備或管線看詳細資料</span>
       </div>
     </div>
     <aside class="panel side" id="side" aria-live="polite"></aside>
@@ -415,41 +530,43 @@ svg.hlon .tag.dim{opacity:.35}
       <div class="ph">
         <h2 data-i18n="tr.title">即時趨勢 · Live trends</h2>
         <span class="sp"></span>
-        <span class="badge sim" data-i18n="tr.badge">瀏覽器內模擬</span>
+        <span class="badge sim" id="simNote" data-i18n="tr.badge">瀏覽器內模擬</span>
       </div>
-      <div class="simnote"><b id="simNote" data-i18n="tr.note">瀏覽器內模擬資料（示意，非實際模擬器輸出）</b></div>
       <div class="ctrl">
         <div class="grp">
           <button type="button" class="btn pri" id="bRun" data-i18n="run.start">▶ 開始</button>
           <div class="seg" role="group" data-i18n-aria="tr.speed" aria-label="速度"><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="4" aria-pressed="false">4×</button></div>
-          <div class="seg" role="group" data-i18n-aria="tr.window" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled data-i18n="tr.evt" data-i18n-title="tr.evtTip" title="注入擾動後可用">擾動事件</button></div>
+          <div class="seg" role="group" data-i18n-aria="tr.window" aria-label="時間窗"><button type="button" data-win="h1" aria-pressed="true">1 h</button><button type="button" data-win="h48" aria-pressed="false">4.8 h</button><button type="button" data-win="evt" aria-pressed="false" disabled data-i18n="tr.evt" data-i18n-title="tr.evtTip" title="加入擾動後可用">擾動前後</button></div>
         </div>
         <div class="grp">
           <label class="lbl" for="selDist" data-i18n="tr.dist">擾動</label>
           <select id="selDist">
-            <option value="5" data-i18n="tr.opt5">IDV(4) 反應器冷卻水入口溫度 step +5 °C</option>
-            <option value="10" data-i18n="tr.opt10">IDV(4) 反應器冷卻水入口溫度 step +10 °C</option>
+            <option value="5" data-i18n="tr.opt5">流進反應器的冷卻水 +5 °C</option>
+            <option value="10" data-i18n="tr.opt10">流進反應器的冷卻水 +10 °C</option>
           </select>
-          <button type="button" class="btn warnb" id="bInject" data-i18n="tr.inject">⚡ 注入擾動</button>
+          <button type="button" class="btn warnb" id="bInject" data-i18n="tr.inject">⚡ 加入擾動</button>
           <button type="button" class="btn" id="bClear" disabled data-i18n="tr.remove">移除擾動</button>
         </div>
       </div>
       <div class="tgrid" id="tgrid"></div>
+      <div class="simcap" id="simcap" hidden></div>
       <div class="tcap" id="tcap"></div>
     </div>
 
     <div class="panel" id="nowPanel">
-      <div class="ph"><h2 data-i18n="now.title">現在發生什麼 · reactor cooling</h2><span class="sp"></span><span class="badge wip" data-i18n="now.badge" data-i18n-title="now.badgeTip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
+      <div class="ph"><h2 data-i18n="now.title">現在發生什麼 · What is happening</h2><span class="sp"></span><span class="badge wip src" data-i18n="now.badge" data-i18n-title="now.badgeTip" title="tep-agent-lab 中 context composition 仍在開發">結構化摘要 · 示意</span></div>
       <div id="now"></div>
+      <details class="fold nowmore" id="nowMore"><summary data-i18n="now.more">細節與依據</summary><div id="nowDetail"></div></details>
     </div>
   </section>
 
   <section class="row3">
     <div class="panel" id="propPanel">
-      <div class="ph"><h2 data-i18n="pp.title">調整提案 · Adjustment proposal</h2><span class="sp"></span><span class="badge built" data-i18n="pp.badge" data-i18n-title="pp.badgeTip" title="每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用">gate 決定，提案者只提議</span></div>
+      <div class="ph"><h2 data-i18n="pp.title">調整提案 · Adjustment proposal</h2><span class="sp"></span><span class="badge built src" data-i18n="pp.badge" data-i18n-title="pp.badgeTip" title="每個提案都先經過 deterministic gate；只有 ACCEPT 才會套用">由安全檢查決定，提案者只能提議</span></div>
       <div class="pb">
+        <p class="gshort" id="gShort"></p>
         <div class="form">
-          <label for="pXmv" data-i18n="pp.xmv">操作變數</label>
+          <label for="pXmv" data-i18n="pp.xmv">要調整的閥</label>
           <select id="pXmv"></select>
           <label for="pTarget" data-i18n="pp.target">目標值 %</label>
           <div class="inl"><input type="number" id="pTarget" min="0" max="100" step="0.1"><button type="button" class="btn" id="pCur" style="padding:3px 8px;font-size:11px" data-i18n="pp.useCur">帶入目前值</button><span class="mono dim" id="pCurV"></span></div>
@@ -458,33 +575,37 @@ svg.hlon .tag.dim{opacity:.35}
         </div>
         <div class="btnrow">
           <button type="button" class="btn" id="pTry" data-i18n="pp.try">試算</button>
-          <button type="button" class="btn pri" id="pApply" disabled data-i18n="pp.apply" data-i18n-title="pp.applyTip" title="先試算並取得 ACCEPT">套用</button>
-          <span class="note" style="margin-top:0" data-i18n="pp.applyNote">套用時以當下狀態重新評估，只有 ACCEPT 才會執行</span>
+          <button type="button" class="btn pri" id="pApply" disabled data-i18n="pp.apply" data-i18n-title="pp.applyTip" title="先試算並取得放行">套用</button>
         </div>
         <div id="pRes"></div>
-        <div class="note" id="gNoteP"></div>
+        <details class="fold gfold"><summary data-i18n="pp.gateMore">檢查規則</summary><div class="note" id="gNoteP"></div></details>
       </div>
     </div>
     <div class="panel" id="logPanel">
-      <div class="ph"><h2 data-i18n="log.title">Gate 紀錄 · Gate log</h2><span class="sp"></span><span class="badge sim" id="logCount" data-i18n="log.count0">0 筆</span></div>
+      <div class="ph"><h2 data-i18n="log.title">檢查紀錄 · Check log</h2><span class="sp"></span><span class="badge sim" id="logCount" data-i18n="log.count0">0 筆</span></div>
       <div class="glog" id="glog"></div>
     </div>
   </section>
 
-  <section class="panel strip" id="strip" aria-label="Context and evidence"></section>
 </main>
 
 <footer class="foot">
-  <div class="hon"><span data-i18n-html="ft.hon"><b>概念示範。</b>趨勢為瀏覽器內模擬；拓樸取自 Tennessee Eastman 製程圖。實作於 tep-agent-lab：live plant 串流已實作；plant context composition 與 UI 讀取開發中。</span>
-    <div class="caps">
-      <span class="badge built" data-i18n="ft.c1">已實作 · 製程拓撲與訊號綁定（人工核對）</span>
-      <span class="badge built" data-i18n="ft.c2">已實作 · live plant 串流（本頁未連線，改用瀏覽器內模擬）</span>
-      <span class="badge built" data-i18n="ft.c3">已實作 · 工程知識擷取與人工審查（staged revision）</span>
-      <span class="badge wip" data-i18n="ft.c4">開發中 · plant context composition</span>
-      <span class="badge wip" data-i18n="ft.c5">開發中 · UI 讀取 pinned snapshot</span>
-      <span class="badge sim" data-i18n="ft.c6">示範 · 規則、PCA 與 gate 僅供教學，不可用於實際工廠操作</span>
+  <div class="ftline"><span data-i18n-html="ft.line"><b>概念示範</b> · 模擬資料，僅供教學，不可用於實際工廠操作</span>
+    <span class="sp"></span><a href="//github.com/shaun0457/plant-context-lab" target="_blank" rel="noopener noreferrer" data-i18n="ft.repo">GitHub 原始碼</a></div>
+  <details class="fold about" id="about"><summary data-i18n="ft.about">關於這個 demo</summary>
+    <div class="aboutb">
+      <p data-i18n="ft.hon">趨勢是模擬出來的示意資料（不是 Tennessee Eastman 模擬器的實際輸出）；製程圖面依照 Tennessee Eastman 教學製程。完整系統在 tep-agent-lab 開發：工廠即時串流已完成；整合工廠知識、讓畫面讀取固定的資料版本還在開發中。</p>
+      <div class="caps">
+        <span class="badge built" data-i18n="ft.c1">已完成 · 製程圖面與儀表對應（人工核對）</span>
+        <span class="badge built" data-i18n="ft.c2">已完成 · 工廠即時串流（本頁沒有連線，改用瀏覽器內模擬）</span>
+        <span class="badge built" data-i18n="ft.c3">已完成 · 工程知識擷取與人工審查</span>
+        <span class="badge wip" data-i18n="ft.c4">開發中 · 整合工廠知識</span>
+        <span class="badge wip" data-i18n="ft.c5">開發中 · 畫面讀取固定的資料版本</span>
+        <span class="badge sim" data-i18n="ft.c6">示範 · 安全上限、異常偵測與安全檢查僅供教學</span>
+      </div>
+      <div class="strip" id="strip" role="group" aria-label="Context and evidence"></div>
     </div>
-  </div>
+  </details>
 </footer>
 
 <div class="gbar" id="gbar" role="status" aria-live="polite" hidden>
@@ -520,6 +641,29 @@ function t(k,p){var s=STR[LANG]&&STR[LANG][k];if(s===undefined||s===null)s=STR.e
   return p?s.replace(/\{(\w+)\}/g,function(m,n){return p[n]!==undefined?String(p[n]):m}):s;}
 /* Traditional Chinese engine fields (ZH, txtZh, rvZh, nameZh) are read only through zhv() */
 function zhv(z,en){return LANG==='zh'&&z?z:en}
+
+/* "Show sources" view: technical ids, data versions and review records. Off by default;
+   the choice is remembered per browser (localStorage pcl-sources, '1' or '0'). */
+var SKEY='pcl-sources',SRC=false;
+function readSrcPref(){try{return window.localStorage.getItem(SKEY)==='1'}catch(e){return false}}
+function writeSrcPref(on){try{window.localStorage.setItem(SKEY,on?'1':'0')}catch(e){}}
+function setSources(on,remember){
+  SRC=!!on;document.body.classList.toggle('src-on',SRC);
+  /* the label itself says what a click does, so the button carries no pressed state (it would read "Hide sources, pressed") */
+  var b=document.getElementById('bSrc');if(b)b.textContent=t(SRC?'src.hide':'src.show');
+  if(remember)writeSrcPref(SRC);
+  /* <option> text cannot hide a span, so the valve list is rebuilt with or without the ids */
+  if(document.getElementById('pXmv'))renderXmvOptions();
+}
+/* info button (aria-controls) and its panel */
+/* own-LLM setup: tabs (roving tabindex) and copy buttons; a blocked or missing clipboard selects the text instead */
+function selTab(tab,focus){var ts=tab.parentNode.querySelectorAll('[role="tab"]');for(var i=0;i<ts.length;i++){var on=ts[i]===tab,p=document.getElementById(ts[i].getAttribute('aria-controls'));ts[i].setAttribute('aria-selected',String(on));ts[i].tabIndex=on?0:-1;if(p)p.hidden=!on;}if(focus)tab.focus();}
+function copyText(txt,nav,onOk,onFail){try{var p=nav.clipboard.writeText(txt);if(p&&typeof p.then==='function')p.then(onOk,onFail);else onOk();}catch(err){onFail();}}
+function selectNode(n){try{var r=document.createRange();r.selectNodeContents(n);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}catch(err){}}
+function copySnippet(btn){var id=btn.getAttribute('data-copy'),pre=document.getElementById(id),hint=document.getElementById(id+'H');if(!pre)return;function say(k){if(hint){hint.setAttribute('data-i18n',k);hint.textContent=t(k);}}copyText(pre.textContent,window.navigator,function(){say('or.copied')},function(){selectNode(pre);say('or.copyFail')});}
+function setMore(btn,open){var mo=document.getElementById(btn.getAttribute('data-more'));if(!mo)return;mo.hidden=!open;btn.setAttribute('aria-expanded',String(!!open));}
+/* small technical id shown only in the sources view */
+function tid(s){return '<span class="tid">'+esc(s)+'</span>'}
 function applyStatic(root){
   $$('[data-i18n]',root).forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'))});
   $$('[data-i18n-html]',root).forEach(function(el){el.innerHTML=t(el.getAttribute('data-i18n-html'))});
@@ -537,6 +681,15 @@ function applyStatic(root){
 var TOPO=PCL.TOPO,LOOPS=PCL.LOOPS,SHORT=PCL.SHORT,ZH=PCL.ZH,REFNAME=PCL.REFNAME,NODE_FORTRAN=PCL.NODE_FORTRAN,SIG=PCL.SIG,KR=PCL.KR,KNOW=PCL.KNOW;
 var TN=PCL.TN,TE=PCL.TE,TNODES=PCL.TNODES,TEDGES=PCL.TEDGES,BIND=PCL.BIND,SN=PCL.SN;
 var keyOf=PCL.keyOf,elLabel=PCL.elLabel;
+/* plain names for the default view; the technical id goes next to it through tid() */
+function elName(k){var id=String(k).slice(2);return zhv(ZH[id],elLabel(k))}
+function sigName(id){
+  var m=/^(XMEAS|XMV)\((\d+)\)$/.exec(id);if(!m)return String(id);
+  var k='sig.'+m[1]+m[2],s=t(k);if(s!==k)return s;
+  var c=SIG[id];if(c&&c[3]){var sm=/stream (\d+)/.exec(c[0]);return t('sig.comp',{s:sm?sm[1]:'?',c:c[3]});}
+  return c?c[0]:String(id);
+}
+function unitOf(id){var u=SIG[id]?SIG[id][1]:'';return u.replace(' gauge','').replace(' command','').replace('degC','°C')}
 var HOPC=['#e05a50','#ee7a3e','#e2a73c','#d8c35a','#a9c46a','#7fbf8f','#6fb3a8'];
 /* branch-comparison anchors measured in tep-agent-lab (reactor cooling incident, 0.1 h) */
 var ANCHOR={'XMEAS(9)':'MAE 0.0648 degC','XMEAS(21)':'MAE 0.1512 degC'};
@@ -621,8 +774,8 @@ function renderPID(){
     if(num){var w=num.length>1?20:15;lab='<g class="snum"><rect x="'+f1(lp[0]-w/2)+'" y="'+f1(lp[1]-7)+'" width="'+w+'" height="14" rx="3"/><text x="'+f1(lp[0])+'" y="'+f1(lp[1]+3.5)+'" text-anchor="middle">'+num+'</text></g>';}
     var v=VALVES[e.id],vs='';
     if(v){var x=v[0],y=v[1];
-      if(v[2]==='h'){vs='<path class="vstem" d="M'+x+' '+y+'V'+(y-11)+'M'+(x-5)+' '+(y-11)+'H'+(x+5)+'"/><polygon class="valve" points="'+(x-7)+','+(y-6)+' '+(x+7)+','+(y+6)+' '+(x+7)+','+(y-6)+' '+(x-7)+','+(y+6)+'"/><text class="vlab" x="'+x+'" y="'+(y+16)+'" text-anchor="middle">'+v[3]+'</text>';}
-      else{vs='<path class="vstem" d="M'+x+' '+y+'H'+(x+11)+'M'+(x+11)+' '+(y-5)+'V'+(y+5)+'"/><polygon class="valve" points="'+(x-6)+','+(y-7)+' '+(x+6)+','+(y+7)+' '+(x-6)+','+(y+7)+' '+(x+6)+','+(y-7)+'"/><text class="vlab" x="'+(x+15)+'" y="'+(y+3)+'">'+v[3]+'</text>';}}
+      if(v[2]==='h'){vs='<path class="vstem" d="M'+x+' '+y+'V'+(y-11)+'M'+(x-5)+' '+(y-11)+'H'+(x+5)+'"/><polygon class="valve" points="'+(x-7)+','+(y-6)+' '+(x+7)+','+(y+6)+' '+(x+7)+','+(y-6)+' '+(x-7)+','+(y+6)+'"/><text class="vlab src" x="'+x+'" y="'+(y+16)+'" text-anchor="middle">'+v[3]+'</text>';}
+      else{vs='<path class="vstem" d="M'+x+' '+y+'H'+(x+11)+'M'+(x+11)+' '+(y-5)+'V'+(y+5)+'"/><polygon class="valve" points="'+(x-6)+','+(y-7)+' '+(x+6)+','+(y+7)+' '+(x-6)+','+(y+7)+' '+(x+6)+','+(y-7)+'"/><text class="vlab src" x="'+(x+15)+'" y="'+(y+3)+'">'+v[3]+'</text>';}}
     s+='<g class="el pipe'+cls+'" data-k="e:'+e.id+'" tabindex="0" role="button" aria-label="'+esc(e.name+(num?' (stream '+num+')':''))+'">'+
        '<path class="under" d="'+d+'"/><path class="glow" d="'+d+'"/><path class="p" d="'+d+'"/>'+arr+vs+lab+'<path class="hit" d="'+d+'"/></g>';
   });
@@ -632,14 +785,14 @@ function renderPID(){
     s+='<g class="tag" data-k="'+t[1]+'" data-tag="'+id+'"><line class="lead" x1="'+(x-14)+'" y1="'+y+'" x2="'+t[5]+'" y2="'+t[6]+'"/>'+
        '<circle class="bub" cx="'+x+'" cy="'+y+'" r="14"/><line class="bl" x1="'+(x-14)+'" y1="'+y+'" x2="'+(x+14)+'" y2="'+y+'"/>'+
        '<text class="t1" x="'+x+'" y="'+(y-3)+'" text-anchor="middle">'+t[2]+'</text><text class="t2" x="'+x+'" y="'+(y+9)+'" text-anchor="middle">'+(id.indexOf('XMV')===0?'V':'')+num+'</text>'+
-       '<rect class="vb" x="'+vbx+'" y="'+(y-9)+'" width="80" height="18" rx="3"/><text class="vv" x="'+(vbx+6)+'" y="'+(y+4)+'"><tspan data-sv="'+id+'">–</tspan> '+esc(SIG[id][1].replace(' gauge','').replace(' command',''))+'</text></g>';
+       '<rect class="vb" x="'+vbx+'" y="'+(y-9)+'" width="80" height="18" rx="3"/><text class="vv" x="'+(vbx+6)+'" y="'+(y+4)+'"><tspan data-sv="'+id+'">–</tspan> '+esc(unitOf(id))+'</text></g>';
   });
-  s+='<text x="16" y="26" class="mono" id="pidNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.pidNote'))+'</text>';
+  s+='<text x="16" y="26" class="mono src" id="pidNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.pidNote'))+'</text>';
   s+='<g class="badges" id="pidBadges"></g>';
   svg.innerHTML=s;
 }
 function unitSVG(id){
-  var u=PU[id],x=u.x,y=u.y,w=u.w,h=u.h,L=SHORT[id],o='',t=u.t,cls='u-'+t,x0=x-w/2,y0=y-h/2;
+  var u=PU[id],x=u.x,y=u.y,w=u.w,h=u.h,L=esc(zhv(ZH[id],SHORT[id])),o='',t=u.t,cls='u-'+t,x0=x-w/2,y0=y-h/2;
   ANCH.pid['n:'+id]=[x0+4,y0+2];
   if(t==='src'||t==='sink'){o='<polygon class="shape" points="'+x0+','+y0+' '+(x0+w-11)+','+y0+' '+(x0+w)+','+y+' '+(x0+w-11)+','+(y0+h)+' '+x0+','+(y0+h)+'"/><text class="nm" x="'+(x-4)+'" y="'+(y+4)+'" text-anchor="middle">'+L+'</text>';}
   else if(t==='srcl'){cls='u-src';o='<polygon class="shape" points="'+(x0+w)+','+y0+' '+(x0+11)+','+y0+' '+x0+','+y+' '+(x0+11)+','+(y0+h)+' '+(x0+w)+','+(y0+h)+'"/><text class="nm" x="'+(x+4)+'" y="'+(y+4)+'" text-anchor="middle">'+L+'</text>';}
@@ -649,12 +802,12 @@ function unitSVG(id){
     o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="45" ry="22"/>'+
       '<path class="deco" d="M383 449V438L417 426L383 414L417 402L383 390L417 378V449"/>'+
       '<circle class="deco" cx="400" cy="256" r="8"/><path class="deco" d="M400 264V305M386 305H414"/>'+
-      '<text class="nm" x="400" y="336" text-anchor="middle">Reactor</text><text class="sm" x="400" y="350" text-anchor="middle">R</text>';}
-  else if(t==='hx'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="22"/><path class="deco" d="M570 172V140H580V160H590V140H600V160H610V140H620V160H630V172"/><text class="nm" x="'+x+'" y="'+(y0-8)+'" text-anchor="middle">Condenser</text>';}
-  else if(t==='drum'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="32"/><path class="deco" d="M'+(x0+20)+' '+(y+12)+'H'+(x0+w-20)+'"/><text class="nm" x="'+x+'" y="'+(y+2)+'" text-anchor="middle">Separator</text>';}
-  else if(t==='comp'){o='<circle class="shape" cx="'+x+'" cy="'+y+'" r="22"/><path class="deco" d="M'+(x+14)+' '+(y-17)+'L'+(x-14)+' '+(y-8)+'V'+(y+8)+'L'+(x+14)+' '+(y+17)+'"/><text class="nm" x="'+x+'" y="'+(y-30)+'" text-anchor="middle">Compressor</text>';}
+      '<text class="nm" x="400" y="336" text-anchor="middle">'+L+'</text><text class="sm" x="400" y="350" text-anchor="middle">R</text>';}
+  else if(t==='hx'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="22"/><path class="deco" d="M570 172V140H580V160H590V140H600V160H610V140H620V160H630V172"/><text class="nm" x="'+x+'" y="'+(y0-8)+'" text-anchor="middle">'+L+'</text>';}
+  else if(t==='drum'){o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="32"/><path class="deco" d="M'+(x0+20)+' '+(y+12)+'H'+(x0+w-20)+'"/><text class="nm" x="'+x+'" y="'+(y+2)+'" text-anchor="middle">'+L+'</text>';}
+  else if(t==='comp'){o='<circle class="shape" cx="'+x+'" cy="'+y+'" r="22"/><path class="deco" d="M'+(x+14)+' '+(y-17)+'L'+(x-14)+' '+(y-8)+'V'+(y+8)+'L'+(x+14)+' '+(y+17)+'"/><text class="nm" x="'+x+'" y="'+(y-30)+'" text-anchor="middle">'+L+'</text>';}
   else if(t==='col'){var tr='';for(var i=0;i<9;i++){var ty=y0+30+i*13;tr+='M'+(i%2?x0+10:x0+4)+' '+ty+'H'+(i%2?x0+w-4:x0+w-10);}
-    o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="30" ry="16"/><path class="deco" d="'+tr+'"/><text class="nm" x="'+(x0-8)+'" y="'+(y+62)+'" text-anchor="end">Stripper</text>';}
+    o='<rect class="shape" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" rx="30" ry="16"/><path class="deco" d="'+tr+'"/><text class="nm" x="'+(x0-8)+'" y="'+(y+62)+'" text-anchor="end">'+L+'</text>';}
   return '<g class="el unit '+cls+'" data-k="n:'+id+'" tabindex="0" role="button" aria-label="'+esc(TN[id].name)+'">'+o+'</g>';
 }
 
@@ -692,9 +845,9 @@ function renderGraph(){
     var ic={REACTOR:'R',CONDENSER:'HX',SEPARATOR:'V',COMPRESSOR:'K',STRIPPER:'C',MIXER:'M'}[n.kind]||'';
     s+='<g class="el unit gnode k-'+k+'" data-k="n:'+n.id+'" tabindex="0" role="button" aria-label="'+esc(n.name)+'"><circle class="shape" cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'"/>'+
        (ic?'<text class="ic" x="'+p[0]+'" y="'+(p[1]+3.5)+'" text-anchor="middle">'+ic+'</text>':'')+
-       '<text class="nm" x="'+p[0]+'" y="'+ly+'" text-anchor="middle">'+SHORT[n.id]+'</text>'+(sub?'<text class="sm" x="'+p[0]+'" y="'+(ly+12)+'" text-anchor="middle">'+sub+'</text>':'')+'</g>';
+       '<text class="nm" x="'+p[0]+'" y="'+ly+'" text-anchor="middle">'+esc(zhv(ZH[n.id],SHORT[n.id]))+'</text>'+(sub?'<text class="sm src" x="'+p[0]+'" y="'+(ly+12)+'" text-anchor="middle">'+sub+'</text>':'')+'</g>';
   });
-  s+='<text x="16" y="590" class="mono" id="gNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.graphNote'))+'</text>';
+  s+='<text x="16" y="590" class="mono src" id="gNote" style="font-size:10.5px;fill:#5d6e7d">'+esc(t('pv.graphNote'))+'</text>';
   s+='<g class="badges" id="gBadges"></g>';
   $('#gsvg').innerHTML=s;
 }
@@ -732,11 +885,11 @@ function applyHL(){
 }
 function renderHLBar(hv){
   var b=$('#hlbar');
-  if(!HL.src){b.innerHTML='<span class="k">'+esc(t('hl.sel'))+'</span><b>'+esc(elLabel(SEL))+'</b><span class="mono dim">'+esc(SEL.slice(2))+'</span><span class="k">'+esc(t('hl.none'))+'</span>';return;}
+  if(!HL.src){b.innerHTML='<span class="k">'+esc(t('hl.sel'))+'</span><b>'+esc(elName(SEL))+'</b>'+tid(SEL.slice(2));return;}
   var n=Object.keys(hv.hop).length,closed=hv.loops.filter(function(s){return s.closed});
-  var src=HL.src==='dist'?'<span class="flag warn">'+esc(t('hl.dist'))+'</span> '+esc(t('hl.from'))+' <b>Reactor CW inlet</b>':'<span class="flag acc">'+esc(t('hl.impact'))+'</span> '+esc(t('hl.from'))+' <b>'+esc(elLabel(HL.start))+'</b>';
+  var src=HL.src==='dist'?'<span class="flag warn">'+esc(t('hl.dist'))+'</span> '+esc(t('hl.from'))+' <b>'+esc(elName('e:reactor_cooling_water_in'))+'</b>':'<span class="flag acc">'+esc(t('hl.impact'))+'</span> '+esc(t('hl.from'))+' <b>'+esc(elName(HL.start))+'</b>';
   b.innerHTML=src+'<span class="k">'+esc(t('hl.range',{n:HL.shown+(HL.shown<HL.depth?' / '+HL.depth:''),count:n}))+'</span>'+
-    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(s.L.name)}).join(', ')+' '+esc(t('hl.closed'))+'</span>':'')+
+    (closed.length?'<span class="flag alarm">↻ '+closed.map(function(s){return esc(loopName(s.L))}).join(', ')+' '+esc(t('hl.closed'))+'</span>':'')+
     '<span class="k">'+esc(t('hl.caveat'))+'</span>'+(HL.src?'<button type="button" class="btn" id="hlClear" style="padding:2px 8px;font-size:11px">'+esc(t('hl.clear'))+'</button>':'');
 }
 function stopPlay(){if(HL.timer){clearInterval(HL.timer);HL.timer=null}var b=$('#impPlay');if(b)b.textContent=t('imp.play');}
@@ -752,46 +905,51 @@ function clearHL(){stopPlay();HL.src=null;applyHL();}
    5. Side panel (selection details)
    ===================================================================== */
 function fmt(id,v){if(v===undefined||v===null||isNaN(v))return '–';var b=Math.abs(SIG[id][2]);var d=b>=1000?1:b>=100?2:b>=10?2:b>=1?3:4;return (+v).toFixed(d)}
-function sigFlag(id){return ANCHOR[id]?'<span class="flag ok" title="'+esc(t('sd.anchorTip',{a:ANCHOR[id]}))+'">'+esc(t('sd.anchor',{a:ANCHOR[id]}))+'</span>':'<span class="flag plan" title="'+esc(t('sd.unverifiedTip'))+'">'+esc(t('sd.unverified'))+'</span>';}
+function sigFlag(id){return ANCHOR[id]?'<span class="flag ok src" title="'+esc(t('sd.anchorTip',{a:ANCHOR[id]}))+'">'+esc(t('sd.anchor',{a:ANCHOR[id]}))+'</span>':'<span class="flag plan src" title="'+esc(t('sd.unverifiedTip'))+'">'+esc(t('sd.unverified'))+'</span>';}
 function refChip(key){var r=KR[key];var rej=/REJECT/.test(r.rv);return '<span class="ref">'+esc(r.id)+'</span><span class="ref rv'+(rej?' rej':'')+'">'+esc(zhv(r.rvZh,r.rv))+'</span>';}
 function renderSide(){
   var k=SEL,id=k.slice(2),isN=k[0]==='n',el=isN?TN[id]:TE[id],h='<div class="pb">';
-  h+='<div class="kindrow"><span class="kind">'+(isN?'NODE':'EDGE')+' · '+esc(el.kind)+'</span>'+(SN[id]?'<span class="kind">stream '+SN[id]+'</span>':'')+'</div>';
-  h+='<h2>'+esc(isN?SHORT[id]:el.name)+(LANG==='zh'?'<span class="zh">'+esc(zhv(ZH[id],''))+'</span>':'')+'</h2>';
-  h+='<div class="mono dim" style="font-size:11px">'+esc(id)+(isN?'':' · '+esc(SHORT[el.s])+' → '+esc(SHORT[el.t]))+'</div>';
+  h+='<div class="kindrow src"><span class="kind">'+(isN?'NODE':'EDGE')+' · '+esc(el.kind)+'</span>'+(SN[id]?'<span class="kind">stream '+SN[id]+'</span>':'')+'</div>';
+  var en=isN?SHORT[id]:el.name;
+  h+='<h2>'+(LANG==='zh'?esc(zhv(ZH[id],en))+'<span class="zh">'+esc(en)+'</span>':esc(en))+'</h2>';
+  h+='<div class="mono dim src" style="font-size:11px">'+esc(id)+(isN?'':' · '+esc(SHORT[el.s])+' → '+esc(SHORT[el.t]))+'</div>';
   /* signals */
   var list=BIND[id]||[];
   h+='<h3>'+esc(t('sd.signals'))+' <span class="cnt">'+list.length+'</span></h3>';
   if(!list.length)h+='<div class="empty">'+esc(t('sd.noSignals'))+'</div>';
   else{
     var comp=list.filter(function(b){return b.q==='composition'});
-    list.forEach(function(b){if(b.q==='composition')return;var m=SIG[b.v];
-      h+='<div class="sig" data-sig="'+b.v+'"><span class="sid">'+b.v+'</span><span class="snm">'+esc(m[0])+' · '+(b.rel==='ACTUATES'?'ACTUATES':'MEASURES')+'</span><span class="sv"><b data-sv="'+b.v+'">–</b> <i>'+esc(m[1])+'</i></span>'+
+    list.forEach(function(b){if(b.q==='composition')return;
+      h+='<div class="sig" data-sig="'+b.v+'"><span class="snm">'+esc(sigName(b.v))+tid(b.v+' · '+(b.rel==='ACTUATES'?'ACTUATES':'MEASURES'))+'</span><span class="sv"><b data-sv="'+b.v+'">–</b> <i>'+esc(unitOf(b.v))+'</i></span>'+
          '<span class="sf">'+(b.rel==='ACTUATES'?'<span class="flag acc">'+esc(t('sd.xmv'))+'</span>':sigFlag(b.v))+'</span></div>';});
     if(comp.length){var ns=comp.map(function(b){return +b.v.match(/\d+/)[0]});
-      h+='<div class="sig"><span class="sid">XMEAS('+Math.min.apply(null,ns)+'–'+Math.max.apply(null,ns)+')</span><span class="snm">composition ×'+comp.length+' · mol%</span><span class="sv"></span>'+
+      h+='<div class="sig"><span class="snm">'+esc(t('sd.comp',{n:comp.length}))+tid('XMEAS('+Math.min.apply(null,ns)+'–'+Math.max.apply(null,ns)+')')+'</span><span class="sv"></span>'+
          '<div class="cv">'+comp.map(function(b){return SIG[b.v][3]+' <b data-sv="'+b.v+'">–</b>'}).join(' · ')+'</div><span class="sf">'+sigFlag(comp[0].v)+'</span></div>';}
-    h+='<div class="note">'+esc(t('sd.prov',{a:REFNAME.bathelt_ricker_jelali_2015,b:REFNAME.downs_vogel_1993}))+'</div>';
+    h+='<div class="note">'+esc(t('sd.prov'))+'</div><div class="note src">'+esc(t('sd.provSrc',{a:REFNAME.bathelt_ricker_jelali_2015,b:REFNAME.downs_vogel_1993}))+'</div>';
   }
   /* knowledge */
   var kn=KNOW[k]||[];
   h+='<h3>'+esc(t('sd.knowledge'))+' <span class="cnt">'+kn.length+'</span></h3>';
   if(!kn.length)h+='<div class="empty">'+esc(t('sd.noKnowledge'))+'</div>';
   kn.forEach(function(x){var st={APPROVED:'<span class="flag ok">'+esc(t('sd.approved'))+'</span>',REJECTED:'<span class="flag alarm">'+esc(t('sd.rejected'))+'</span>',SOURCE:'<span class="flag plan">'+esc(t('sd.source'))+'</span>'}[x.s];
-    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+x.t+'</span>'+st+'</div><div class="kt">'+esc(zhv(x.txtZh,x.txt))+'</div><div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
+    var kl=t('kn.'+x.t);if(kl==='kn.'+x.t)kl=x.t;
+    /* plain summary by default; the reviewed text itself shows in the sources view */
+    var pk='kt.'+x.r[0],pl=t(pk),raw=esc(zhv(x.txtZh,x.txt));
+    var body=pl!==pk?'<div class="kt">'+esc(pl)+'</div><div class="kt src" style="font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:4px">'+raw+'</div>':'<div class="kt">'+raw+'</div>';
+    h+='<div class="kn '+x.s+'"><div class="kh"><span class="kind">'+esc(kl)+'</span>'+st+'</div>'+body+'<div class="refs">'+x.r.map(refChip).join('')+'</div></div>';});
   /* impact */
   h+='<h3>'+esc(t('sd.impact'))+'</h3><div class="imp">'+
-     '<div class="r"><label for="impDepth" class="muted" style="font-size:12px">'+esc(t('sd.depth'))+' <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
+     '<div class="r"><label for="impDepth" class="muted" style="font-size:13px">'+esc(t('sd.depth'))+' <b id="impDepthV" class="mono" style="color:var(--text)">'+HL.depth+'</b></label><input type="range" id="impDepth" min="1" max="6" step="1" value="'+HL.depth+'"></div>'+
      '<div class="r"><button type="button" class="btn pri" id="impShow">'+esc(t('sd.show'))+'</button><button type="button" class="btn" id="impPlay">'+esc(t(HL.timer?'imp.stop':'imp.play'))+'</button></div>'+
      '<div id="impRes"></div></div>';
   /* topology refs */
   var refs=isN?(['downs_vogel_1993'].concat(NODE_FORTRAN[id]?['sim_fortran']:[])):['downs_vogel_1993','sim_fortran'];
-  h+='<h3>'+esc(t('sd.topoRefs'))+'</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div>';
+  h+='<div class="src"><h3>'+esc(t('sd.topoRefs'))+'</h3><div class="refs">'+refs.map(function(r){return '<span class="ref src">'+esc(REFNAME[r])+'</span>'}).join('')+'<span class="ref">tep-process-graph 0.2.0 · HUMAN_VERIFIED</span></div></div>';
   h+='</div>';
   $('#side').innerHTML=h;
   cacheSV();updateLive();
 }
-function loopName(L){var z=zhv(L.nameZh,'');return z?z+' · '+L.name:L.name}
+function loopName(L){return zhv(L.nameZh,L.name)}
 function renderImpactResult(hv){
   var box=$('#impRes');if(!box)return;
   if(HL.src!=='impact'||HL.start!==SEL){box.innerHTML='<div class="note" style="margin-top:0">'+esc(t('imp.intro'))+'</div>';return;}
@@ -802,9 +960,9 @@ function renderImpactResult(hv){
     ks.forEach(function(k){(BIND[k.slice(2)]||[]).forEach(function(b){if(b.rel!=='MEASURES')return;if(b.q==='composition'){return}
       ms+='<span class="ref'+(ANCHOR[b.v]?' rv':'')+'" title="'+esc(SIG[b.v][0])+'">'+b.v+(ANCHOR[b.v]?esc(t('imp.measured')):'')+'</span>';});
       var nc=(BIND[k.slice(2)]||[]).filter(function(b){return b.q==='composition'}).length;if(nc)ms+='<span class="ref">composition ×'+nc+'</span>';});
-    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elLabel(k))}).join(esc(t('imp.sep')))+'</div>'+(ms?'<div class="ms">'+ms+'</div>':'')+'</div></div>';});
+    o+='<div class="hoprow"><span class="hb" style="background:'+HOPC[Math.min(v,6)]+'">'+v+'</span><div><div class="els">'+ks.map(function(k){return esc(elName(k))}).join(esc(t('imp.sep')))+'</div>'+(ms?'<div class="ms src">'+ms+'</div>':'')+'</div></div>';});
   if(!o)o='<div class="note">'+esc(t('imp.none'))+'</div>';
-  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(loopName(s.L))+'</b> <span class="mono">'+s.got+'/'+s.L.e.length+'</span><div>'+esc(t(s.closed?'imp.loopClosed':'imp.loopPartial'))+'</div><div class="mono dim" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
+  hv.loops.forEach(function(s){if(!s.got)return;o+='<div class="loopc'+(s.closed?' closed':'')+'"><b>'+(s.closed?'↻ ':'')+esc(loopName(s.L))+'</b> <span class="mono src">'+s.got+'/'+s.L.e.length+'</span><div>'+esc(t(s.closed?'imp.loopClosed':'imp.loopPartial'))+'</div><div class="mono dim src" style="font-size:10.5px">'+esc(s.L.path)+'</div></div>'});
   o+='<div class="note">'+esc(t('imp.caveat'))+'</div>';
   box.innerHTML=o;
 }
@@ -862,30 +1020,45 @@ function detect(){
    7. Trend charts (canvas, capped ring of CAP samples)
    ===================================================================== */
 var CH=[
- {k:'x9',id:'XMEAS(9)',nm:'Reactor temperature',u:'degC',c:'#ee7a3e',span:0.3,base:120.40,dp:2},
- {k:'x21',id:'XMEAS(21)',nm:'Reactor CW outlet temp',u:'degC',c:'#4fb0e0',span:0.5,base:94.599,dp:2},
- {k:'u10',id:'XMV(10)',nm:'Reactor CW flow valve',u:'% command',c:'#2bc3c8',span:1.2,base:41.106,dp:2},
- {k:'x7',id:'XMEAS(7)',nm:'Reactor pressure',u:'kPa gauge',c:'#a9c46a',span:8,base:2705.0,dp:1}
+ {k:'x9',id:'XMEAS(9)',u:'°C',c:'#ee7a3e',span:0.3,base:120.40,dp:2},
+ {k:'x21',id:'XMEAS(21)',u:'°C',c:'#4fb0e0',span:0.5,base:94.599,dp:2},
+ {k:'u10',id:'XMV(10)',u:'%',c:'#2bc3c8',span:1.2,base:41.106,dp:2},
+ {k:'x7',id:'XMEAS(7)',u:'kPa',c:'#a9c46a',span:8,base:2705.0,dp:1}
 ];
 /* views: 1 h live / 4.8 h live / event-anchored (-0.5 h .. +2.5 h around the injection, separately capped) */
 var VIEW='h1',WIN={h1:100,h48:CAP},PRE=50,POST=250,SHADE=80,EVT=null;
 function buildTrends(){
-  $('#tgrid').innerHTML=CH.map(function(c){return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n"><b>'+c.id+'</b>'+esc(c.nm)+(c.k==='u10'?'<span class="prim" id="prim" hidden>'+esc(t('tr.primary'))+'</span>':'')+'</div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>'+esc(t('tr.base',{b:c.base}))+'</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
+  $('#tgrid').innerHTML=CH.map(function(c){c.nm=sigName(c.id);return '<div class="tc" id="tc-'+c.k+'"><div class="th"><div class="n">'+esc(c.nm)+tid(c.id)+(c.k==='u10'?'<span class="prim" id="prim" hidden>'+esc(t('tr.primary'))+'</span>':'')+'<span class="simtag" id="stg-'+c.k+'" hidden>'+esc(t('act.simLabel'))+'</span></div><div class="tv"><span data-sv="'+c.id+'">–</span> <small>'+esc(c.u)+'</small><span class="td" id="td-'+c.k+'"></span></div></div><canvas id="cv-'+c.k+'" aria-label="'+esc(c.id+' '+c.nm)+' trend"></canvas><div class="tk"><span id="tkl-'+c.k+'"></span><span>'+esc(t('tr.base',{b:c.base}))+'</span><span id="tkr-'+c.k+'"></span></div></div>'}).join('');
   CH.forEach(function(c){c.cv=document.getElementById('cv-'+c.k);c.ctx=c.cv.getContext('2d');});
 }
 var dirty=true;
 function sizeCanvas(c){var dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(10,c.cv.clientWidth),h=Math.max(10,c.cv.clientHeight);
   if(c.cv.width!==Math.round(w*dpr)||c.cv.height!==Math.round(h*dpr)){c.cv.width=Math.round(w*dpr);c.cv.height=Math.round(h*dpr);}c.w=w;c.h=h;c.dpr=dpr;}
 function series(k){
-  if(VIEW==='evt'&&EVT){var pre=EVT.pre[k];return {a:pre.concat(EVT.post[k]),slots:PRE+POST,left:true,idx:function(K){return (pre.length-1)+(K-EVT.K0)}};}
-  var m=WIN[VIEW]||100,full=BUF[k],a=full.length>m?full.slice(-m):full,n=a.length;
-  return {a:a,slots:m,left:false,idx:function(K){return n-1-(SIM.K-K)}};
+  if(VIEW==='evt'&&EVT){var pre=EVT.pre[k];return {a:pre.concat(EVT.post[k]),slots:PRE+POST,off:0,fut:0,left:true,idx:function(K){return (pre.length-1)+(K-EVT.K0)}};}
+  var m=WIN[VIEW]||100,full=BUF[k],a=full.length>m?full.slice(-m):full,n=a.length,fut=0;
+  /* an LLM simulation runs ahead of now: keep room on the right for the rest of its horizon */
+  if(simOn()){var sv=SIMOV.s;fut=Math.max(0,Math.min(400,sv.snapshot.K+Math.round(sv.minutes/MPS)-SIM.K));}
+  return {a:a,slots:m+fut,off:m-n,fut:fut,left:false,idx:function(K){return n-1-(SIM.K-K)}};
+}
+/* LLM simulation overlay: trajectory points of one branch as {K,v}; starts at the snapshot it ran from */
+var MPS=PCL.MINUTES_PER_STEP||0.6;
+function simPts(c,which){
+  var sv=SIMOV.s,tr=sv[which]||[],K0=sv.snapshot.K,pts=[],i0=BUF.K.indexOf(K0);
+  if(i0>=0)pts.push({K:K0,v:BUF[c.k][i0]});
+  if(which==='withChange'&&c.id===sv.xmv&&isFinite(sv.target))pts.push({K:K0,v:+sv.target});
+  tr.forEach(function(p){var v=+p[c.id];if(isFinite(v)&&isFinite(p.min))pts.push({K:K0+Math.round(p.min/MPS),v:v})});
+  return pts;
 }
 function drawChart(c){
   sizeCanvas(c);var x=c.ctx,W=c.w,H=c.h,S=series(c.k),a=S.a,n=a.length;
   x.setTransform(c.dpr,0,0,c.dpr,0,0);x.clearRect(0,0,W,H);
-  var pl=48,pr=8,pt=20,pb=6,iw=W-pl-pr,ih=H-pt-pb,off=S.left?0:S.slots-n;
+  var pl=48,pr=8,pt=20,pb=6,iw=W-pl-pr,ih=H-pt-pb,off=S.off;
   var lo=c.base,hi=c.base;for(var i=0;i<n;i++){if(a[i]<lo)lo=a[i];if(a[i]>hi)hi=a[i];}
+  var OV=null;
+  if(simOn()){OV=[['noChange',[2,3],'#8da1b5'],['withChange',[6,4],'#c9b6f0']].map(function(b){
+      var ps=simPts(c,b[0]).map(function(p){return {i:S.idx(p.K),v:p.v}}).filter(function(p){return off+p.i>=0&&off+p.i<=S.slots-1});
+      ps.forEach(function(p){if(p.v<lo)lo=p.v;if(p.v>hi)hi=p.v;});return {ps:ps,dash:b[1],col:b[2]};});}
   var mid=(lo+hi)/2,sp=Math.max((hi-lo)*1.25,c.span);lo=mid-sp/2;hi=mid+sp/2;
   function X(i){return pl+iw*(off+i)/(S.slots-1)}
   function Y(v){return pt+ih*(1-(v-lo)/(hi-lo))}
@@ -893,7 +1066,7 @@ function drawChart(c){
   for(var g=0;g<=3;g++){var v=lo+(hi-lo)*g/3,yy=Math.round(Y(v))+.5;x.strokeStyle='#1b2733';x.lineWidth=1;x.beginPath();x.moveTo(pl,yy);x.lineTo(W-pr,yy);x.stroke();x.fillStyle='#6f8090';x.fillText(v.toFixed(c.dp),pl-5,yy);}
   x.setLineDash([4,4]);x.strokeStyle='#5d6e7d';x.beginPath();var by=Y(c.base);x.moveTo(pl,by);x.lineTo(W-pr,by);x.stroke();x.setLineDash([]);
   /* injection / removal markers: line in plot, label in the reserved top margin (never on the curve or axis labels) */
-  var lastEnd=-1e9,lab=function(m){return m.lk?t(m.lk):m.l};
+  var lastEnd=-1e9,lab=function(m){return m.lk?t(m.lk,m.lp):m.l};
   var offL=MARKS.filter(function(m){var i=S.idx(m.K)+0.5;return i<0&&!S.left&&SIM.K-m.K<BUF[c.k].length;});
   if(offL.length){var mo=offL[offL.length-1];x.font='600 10px Consolas, monospace';x.fillStyle=mo.c;x.textAlign='left';x.fillText('◀ '+lab(mo).replace(/^[▼▲] /,'')+' · −'+((SIM.K-mo.K)*STEP_H).toFixed(1)+' h',pl,8);lastEnd=pl+x.measureText('◀ '+lab(mo)+' · −0.0 h').width;}
   MARKS.forEach(function(m){var i=S.idx(m.K)+0.5;if(i<0||i>n-1)return;var mx=Math.round(X(i))+.5;
@@ -905,13 +1078,21 @@ function drawChart(c){
   x.textAlign='right';x.font='10px Consolas, monospace';
   if(n>1){x.strokeStyle=c.c;x.lineWidth=1.6;x.lineJoin='round';x.beginPath();for(var j=0;j<n;j++){var px=X(j),py=Y(a[j]);if(j)x.lineTo(px,py);else x.moveTo(px,py);}x.stroke();
     x.fillStyle=c.c;x.beginPath();x.arc(X(n-1),Y(a[n-1]),2.8,0,Math.PI*2);x.fill();}
+  if(OV){
+    var nx=n?X(n-1):pl;
+    if(S.fut>0&&nx<W-pr){x.fillStyle='rgba(160,130,230,.07)';x.fillRect(nx,pt,W-pr-nx,ih);}
+    OV.forEach(function(o){if(o.ps.length<2)return;x.strokeStyle=o.col;x.lineWidth=1.5;x.setLineDash(o.dash);x.beginPath();
+      o.ps.forEach(function(p,j){var px=X(p.i),py=Y(p.v);if(j)x.lineTo(px,py);else x.moveTo(px,py);});x.stroke();x.setLineDash([]);});
+    x.font='600 10px Consolas, monospace';var sl=t('act.simLabel'),sw=x.measureText(sl).width;
+    x.fillStyle='rgba(13,21,28,.85)';x.fillRect(W-pr-sw-8,pt+ih-17,sw+6,14);x.fillStyle='#c9b6f0';x.textAlign='right';x.fillText(sl,W-pr-5,pt+ih-10);
+  }
 }
 function primaryOn(){return !!(EVT&&DET&&!DET.removedT&&SIM.mode==='AUTO'&&DET.first['XMV(10)']!==undefined)}
 function trendCaption(){
   if(!EVT)return esc(t('tr.capNone'));
   if(DET&&DET.removedT)return esc(t('tr.capRemoved',{t:DET.removedT.toFixed(2)}));
   if(primaryOn()){var du=DET.cur['XMV(10)'],p9=DET.peak['XMEAS(9)']||0,p21=DET.peak['XMEAS(21)']||0;
-    return t('tr.capPrimary',{du:(du>=0?'+':'')+du.toFixed(1),p9:(p9>=0?'+':'')+p9.toFixed(2),p21:(p21>=0?'+':'')+p21.toFixed(2),hd:Math.max(0,150-VAL['XMEAS(9)']).toFixed(0)});}
+    return t('tr.capPrimary',{du:(du>=0?'+':'')+du.toFixed(1),p9:(p9>=0?'+':'')+p9.toFixed(2),hd:Math.max(0,150-VAL['XMEAS(9)']).toFixed(0)});}
   if(!DET)return esc(t('tr.capOver'));
   return esc(t('tr.capWait',{m:EVT.mag,t:EVT.t0.toFixed(2)}));
 }
@@ -919,9 +1100,10 @@ var lastCap='';
 function drawAll(){CH.forEach(drawChart);
   CH.forEach(function(c){var el=document.getElementById('td-'+c.k);var a=BUF[c.k];if(!a.length)return;var dv=a[a.length-1]-c.base;
     var big=DET&&DET.dev[c.id];el.textContent=t('tr.vsBase',{dv:(dv>=0?'+':'')+dv.toFixed(c.dp)});el.classList.toggle('up',!!big);
-    var L,R;if(VIEW==='evt'&&EVT){L='−0.5 h';R=EVT.post.x9.length>=POST?'+2.5 h ✓':'+2.5 h';}else{L='−'+((WIN[VIEW]||100)*STEP_H).toFixed(1)+' h';R='now';}
+    var L,R;if(VIEW==='evt'&&EVT){L='−0.5 h';R=EVT.post.x9.length>=POST?'+2.5 h ✓':'+2.5 h';}else{L='−'+((WIN[VIEW]||100)*STEP_H).toFixed(1)+' h';R=t('tr.now');}
     document.getElementById('tkl-'+c.k).textContent=L;document.getElementById('tkr-'+c.k).textContent=R;});
   var pr=primaryOn();$('#prim').hidden=!pr;$('#tc-u10').classList.toggle('primary',pr);
+  var so=simOn();CH.forEach(function(c){var tg=document.getElementById('stg-'+c.k);if(tg)tg.hidden=!so});renderSimCap();
   var cap=trendCaption();if(cap!==lastCap){$('#tcap').innerHTML=cap;lastCap=cap;}
 }
 function setToggle(attr,v){$$('['+attr+']').forEach(function(b){var on=b.getAttribute(attr)===String(v);b.setAttribute('aria-pressed',String(on));b.classList.toggle('on',on);if(on&&b.parentNode)b.parentNode.setAttribute('data-active',String(v));});}
@@ -945,25 +1127,27 @@ function updateLive(){
    ===================================================================== */
 function snapId(){return 'snap@T'+SIM.t.toFixed(2)+'h/K'+SIM.K}
 var USED={};
+/* one statement with its sources (signals, rules, reviewed knowledge, snapshot); the chips show in the sources view */
 function line(txt,sigs,kr,rules){var sn=snapId();(kr||[]).forEach(function(k){USED[k]=1});
   return '<li><div class="ln">'+txt+'</div><div class="refs">'+(sigs||[]).map(function(s){return '<span class="ref rs">'+s+'</span>'}).join('')+(rules||[]).map(function(r){return '<span class="ref rule">'+esc(r)+'</span>'}).join('')+(kr||[]).map(refChip).join('')+'<span class="ref snap">'+sn+'</span></div></li>';}
 function sgn(v,d){return (v>=0?'+':'')+v.toFixed(d)}
 function ruleOf(sig){if(!SAFE)return null;for(var i=0;i<SAFE.rules.signals.length;i++)if(SAFE.rules.signals[i].signal===sig)return SAFE.rules.signals[i];return null;}
-function stSpan(st){return '<span class="'+(st==='NORMAL'?'g':'w')+'">'+st+'</span>'}
-function limitText(sig,nu,sd){
+function stSpan(st){return '<span class="'+(st==='NORMAL'?'g':'w')+'">'+esc(t('stz.'+st))+'</span>'}
+function limitText(sig,nu,sd,unit){
   var r=ruleOf(sig),v=VAL[sig],st=r?r.state:'NORMAL',hd=(nu-v).toFixed(1);
   var k=st==='TRIP'?'now.limTrip':st==='ALARM'?'now.limAlarm':st==='ATTENTION'?'now.limAtt':'now.limNormal';
   var ids=PCL.RULES.filter(function(x){return x.signal===sig&&x.kind!=='ATTENTION_BAND'}).map(function(x){return x.id});
   if(r&&r.ruleId&&ids.indexOf(r.ruleId)<0)ids.unshift(r.ruleId);
-  return {txt:esc(t(k,{nu:nu,sd:sd,hd:hd}))+stSpan(st),ids:ids};
+  return {txt:esc(t(k,{nu:nu+' '+unit,sd:sd+' '+unit,hd:hd}))+stSpan(st),ids:ids};
 }
 function renderNow(){
   if(!SAFE)return;
   USED={};
   var t9=VAL['XMEAS(9)'],t21=VAL['XMEAS(21)'],u=VAL['XMV(10)'],p=VAL['XMEAS(7)'];
-  var state='normal',title=t('now.tNormal'),stl=t('now.stNormal');
+  var state='normal',title=t('now.tNormal'),stl=t('now.stNormal'),order=[];
   if(DET){
     var anyT=DET.dev['XMEAS(9)']||DET.dev['XMEAS(21)'],uDev=DET.dev['XMV(10)'],el=SIM.t-DET.t0,man=SIM.mode==='MANUAL'&&!DET.removedT;
+    order=KEYS.map(function(k){return k[1]}).filter(function(id){return DET.first[id]!==undefined}).sort(function(a,b){return DET.first[a]-DET.first[b]});
     if(DET.removedT){state='dist';stl=t('now.stRecovering');title=t('now.tRecovering');}
     else if(anyT){state='dist';stl=t('now.stDisturbed');
       var cwFirst=DET.first['XMEAS(21)']!==undefined&&(DET.first['XMEAS(9)']===undefined||DET.first['XMEAS(21)']<DET.first['XMEAS(9)']);
@@ -973,33 +1157,36 @@ function renderNow(){
     else{state='comp';stl=t('now.stMasked');title=t('now.tMasked');}
     if(man)title+=t('now.tManual');
   }
-  var o='<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+esc(stl)+'</div><div class="tt">'+esc(title)+'</div><div class="refs"><span class="ref snap">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>';
-  var C=t('now.colon');
-  /* current condition */
+  /* the second sentence: the single most important change (not what the safety bar already says) */
+  var m2='';
+  if(SIM.mode==='MANUAL')m2=t('now.mManual',{u:u.toFixed(1)});
+  else if(!DET)m2=t('now.mHint');
+  else if(!DET.removedT&&DET.first['XMV(10)']!==undefined&&DET.cur['XMV(10)']>0)m2=t('now.mValve',{c:DET.cur['XMV(10)'].toFixed(1),p:sgn(DET.peak['XMEAS(9)']||0,2)});
+  else if(!DET.removedT&&order.length)m2=t('now.mFirst',{nm:sigName(order[0]),lag:((DET.first[order[0]]-DET.t0)*60).toFixed(0)});
+  setHTML($('#now'),'<div class="status '+(state==='dist'?'dist':state==='comp'?'comp':'')+'"><span class="ic"></span><div><div class="st">'+esc(stl)+'</div><div class="tt">'+esc(title)+'</div>'+(m2?'<div class="m2">'+esc(m2)+'</div>':'')+
+    '<div class="refs"><span class="ref snap keep">'+snapId()+'</span><span class="ref">event horizon T = '+SIM.t.toFixed(2)+' h</span><span class="ref">ingest cutoff K = '+SIM.K+'</span></div></div></div>');
+  var C=t('now.colon'),o='';
+  /* details (collapsed by default): current readings, observed changes, engineering context */
   o+='<div class="nowsec"><h3>'+esc(t('now.current'))+'</h3><ul>';
-  var l9=limitText('XMEAS(9)',150,175),l7=limitText('XMEAS(7)',2895,3000);
-  o+=line('<b>XMEAS(9)</b> '+esc(t('now.n.x9'))+' <b class="num">'+t9.toFixed(2)+' degC</b>'+C+l9.txt,['XMEAS(9)'],['row2'],l9.ids);
-  o+=line('<b>XMEAS(7)</b> '+esc(t('now.n.x7'))+' <b class="num">'+p.toFixed(1)+' kPa gauge</b>'+C+l7.txt,['XMEAS(7)'],['row1'],l7.ids);
-  o+=line('<b>XMEAS(21)</b> '+esc(t('now.n.x21'))+' <b class="num">'+t21.toFixed(2)+' degC</b>'+C+esc(t('now.x21NoLimit')),['XMEAS(21)'],['row3']);
-  o+=line('<b>XMV(10)</b> '+esc(t('now.n.u10'))+' <b class="num">'+u.toFixed(2)+' %</b>'+esc(t('now.u10Range')),['XMV(10)'],['row4']);
+  var l9=limitText('XMEAS(9)',150,175,'°C'),l7=limitText('XMEAS(7)',2895,3000,'kPa');
+  o+=line(esc(sigName('XMEAS(9)'))+' <b class="num">'+t9.toFixed(2)+' °C</b>'+C+l9.txt,['XMEAS(9)'],['row2'],l9.ids);
+  o+=line(esc(sigName('XMEAS(7)'))+' <b class="num">'+p.toFixed(1)+' kPa</b>'+C+l7.txt,['XMEAS(7)'],['row1'],l7.ids);
+  o+=line(esc(sigName('XMEAS(21)'))+' <b class="num">'+t21.toFixed(2)+' °C</b>'+C+esc(t('now.x21NoLimit')),['XMEAS(21)'],['row3']);
+  o+=line(esc(sigName('XMV(10)'))+' <b class="num">'+u.toFixed(2)+' %</b>'+esc(t('now.u10Range')),['XMV(10)'],['row4']);
   if(SIM.mode==='MANUAL')o+=line(t('now.manual',{u:u.toFixed(1)}),['XMV(10)','XMEAS(9)'],['ctrl']);
   o+='</ul></div>';
-  /* observed changes */
   o+='<div class="nowsec"><h3>'+esc(t('now.observed'))+'</h3><ul>';
   if(!DET){o+=line(esc(t('now.noDev')),['XMEAS(9)','XMEAS(21)','XMV(10)','XMEAS(7)'],[]);}
   else{
-    var order=KEYS.map(function(k){return k[1]}).filter(function(id){return DET.first[id]!==undefined}).sort(function(a,b){return DET.first[a]-DET.first[b]});
-    var nm={'XMEAS(9)':t('now.n.x9'),'XMEAS(21)':t('now.n.x21'),'XMV(10)':t('now.n.u10'),'XMEAS(7)':t('now.n.x7')};
-    var un={'XMEAS(9)':'degC','XMEAS(21)':'degC','XMV(10)':'%','XMEAS(7)':'kPa'};
-    o+=line(t('now.idv',{s:SIM.d>0?'+'+SIM.d+' °C':esc(t('now.removed')),t:DET.t0.toFixed(2)}),[],['rcw']);
+    var un={'XMEAS(9)':'°C','XMEAS(21)':'°C','XMV(10)':'%','XMEAS(7)':'kPa'};
+    o+=line(esc(t('now.idv',{s:SIM.d>0?'+'+SIM.d+' °C':t('now.removed')})),[],['rcw']);
     if(!order.length)o+=line(esc(t('now.noneYet',{m:((SIM.t-DET.t0)*60).toFixed(0)})),['XMEAS(21)','XMEAS(9)','XMV(10)'],[]);
     order.forEach(function(id,i){var d=id==='XMEAS(7)'?1:2,cur=DET.cur[id],pk=DET.peak[id];
-      o+=line(t('now.crossed',{i:i+1,id:id,nm:esc(nm[id]),t:DET.first[id].toFixed(2),lag:((DET.first[id]-DET.t0)*60).toFixed(0),cur:'<span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>',pk:sgn(pk,d)+' '+un[id]}),[id],[]);});
-    if(DET.first['XMV(10)']!==undefined&&!DET.removedT&&SIM.mode==='AUTO')o+=line(t('now.primary',{c:sgn(DET.cur['XMV(10)'],1),p:sgn(DET.peak['XMEAS(9)']||0,2)}),['XMV(10)','XMEAS(9)'],['ctrl']);
-    if(order.length>1)o+=line(esc(t('now.order',{o:order.join(' → ')})),order,['topo']);
+      o+=line(t('now.crossed',{i:i+1,nm:esc(sigName(id)),lag:((DET.first[id]-DET.t0)*60).toFixed(0),cur:'<span class="'+(DET.dev[id]?'w':'g')+'">'+sgn(cur,d)+' '+un[id]+'</span>',pk:sgn(pk,d)+' '+un[id]}),[id],[]);});
+    if(DET.first['XMV(10)']!==undefined&&!DET.removedT&&SIM.mode==='AUTO')o+=line(esc(t('now.primary',{c:sgn(DET.cur['XMV(10)'],1),p:sgn(DET.peak['XMEAS(9)']||0,2)})),['XMV(10)','XMEAS(9)'],['ctrl']);
+    if(order.length>1)o+=line(esc(t('now.order',{o:order.map(sigName).join(' → ')})),order,['topo']);
   }
   o+='</ul></div>';
-  /* engineering context */
   o+='<div class="nowsec"><h3>'+esc(t('now.context'))+'</h3><ul>';
   o+=line(esc(t('now.ctxCtrl')),['XMV(10)'],['ctrl']);
   if(DET){
@@ -1011,16 +1198,16 @@ function renderNow(){
     o+=line(esc(t('now.ctx150')),['XMEAS(9)'],['c145']);
   }
   o+='</ul></div>';
-  $('#now').innerHTML=o;
+  setHTML($('#nowDetail'),o);
   renderStrip();
 }
 function renderStrip(){
   var used=Object.keys(USED);
-  $('#strip').innerHTML=
-   '<div><div class="k">Context Layer · plant context revision <span class="badge built">'+esc(t('st.built'))+'</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
-   '<div><div class="k">Knowledge revision <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">'+esc(t('st.reviews'))+'</div></div>'+
-   '<div><div class="k">Snapshot <span class="badge sim">'+esc(t(CONNECTED?'st.snapServer':'st.snapPage'))+'</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
-   '<div><div class="k">Knowledge refs used · '+used.length+'</div><div class="refs" style="margin-top:0">'+used.map(function(k){return '<span class="ref">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">'+esc(t('st.pinned'))+'</div></div>';
+  setHTML($('#strip'),
+   '<div><div class="k">'+esc(t('st.kPlant'))+' <span class="badge built">'+esc(t('st.built'))+'</span></div><div class="v">tep-process-graph 0.2.0 · edd41ae4…</div><div class="d">HUMAN_VERIFIED · 17 nodes · 18 edges · 53 bindings</div></div>'+
+   '<div><div class="k">'+esc(t('st.kKnow'))+' <span class="badge built">staged</span></div><div class="v">ecr-32140d7b…</div><div class="d">'+esc(t('st.reviews'))+'</div></div>'+
+   '<div><div class="k">'+esc(t('st.kSnap'))+' <span class="badge sim">'+esc(t(CONNECTED?'st.snapServer':'st.snapPage'))+'</span></div><div class="v">'+snapId()+'</div><div class="d">event horizon T = '+SIM.t.toFixed(2)+' h · ingest cutoff K = '+SIM.K+'</div></div>'+
+   '<div><div class="k">'+esc(t('st.kRefs',{n:used.length}))+'</div><div class="refs keep">'+used.map(function(k){return '<span class="ref keep">'+esc(KR[k].id.split(' · ')[0])+'</span>'}).join('')+'</div><div class="d">'+esc(t('st.pinned'))+'</div></div>');
 }
 
 /* =====================================================================
@@ -1055,7 +1242,7 @@ function onInjected(mag,K0,t0){
   var k0=K0!==undefined?K0:SIM.K,tt=t0!==undefined?t0:SIM.t,end=BUF.K.length;
   if(K0!==undefined){end=0;while(end<BUF.K.length&&BUF.K[end]<=K0)end++;}
   DET=startDET(K0,t0);SIM.d=mag;
-  MARKS.push({K:k0,l:'▼ IDV(4) +'+mag+'°C',c:'#e2a73c',inj:1});
+  MARKS.push({K:k0,l:'',lk:'tr.injMark',lp:{m:mag},c:'#e2a73c',inj:1});
   EVT={K0:k0,t0:tt,mag:mag,pre:{},post:{}};['x9','x21','u10','x7'].forEach(function(k){EVT.pre[k]=BUF[k].slice(0,end).slice(-PRE);EVT.post[k]=BUF[k].slice(end,end+POST);});
   $('[data-win="evt"]').disabled=false;setView('evt');
   stopPlay();HL.src='dist';HL.start='e:reactor_cooling_water_in';HL.depth=6;HL.shown=0;applyHL();
@@ -1093,20 +1280,24 @@ function setHTML(el,h){if(el._h!==h){el.innerHTML=h;el._h=h;}}
 function renderSafety(){
   if(!SAFE)return;
   var r=SAFE.rules,w=r.worst,p=SAFE.pca;
-  setHTML($('#sfRule'),'<span class="rst '+w.state+'">'+w.state+'</span><b>'+esc(t('stz.'+w.state))+'</b>'+(w.ruleId?'<span class="ref rule">'+esc(w.ruleId)+'</span>':''));
-  setHTML($('#sfRuleD'),r.signals.map(function(s){return esc(s.signal)+' '+fmt(s.signal,s.value)+' '+esc(s.unit.replace(' gauge',''))+' → '+s.state}).join(' · ')+esc(t('sf.others',{n:r.noReviewedLimit.length})));
+  setHTML($('#sfRule'),'<span class="rst '+w.state+'">'+esc(t('stz.'+w.state))+'</span>'+tid(w.state)+(w.ruleId?'<span class="ref rule">'+esc(w.ruleId)+'</span>':''));
+  setHTML($('#sfRuleD'),r.signals.map(function(s){return esc(sigName(s.signal))+' <span class="num">'+fmt(s.signal,s.value)+' '+esc(unitOf(s.signal))+'</span>'}).join(esc(t('imp.sep'))));
+  setHTML($('#sfRuleMore'),esc(t('sf.rulesMore',{n:r.noReviewedLimit.length})));
   if(p){
     var ex=p.exceeded.any;
     setHTML($('#sfPca'),'<span class="rst '+(ex?'EXC':'NORMAL')+'">'+esc(t(ex?'sf.pcaExc':'sf.pcaOk'))+'</span><span class="meter'+(ex?' hot':'')+'" title="'+esc(t('sf.meterTip'))+'"><i style="width:'+Math.min(100,p.score*50).toFixed(1)+'%"></i><b></b></span><span class="mono">'+p.score.toFixed(2)+'×</span>');
     setHTML($('#sfPcaD'),esc(t('sf.pcaD',{t2:p.t2.toFixed(2),t2l:p.t2Limit.toFixed(2),spe:p.spe.toFixed(2),spel:p.speLimit.toFixed(2)})));
-    setHTML($('#sfTop'),p.contributors.map(function(c){return '<span class="ctb" title="'+esc(SIG[c.signal][0])+'">'+esc(c.signal)+' '+Math.round(c.share*100)+'% '+(c.direction==='high'?'↑':'↓')+'</span>'}).join('')+(ex?'':'<span class="muted" style="font-size:11px">'+esc(t('sf.topRef'))+'</span>'));
+    setHTML($('#sfTop'),esc(t('sf.top'))+t('now.colon')+p.contributors.map(function(c){return esc(sigName(c.signal))+' '+(c.direction==='high'?'↑':'↓')+tid(c.signal+' '+Math.round(c.share*100)+'%')}).join(esc(t('imp.sep')))+(ex?'':' '+esc(t('sf.topRef'))));
   }
   var man=SAFE.loop.mode==='MANUAL';
-  setHTML($('#sfLoop'),'<span class="rst '+(man?'ATTENTION':'NORMAL')+'">'+SAFE.loop.mode+'</span><span class="mono">'+SAFE.loop.output.toFixed(1)+' %</span>'+(man?'<button type="button" class="btn" id="bAuto" style="padding:2px 8px;font-size:11px">'+esc(t('sf.auto'))+'</button>':''));
+  setHTML($('#sfLoop'),'<span class="rst '+(man?'ATTENTION':'NORMAL')+'">'+esc(t('lm.'+SAFE.loop.mode))+'</span><span class="mono">'+SAFE.loop.output.toFixed(1)+' %</span>'+(man?'<button type="button" class="btn" id="bAuto" style="padding:2px 10px;font-size:12px">'+esc(t('sf.auto'))+'</button>':''));
   setHTML($('#sfLoopD'),esc(t(man?'sf.loopMan':'sf.loopAuto')));
   var cur=VAL[$('#pXmv').value];$('#pCurV').textContent=cur!==undefined?t('pp.current',{v:(+cur).toFixed(2)}):'';
 }
 function syncLog(){if(!CONNECTED){var changed=GSEQ!==ENG.gateSeq;GLOG=ENG.gateLog;GSEQ=ENG.gateSeq;if(changed)renderGateLog();}}
+/* verdict chip: plain label, the engine's code next to it in the sources view */
+function vdChip(v){var k=v==='ACCEPT'||v==='REJECT'?v:'ERROR';return '<span class="vd '+(k==='ACCEPT'?'ACCEPT':'REJECT')+'">'+esc(t('vd.'+k))+'</span>'+tid(v)}
+function rzLabel(code){var l=t('rz.'+code);return l!=='rz.'+code?l:String(code)}
 function renderGateLog(){
   var L=(GLOG||[]).slice(-30).reverse();
   $('#logCount').textContent=t('log.count',{n:GSEQ});
@@ -1116,7 +1307,7 @@ function renderGateLog(){
     var src=e.source==='mcp'?'<span class="flag acc">MCP</span>':'<span class="flag plan">'+(e.source==='page'?esc(t('log.page')):esc(e.source))+'</span>';
     var md=e.mode==='apply'?(e.applied?'<span class="flag ok">'+esc(t('log.applied'))+'</span>':'<span class="flag">'+esc(t('log.notExec'))+'</span>'):'<span class="flag">'+esc(t('log.dry'))+'</span>';
     var vd=e.verdict==='ACCEPT'?'ACCEPT':'REJECT';
-    return '<div class="gl"><span class="s">#'+(+e.seq)+'</span><div class="m"><span class="vd '+vd+'">'+vd+'</span><b class="mono">'+esc(e.input.xmv)+' → '+esc(e.input.target)+' %</b>'+src+md+'</div><div class="c">'+esc(tm)+' · '+esc(e.snapshot.id)+(e.reasons.length?' · '+e.reasons.map(function(x){return esc(x.code)}).join(', '):'')+'</div></div>';
+    return '<div class="gl"><span class="s">#'+(+e.seq)+'</span><div class="m">'+vdChip(vd)+'<b>'+esc(sigName(e.input.xmv))+' → '+esc(e.input.target)+' %</b>'+src+md+'</div><div class="c">'+esc(tm)+(e.reasons.length?' · '+e.reasons.map(function(x){return esc(rzLabel(x.code))}).join(esc(t('imp.sep'))):'')+'<span class="tid">'+esc(e.snapshot.id)+(e.reasons.length?' · '+e.reasons.map(function(x){return esc(x.code)}).join(', '):'')+'</span></div></div>';
   }).join(''));
 }
 var LASTOK=null,LASTGATE=null;
@@ -1124,13 +1315,13 @@ function propKey(){return $('#pXmv').value+'|'+$('#pTarget').value+'|'+$('#pWhy'
 function syncApply(){$('#pApply').disabled=LASTOK===null||LASTOK!==propKey();}
 /* render only; called again on a language switch */
 function renderGate(r,apply){
-  if(!r||!r.verdict){setHTML($('#pRes'),'<div class="gres"><span class="vd REJECT">ERROR</span> '+esc((r&&r.error)||t('g.noResponse'))+'</div>');return;}
-  var h='<div class="gres"><div class="gh"><span class="vd '+esc(r.verdict)+'">'+esc(r.verdict)+'</span><b class="mono">'+esc(r.input.xmv)+' → '+esc(r.input.target)+' %</b>'+(r.current!==null?'<span class="muted">'+esc(t('pp.current',{v:(+r.current).toFixed(2)}))+'</span>':'')+
-    (apply?(r.applied?'<span class="flag ok">'+esc(t('g.applied'))+'</span>':'<span class="flag">'+esc(t('g.notApplied'))+'</span>'):'<span class="flag">'+esc(t('g.dry'))+'</span>')+'<span class="ref snap">'+esc(r.snapshot.id)+'</span></div>';
-  if(r.reasons.length)h+='<ul>'+r.reasons.map(function(x){var lab=t('rz.'+x.code);return '<li><code>'+esc(x.code)+'</code> '+(lab!=='rz.'+x.code?esc(lab):'')+'<div class="muted" style="font-size:11px">'+esc(x.message)+'</div></li>'}).join('')+'</ul>';
+  if(!r||!r.verdict){setHTML($('#pRes'),'<div class="gres">'+vdChip('ERROR')+' '+esc((r&&r.error)||t('g.noResponse'))+'</div>');return;}
+  var h='<div class="gres"><div class="gh">'+vdChip(r.verdict)+'<b>'+esc(sigName(r.input.xmv))+' → '+esc(r.input.target)+' %</b>'+tid(r.input.xmv)+(r.current!==null?'<span class="muted">'+esc(t('pp.current',{v:(+r.current).toFixed(2)}))+'</span>':'')+
+    (apply?(r.applied?'<span class="flag ok">'+esc(t('g.applied'))+'</span>':'<span class="flag">'+esc(t('g.notApplied'))+'</span>'):'<span class="flag">'+esc(t('g.dry'))+'</span>')+'<span class="ref snap keep">'+esc(r.snapshot.id)+'</span></div>';
+  if(r.reasons.length)h+='<ul>'+r.reasons.map(function(x){return '<li>'+esc(rzLabel(x.code))+'<code class="src" style="margin-left:6px">'+esc(x.code)+'</code><div class="muted src" style="font-size:11.5px">'+esc(x.message)+'</div></li>'}).join('')+'</ul>';
   else h+='<div class="g" style="color:#8fdcb4">'+esc(t('g.pass'))+(apply?'':esc(t('g.passHint')))+'</div>';
   if(r.simulation){var a=r.simulation.withChange,b=r.simulation.noChange;
-    h+='<div class="sim">'+esc(t('g.sim',{h:a.horizonMin,a9:a.peak['XMEAS(9)'].toFixed(2),b9:b.peak['XMEAS(9)'].toFixed(2),a7:a.peak['XMEAS(7)'].toFixed(1),b7:b.peak['XMEAS(7)'].toFixed(1),aw:a.worstRuleState,bw:b.worstRuleState}))+(a.meanSpe!==null?esc(t('g.simSpe',{a:a.meanSpe.toFixed(2),b:b.meanSpe.toFixed(2)})):'')+'</div>';}
+    h+='<div class="sim">'+esc(t('g.sim',{h:a.horizonMin,a9:a.peak['XMEAS(9)'].toFixed(2),b9:b.peak['XMEAS(9)'].toFixed(2),a7:a.peak['XMEAS(7)'].toFixed(1),b7:b.peak['XMEAS(7)'].toFixed(1),aw:t('stz.'+a.worstRuleState),bw:t('stz.'+b.worstRuleState)}))+(a.meanSpe!==null?'<span class="src">'+esc(t('g.simSpe',{a:a.meanSpe.toFixed(2),b:b.meanSpe.toFixed(2)}))+'</span>':'')+'</div>';}
   h+='</div>';
   setHTML($('#pRes'),h);
 }
@@ -1149,10 +1340,11 @@ function propose(apply){
 }
 function renderXmvOptions(){
   var sel=$('#pXmv').value||'XMV(10)';
-  $('#pXmv').innerHTML=PCL.XMV_IDS.map(function(id){var m=PCL.MODELLED_XMVS.indexOf(id)>=0;return '<option value="'+id+'"'+(id===sel?' selected':'')+'>'+id+' · '+esc(SIG[id][0])+(m?'':esc(t('pp.notModelled')))+'</option>'}).join('');
+  $('#pXmv').innerHTML=PCL.XMV_IDS.map(function(id){var m=PCL.MODELLED_XMVS.indexOf(id)>=0;return '<option value="'+id+'"'+(id===sel?' selected':'')+'>'+esc(sigName(id))+(SRC?' · '+id:'')+(m?'':esc(t('pp.notModelled')))+'</option>'}).join('');
 }
 function renderGateNote(){
   var m=function(v){return '<span class="mono">'+esc(v)+'</span>'};
+  $('#gShort').textContent=t('pp.gateShort',{hor:GATE.horizonMin});
   $('#gNoteP').innerHTML=esc(t('pp.gateNote',{step:'\x01',win:'\x02',rate:'\x03',hor:'\x04'})).replace('\x01',m(GATE.maxStepPct)).replace('\x02',m(GATE.rateWindowMin)).replace('\x03',m(GATE.maxChangeInWindowPct)).replace('\x04',m(GATE.horizonMin));
 }
 function initProposal(){
@@ -1190,7 +1382,7 @@ function onInit(m){
   SAFE=m.safety;GLOG=m.gateLog||[];GSEQ=m.gateSeq;serverControls(m);
   if(s.d>0){var ev=null;(m.events||[]).forEach(function(e){if(e.type==='IDV4_INJECT')ev=e});onInjected(s.d,ev?ev.snapshot.K:undefined,ev?ev.snapshot.T_h:undefined);}
   else $('#bClear').disabled=true;
-  renderGateLog();afterTick(true);
+  renderGateLog();onActivityInit(m.activity);afterTick(true);
 }
 function onTick(m){
   (m.samples||[]).forEach(function(s){
@@ -1202,10 +1394,96 @@ function onTick(m){
   afterTick(!(m.samples&&m.samples.length));
 }
 function connect(){
-  var es=new EventSource('/api/stream');
-  es.addEventListener('init',function(ev){setMode('mode.connected');onInit(JSON.parse(ev.data));});
+  /* EventSource cannot send headers, so the page token goes in the query */
+  var es=new EventSource('/api/stream?token='+encodeURIComponent(TOKEN));
+  es.addEventListener('init',function(ev){STREAM_LOST=false;setMode('mode.connected');onInit(JSON.parse(ev.data));});
   es.addEventListener('tick',function(ev){onTick(JSON.parse(ev.data));});
-  es.onerror=function(){setMode('mode.lost');};
+  es.addEventListener('activity',function(ev){onActivity(JSON.parse(ev.data));});
+  /* the browser retries on its own; until the next init arrives, the LLM status is unknown, so say so */
+  es.onerror=function(){STREAM_LOST=true;setMode('mode.lost');renderLlmStatus();};
+}
+var STREAM_LOST=false;
+
+/* =====================================================================
+   12b. LLM activity feed (connected mode): every MCP request the local server
+        answered. Server-capped, untrusted text (names, arguments, rationale,
+        client name): always escaped or set as textContent here.
+   ===================================================================== */
+var ACT={records:[],client:null,seq:0},ACT_CAP=200,SIMOV=null,SIM_TTL=120000,FOCUS_MS=8000,FOCUS={timer:null};
+/* an overlay needs a simulation that ran from a known snapshot; anything else is dropped, never drawn */
+function simOn(){
+  if(!SIMOV)return false;
+  var sv=SIMOV.s;
+  if(!sv||!sv.snapshot||!isFinite(+sv.snapshot.K)||Date.now()-SIMOV.t0>SIM_TTL){SIMOV=null;return false;}
+  return true;
+}
+function renderSimCap(){
+  var el=$('#simcap');if(!el)return;var on=CONNECTED&&simOn();
+  if(!on){el.hidden=true;return;}
+  /* plain caption; the snapshot id it ran from shows in the sources view only */
+  var sv=SIMOV.s;
+  setHTML(el,esc(t('act.simCap',{xmv:sigName(String(sv.xmv)),target:(+sv.target).toFixed(1),min:+sv.minutes}))+tid(String(sv.snapshot.id||'')));
+  el.hidden=false;
+}
+/* name of a client that completed initialize and is still connected, else null */
+function actClientText(){var c=ACT.client;return c&&c.initialized&&c.connected!==false?c.name+(c.version?' '+c.version:''):null;}
+function actGoneText(){var c=ACT.client;return c&&c.connected===false?c.name+(c.version?' '+c.version:''):null;}
+function renderLlmStatus(){
+  if(!CONNECTED)return;
+  var c=STREAM_LOST?null:actClientText(),g=actGoneText(),txt=STREAM_LOST?t('act.streamLost'):c?t('act.client',{c:c}):g?t('act.clientGone',{c:g}):t('act.noClient');
+  $('#cLlmDot').className='dot'+(c?' llmon':'');$('#cLlmT').textContent=txt;
+  $('#cLlm').title=c?t('act.clientTip',{p:ACT.client.protocol||'-'}):t('act.noClientTip');
+  setHTML($('#actStat'),'<span class="dot'+(c?' llmon':'')+'"></span>'+esc(txt));
+}
+function actKind(k){var s=t('act.kind.'+k);return s==='act.kind.'+k?String(k):s}
+function actOutcome(o){
+  if(o==='ACCEPT'||o==='REJECT')return vdChip(o);
+  return o==='error'?'<span class="flag alarm">'+esc(t('act.error'))+'</span>':'<span class="flag ok">'+esc(t('act.ok'))+'</span>';
+}
+function actRow(r,isNew){
+  var tm='';try{tm=new Date(r.ts).toLocaleTimeString(LANG==='zh'?'zh-TW':'en-GB',{hour12:false})}catch(x){tm=''}
+  var h='<div class="al'+(isNew?' new':'')+'"><span class="s">#'+(+r.seq)+'<br>'+esc(tm)+'</span><div class="m"><span class="flag llmk">'+esc(actKind(r.kind))+'</span><b>'+esc(r.name)+'</b>'+actOutcome(r.outcome)+(r.args?'<span class="a">'+esc(r.args)+'</span>':'')+'</div>';
+  h+='<div class="c">'+esc(r.summary)+(r.snapshot?' <span class="ref snap">'+esc(r.snapshot)+'</span>':'')+'</div>';
+  if(r.rationale!==undefined)h+='<div class="why"><span class="k">'+esc(t('act.why'))+'</span>'+esc(r.rationale||'-')+'</div>';
+  return h+'</div>';
+}
+function renderActivity(newSeq){
+  if(!CONNECTED)return;
+  renderLlmStatus();
+  var L=ACT.records,c=actClientText();
+  $('#actCount').textContent=t('act.count',{n:ACT.seq});
+  if(!L.length){
+    $('#alog').innerHTML='<div class="aempty"><div>'+esc(t(c?'act.emptyClient':'act.emptyNoClient'))+'</div>'+(c?'':'<div class="muted">'+esc(t('act.emptyNoClient2'))+'</div>')+
+      '<div class="muted">'+esc(t('act.ask'))+'</div><ul><li>'+esc(t('act.q1'))+'</li><li>'+esc(t('act.q2'))+'</li><li>'+esc(t('act.q3'))+'</li></ul></div>';
+    return;
+  }
+  var h='';for(var i=L.length-1;i>=0;i--)h+=actRow(L[i],newSeq!==undefined&&L[i].seq===newSeq);
+  $('#alog').innerHTML=h;
+}
+function hasEl(k){var id=String(k).slice(2);return k[0]==='n'?Object.prototype.hasOwnProperty.call(TN,id):k[0]==='e'?Object.prototype.hasOwnProperty.call(TE,id):false}
+function clearFocus(){if(FOCUS.timer){clearTimeout(FOCUS.timer);FOCUS.timer=null}$$('.llmhit,.llmreach').forEach(function(g){g.classList.remove('llmhit','llmreach')});var f=$('#pvLlm');if(f)f.hidden=true;}
+/* briefly mark the element(s) a topology / engineering-context call was about */
+function llmFocus(r){
+  clearFocus();
+  var hit={},reach={};(r.focus||[]).forEach(function(k){hit[k]=1});(r.reach||[]).forEach(function(k){if(!hit[k])reach[k]=1});
+  $$('#pid .el[data-k], #gsvg .el[data-k]').forEach(function(g){var k=g.getAttribute('data-k');if(hit[k])g.classList.add('llmhit');else if(reach[k])g.classList.add('llmreach');});
+  var f=$('#pvLlm');f.textContent=t('act.focus',{tool:r.name,el:(r.focus||[]).map(function(k){return hasEl(k)?elName(k):k}).join(', ')});f.hidden=false;
+  FOCUS.timer=setTimeout(clearFocus,FOCUS_MS);
+}
+function onActivityInit(a){
+  a=a||{};
+  ACT={records:(a.records||[]).slice(-ACT_CAP),client:a.client||null,seq:+a.seq||0};
+  SIMOV=a.sim?{s:a.sim,t0:Date.now()-(+a.sim.ageMs||0)}:null;
+  renderActivity();dirty=true;
+}
+function onActivity(u){
+  if(u.client)ACT.client=u.client;
+  var r=u.record;
+  if(r){ACT.records.push(r);while(ACT.records.length>ACT_CAP)ACT.records.shift();ACT.seq=Math.max(ACT.seq,+r.seq||0);}
+  if(u.simCleared){SIMOV=null;dirty=true;} /* the plant changed: the earlier LLM simulation is stale */
+  if(u.sim){SIMOV={s:u.sim,t0:Date.now()};dirty=true;}
+  renderActivity(r?r.seq:undefined);
+  if(r&&r.focus&&r.focus.length)llmFocus(r);
 }
 
 /* =====================================================================
@@ -1220,15 +1498,16 @@ function setLang(l,remember){
     try{var u=new URL(location.href);if(u.searchParams.has('lang')){u.searchParams.set('lang',l);history.replaceState(null,'',u.href);}}catch(e){}
   }
   applyStatic();
-  if(CONNECTED)$('#simNote').textContent=t('tr.noteConn');
+  setSources(SRC,false);
+  if(CONNECTED)$('#simNote').textContent=t('tr.badgeConn');
   setMode(MODE.k,MODE.p);
   showRunning(SIM.running);
-  var pn=$('#pidNote');if(pn)pn.textContent=t('pv.pidNote');
-  var gn=$('#gNote');if(gn)gn.textContent=t('pv.graphNote');
   if($('#pWhy').value===prevWhy){$('#pWhy').value=t('pp.whyDefault');if(LASTOK===oldKey)LASTOK=propKey();}
   renderXmvOptions();renderGateNote();syncApply();
+  /* unit names on both drawings are localized, so redraw them (the notes are redrawn with them) */
+  renderPID();renderGraph();
   buildTrends();renderSide();applyHL();lastCap='';drawAll();
-  renderNow();renderSafety();renderGateLog();
+  renderNow();renderSafety();renderGateLog();renderActivity();renderSimCap();
   if(LASTGATE)renderGate(LASTGATE.r,LASTGATE.apply);
   renderGuide();
 }
@@ -1251,7 +1530,7 @@ function renderGuide(){
   if(!GUIDE){bar.hidden=true;return;}
   bar.hidden=false;
   $('#gbarK').textContent=GUIDE.stopped?t('guide.stoppedK'):t('guide.step',{i:GUIDE.i,n:GSTEPS});
-  $('#gbarT').textContent=t(GUIDE.key,GUIDE.p);
+  $('#gbarT').textContent=t(GUIDE.key,guideParams(GUIDE.p));
   $('#gbarStop').textContent=t(GUIDE.done?'guide.close':'guide.stop');
 }
 function guideCaption(i,key,p){if(!GUIDE)return;GUIDE.i=i;GUIDE.key=key;GUIDE.p=p||null;renderGuide();}
@@ -1271,10 +1550,20 @@ function guideTry(target){
   $('#pXmv').value='XMV(10)';$('#pTarget').value=(+target).toFixed(1);$('#pWhy').value=t('pp.whyDefault');
   return propose(false);
 }
+/* captions keep the gate's raw verdict, reason codes and rule state; they are put into plain
+   words at render time, so a language switch re-renders them correctly */
 function verdictParams(r){
-  if(!r||!r.verdict)return {from:'–',to:'–',d:'–',verdict:'ERROR',why:'',hor:GATE.horizonMin};
+  if(!r||!r.verdict)return {from:'–',to:'–',d:'–',verdict:'ERROR',codes:[],hor:GATE.horizonMin};
   var cur=r.current!==null?+r.current:+VAL['XMV(10)'];
-  return {from:cur.toFixed(1),to:(+r.input.target).toFixed(1),d:Math.abs(r.input.target-cur).toFixed(1),verdict:r.verdict,why:r.reasons.length?' ('+r.reasons.map(function(x){return x.code}).join(', ')+')':'',hor:GATE.horizonMin};
+  return {from:cur.toFixed(1),to:(+r.input.target).toFixed(1),d:Math.abs(r.input.target-cur).toFixed(1),verdict:r.verdict,codes:r.reasons.map(function(x){return x.code}),hor:GATE.horizonMin};
+}
+function guideParams(p){
+  if(!p)return p;
+  var q={};Object.keys(p).forEach(function(k){q[k]=p[k]});
+  if(p.verdict)q.verdict=t('vd.'+(p.verdict==='ACCEPT'||p.verdict==='REJECT'?p.verdict:'ERROR'));
+  if(p.codes)q.why=p.codes.length?' ('+p.codes.map(rzLabel).join(t('imp.sep'))+')':'';
+  if(p.state)q.state=t('stz.'+p.state);
+  return q;
 }
 function startGuide(){
   if(CONNECTED)return;
@@ -1291,7 +1580,7 @@ function startGuide(){
   });})();
 }
 function guideStep2(){
-  guideCaption(2,'guide.s2',{state:SAFE?SAFE.rules.worst.state:'NORMAL'});
+  guideCaption(2,'guide.s2',{state:SAFE?SAFE.rules.worst.state:'NORMAL'});/* raw state; guideParams() words it */
   goTo('#trendPanel');
   gWait(7000,guideStep3);
 }
@@ -1315,6 +1604,14 @@ function guideStep4(){
 document.addEventListener('click',function(e){
   var lb=e.target.closest('[data-lang]');
   if(lb){setLang(lb.getAttribute('data-lang'),true);return;}
+  if(e.target.closest('#bSrc')){setSources(!SRC,true);return;}
+  /* info buttons: tap or click toggles the short explanation below (works without hover) */
+  var ib=e.target.closest('[data-more]');
+  if(ib){setMore(ib,ib.getAttribute('aria-expanded')!=='true');return;}
+  var tb=e.target.closest('[role="tab"][data-tab]');
+  if(tb){selTab(tb,false);return;}
+  var cb=e.target.closest('[data-copy]');
+  if(cb){copySnippet(cb);return;}
   var go=e.target.closest('[data-goto]');
   if(go){var gt=GOTO[go.getAttribute('data-goto')];if(gt)goTo(gt[0],gt[1]);return;}
   if(e.target.closest('#bGuide')){if(GUIDE&&!GUIDE.done)stopGuide(true);else startGuide();return;}
@@ -1338,7 +1635,14 @@ document.addEventListener('click',function(e){
   if(el){select(el.dataset.k);}
 });
 document.addEventListener('keydown',function(e){
+  /* Esc closes open info panels first (focus stays where it is), then the guided run */
+  if(e.key==='Escape'){var open=$$('[data-more][aria-expanded="true"]');
+    if(open.length){open.forEach(function(b){setMore(b,false)});return;}}
   if(e.key==='Escape'&&GUIDE&&!(e.target.closest&&e.target.closest('input,select,textarea'))){stopGuide(true);return;}
+  /* arrow keys, Home and End move between the setup tabs */
+  var tk=e.target.closest&&e.target.closest('[role="tab"][data-tab]');
+  if(tk&&/^(ArrowLeft|ArrowRight|Home|End)$/.test(e.key)){var ts=Array.prototype.slice.call(tk.parentNode.querySelectorAll('[role="tab"]')),n=ts.length,i=ts.indexOf(tk);
+    i=e.key==='Home'?0:e.key==='End'?n-1:(i+(e.key==='ArrowRight'?1:-1)+n)%n;e.preventDefault();selTab(ts[i],true);return;}
   if(e.key!=='Enter'&&e.key!==' ')return;var el=e.target.closest&&e.target.closest('svg .el');
   if(el){e.preventDefault();select(el.dataset.k);}
 });
@@ -1361,13 +1665,16 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)dirt
 
 /* boot */
 applyStatic();
+setSources(readSrcPref(),false);
 setToggle('data-view','pid');setToggle('data-speed','1');setToggle('data-win','h1');
 $('#lgHops').innerHTML=HOPC.map(function(c,i){return '<i style="background:'+c+'">'+i+'</i>'}).join('');
 renderPID();renderGraph();buildTrends();
 if(CONNECTED){
   setMode('mode.connecting');
-  $('#simNote').textContent=t('tr.noteConn');
+  $('#simNote').textContent=t('tr.badgeConn');
   $('#bGuide').hidden=true;
+  $('#llmPanel').hidden=false;$('#cLlm').hidden=false;
+  renderActivity();
   showRunning(false);
   initProposal();renderSide();applyHL();renderGateLog();
   connect();

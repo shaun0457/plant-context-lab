@@ -4,26 +4,52 @@
  * Streamable HTTP on 127.0.0.1).
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { z } from 'zod';
 import { GATE_PARAMS, MAX_HOPS, MAX_SIGNAL_IDS, RULES } from '../engine/index.ts';
 import type { Docs } from './docs.ts';
 import { MAX_SIM_MINUTES, createToolHandlers, type ToolContext } from './tools.ts';
+import pkg from '../../package.json' with { type: 'json' };
 
 export const SERVER_NAME = 'plant-context-lab';
-export const SERVER_VERSION = '0.3.0';
+/** single source: package.json (esbuild inlines it into dist/server.js) */
+export const SERVER_VERSION: string = pkg.version;
 
 function asContent(result: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
 }
 
+/**
+ * McpServer that reports every request it answers to the shared activity log
+ * (when there is one) before handing the transport to the SDK. Results are not
+ * touched. This relies on two behaviours of @modelcontextprotocol/sdk 1.31.0
+ * (pinned exactly in package.json): Protocol.connect() chains a transport's
+ * pre-set onmessage / onclose handlers, and every response goes through
+ * transport.send(). See activity.ts and test/activity.test.ts.
+ */
+class ObservedMcpServer extends McpServer {
+  observer: ((t: Transport) => void) | null = null;
+  override async connect(transport: Transport): Promise<void> {
+    this.observer?.(transport);
+    return super.connect(transport);
+  }
+}
+
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
-export function createMcpServer(ctx: ToolContext, docs: Docs): McpServer {
+export interface McpServerOptions {
+  /** one server per stateless Streamable HTTP request: a transport close is not a client leaving */
+  statelessHttp?: boolean;
+}
+
+export function createMcpServer(ctx: ToolContext, docs: Docs, opt: McpServerOptions = {}): McpServer {
   const h = createToolHandlers(ctx);
-  const server = new McpServer(
+  const server = new ObservedMcpServer(
     { name: SERVER_NAME, version: SERVER_VERSION },
     { instructions: 'Simulated Tennessee Eastman reactor-cooling demo for education only. Read resource docs://system-prompt (or prompt operator-assistant) first. Always call get_safety_state before advising. The gate decides; you only propose.' },
   );
+  const activity = ctx.activity;
+  if (activity) server.observer = (t) => activity.observe(t, { trackClose: !opt.statelessHttp });
 
   server.registerTool('get_plant_overview', {
     title: 'Plant overview',

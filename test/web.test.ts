@@ -15,7 +15,7 @@ function req(method: string, path: string, headers: Record<string, string> = {},
   return new Promise((resolve, reject) => {
     const r = request({ host: '127.0.0.1', port, method, path, headers: { host: '127.0.0.1:' + port, ...headers } }, (res) => {
       let text = '';
-      res.on('data', (c) => { text += c; if (path === '/api/stream' && text.includes('event: init')) { res.destroy(); resolve({ status: res.statusCode!, text, headers: res.headers }); } });
+      res.on('data', (c) => { text += c; if (path.startsWith('/api/stream') && text.includes('event: init')) { res.destroy(); resolve({ status: res.statusCode!, text, headers: res.headers }); } });
       res.on('end', () => resolve({ status: res.statusCode!, text, headers: res.headers }));
       res.on('error', () => resolve({ status: res.statusCode!, text, headers: res.headers }));
     });
@@ -43,13 +43,23 @@ test('rejects foreign Host headers (DNS rebinding)', async () => {
   assert.equal(r.status, 421);
 });
 
-test('state and SSE init are served', async () => {
-  const s = await req('GET', '/api/state');
+test('state and stream need the page token (a plain GET cannot read the scenario events)', async () => {
+  for (const path of ['/api/state', '/api/stream', '/api/stream?token=wrong']) {
+    const r = await req('GET', path);
+    assert.equal(r.status, 403, path);
+    assert.doesNotMatch(r.text, /IDV|inject|events/i, path);
+  }
+  assert.equal((await req('GET', '/api/state', { 'x-pcl-token': app.token, origin: 'http://evil.example' })).status, 403, 'foreign origin');
+});
+
+test('state and SSE init are served with the token (header or query)', async () => {
+  const s = await req('GET', '/api/state', { 'x-pcl-token': app.token });
   const j = JSON.parse(s.text);
   assert.equal(j.mode, 'connected');
   assert.equal(j.history.t.length, 480);
   assert.ok(j.safety.rules);
-  const e = await req('GET', '/api/stream');
+  assert.equal((await req('GET', '/api/state?token=' + app.token)).status, 200);
+  const e = await req('GET', '/api/stream?token=' + app.token);
   assert.equal(e.status, 200);
   assert.match(e.text, /event: init/);
 });

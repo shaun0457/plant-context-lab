@@ -82,6 +82,12 @@ test('simulate_adjustment never mutates; propose REJECT then ACCEPT', () => {
   assert.equal(log.entries[1].verdict, 'REJECT');
 });
 
+test('the plant overview does not point the LLM at the viewer port', () => {
+  const r = createToolHandlers({ sim: mk() }).get_plant_overview() as Record<string, unknown>;
+  assert.ok(!('viewer' in r));
+  assert.doesNotMatch(JSON.stringify(r), /127\.0\.0\.1|localhost|:8787/);
+});
+
 test('agent-facing results never reveal the injected scenario', () => {
   const sim = mk();
   sim.injectIdv4(10, 'cli');

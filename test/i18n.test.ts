@@ -37,6 +37,14 @@ test('every key the page uses is defined, including the dynamic ones', () => {
   for (const m of tpl.matchAll(/\bt\([^()]*\?'([\w.]+)':'([\w.]+)'/g)) { used.add(m[1]); used.add(m[2]); }
   for (const m of tpl.matchAll(/'(guide\.\w+)'/g)) used.add(m[1]); // guided-run caption keys passed to guideCaption()
   for (const s of Object.keys(STATE_ORDER)) used.add('stz.' + s);
+  for (const k of ['tool', 'resource', 'prompt', 'list', 'session']) used.add('act.kind.' + k); // activity record kinds
+  for (const v of ['ACCEPT', 'REJECT', 'ERROR']) used.add('vd.' + v); // plain verdict labels
+  for (const m of ['AUTO', 'MANUAL']) used.add('lm.' + m); // loop modes
+  for (const items of Object.values(KNOW)) for (const x of items) { used.add('kn.' + x.t); used.add('kt.' + x.r[0]); } // knowledge kinds and plain summaries
+  for (const id of Object.keys(SIG)) { // plain signal names; the composition signals share sig.comp
+    const m = /^(XMEAS|XMV)\((\d+)\)$/.exec(id);
+    if (m && !SIG[id][3]) used.add('sig.' + m[1] + m[2]);
+  }
   for (const c of ['XMV_UNKNOWN', 'XMV_NOT_MODELLED', 'TARGET_INVALID', 'TARGET_OUT_OF_RANGE', 'RATIONALE_MISSING', 'TRIP_ACTIVE', 'STEP_TOO_LARGE', 'RATE_LIMIT', 'SIM_RULE_TRIP', 'SIM_RULE_ALARM', 'SIM_HEADROOM_LOSS', 'PCA_SPE_WORSENS']) used.add('rz.' + c);
   assert.ok(used.size > 150, 'scan found too few keys: ' + used.size);
   for (const k of used) assert.ok(k in STRINGS.en, 'missing string key: ' + k);

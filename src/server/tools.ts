@@ -11,6 +11,7 @@ import {
   evaluateAdjustment, getEngineeringContext, impact, resolveElement, simulateAhead, topologySummary,
   type GateLogEntry, type Simulation,
 } from '../engine/index.ts';
+import type { ActivityLog } from './activity.ts';
 
 export const DISCLAIMER = 'SIMULATED plant (illustrative lumped model of the Tennessee Eastman reactor-cooling subsystem). Education only; not for real plant operation.';
 
@@ -30,7 +31,11 @@ function ruleRefs(): string[] {
 
 function round(v: number, d = 3): number { return +(+v).toFixed(d); }
 
-export interface ToolContext { sim: Simulation; viewerUrl?: string | null }
+export interface ToolContext {
+  sim: Simulation;
+  /** optional LLM activity feed for the viewer; observes MCP traffic, never changes results */
+  activity?: ActivityLog;
+}
 
 export function createToolHandlers(ctx: ToolContext) {
   const { sim } = ctx;
@@ -62,7 +67,6 @@ export function createToolHandlers(ctx: ToolContext) {
           note: 'An accepted adjustment puts the loop in MANUAL at the target. Only a human can return it to AUTO (page button).' },
         safetySummary: { worstRuleState: s.rules.worst.state, worstRuleId: s.rules.worst.ruleId, pcaScore: s.pca ? s.pca.score : null, pcaExceeded: s.pca ? s.pca.exceeded.any : null },
         timebase: { minutesPerSample: MINUTES_PER_STEP, simTime_h: round(sim.t, 2) },
-        viewer: ctx.viewerUrl || null,
         nextStep: 'Call get_safety_state first, then get_signals / get_engineering_context. Use simulate_adjustment before propose_adjustment.',
       };
     },

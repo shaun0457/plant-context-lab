@@ -25,7 +25,7 @@ Or press **Guided run** at the top of the page: it injects the disturbance, wait
 
 ## Connect your own LLM (MCP)
 
-One local Node process (Node.js 22.18 or later) holds one engine and exposes it twice: as an **MCP server over stdio**, and as a **viewer at `http://127.0.0.1:8787/`** that shows the same engine live, so you can watch what your LLM does. Pin a commit so you know what you run; `ef6f14f` below is an example, use the latest commit of `main`.
+One local Node process (Node.js 22.18 or later) holds one engine and exposes it twice: as an **MCP server over stdio**, and as a **viewer at `http://127.0.0.1:8787/`** that shows the same engine live, so you can watch what your LLM does. Versions are pinned by release tag (`#v0.4.0` below), so you know exactly what you run; check the repository's tags for newer ones.
 
 **Claude Desktop** (`claude_desktop_config.json`, then restart):
 
@@ -34,23 +34,42 @@ One local Node process (Node.js 22.18 or later) holds one engine and exposes it 
   "mcpServers": {
     "plant-context-lab": {
       "command": "npx",
-      "args": ["-y", "github:shaun0457/plant-context-lab#ef6f14f", "--scenario", "idv4-step5"]
+      "args": ["-y", "github:shaun0457/plant-context-lab#v0.4.0", "--scenario", "idv4-step5"]
     }
   }
 }
 ```
 
-On Windows, if `npx` is not found, use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "github:shaun0457/plant-context-lab#ef6f14f"]`.
+On Windows, if `npx` is not found, use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "github:shaun0457/plant-context-lab#v0.4.0"]`.
 
 **Claude Code:**
 
 ```bash
-claude mcp add plant-context-lab -- npx -y github:shaun0457/plant-context-lab#ef6f14f
+claude mcp add plant-context-lab -- npx -y github:shaun0457/plant-context-lab#v0.4.0
 ```
 
-**Any other MCP client (stdio):** command `npx`, args `-y github:shaun0457/plant-context-lab#ef6f14f`. From a clone: `npm install`, then command `node`, args `dist/server.js`. Streamable HTTP is optional: start with `--http-mcp` and connect to `http://127.0.0.1:8787/mcp`.
+**Codex** (`~/.codex/config.toml`). The first `npx` start downloads and installs the package and can take longer than the default MCP startup timeout, so raise it:
 
-Then open `http://127.0.0.1:8787/` to watch, and ask for example:
+```toml
+[mcp_servers.plant-context-lab]
+command = "npx"
+args = ["-y", "github:shaun0457/plant-context-lab#v0.4.0", "--scenario", "idv4-step5"]
+startup_timeout_sec = 60
+```
+
+**Any other MCP client (stdio):** command `npx`, args `-y github:shaun0457/plant-context-lab#v0.4.0`. Streamable HTTP is optional: start with `--http-mcp` and connect to `http://127.0.0.1:8787/mcp`.
+
+**Faster start (any client).** `npx -y github:...` installs on every cold start. Install once instead, then use the installed command:
+
+```bash
+npm install -g github:shaun0457/plant-context-lab#v0.4.0   # then: command "plant-context-lab", args ["--scenario", "idv4-step5"]
+```
+
+or run a clone directly: `npm install` in the clone, then command `node`, args `["<clone>/dist/server.js"]`.
+
+Then open the viewer to watch. The server prints its URL to stderr (your MCP client's server log), for example `viewer (connected mode): http://127.0.0.1:8787/`; if 8787 is busy it takes the next free port, so check that line. Every MCP call your LLM makes (tool calls, resource reads, prompt gets) appears in the **LLM activity** panel at the top of the viewer, newest first, with its arguments, the snapshot id, a one-line result and the rationale of each proposal. A `simulate_adjustment` call is also drawn on the trend charts as a dashed "LLM simulation" (a branch copy, not live data), and topology or engineering-context queries briefly mark the element on the P&ID. The header shows "LLM connected" with the client's name once it has completed the MCP handshake.
+
+Ask for example:
 
 - *"Use the operator-assistant prompt. What is happening in the plant right now?"*
 - *"Is any rule close to a limit? Cite the rule ids and the snapshot id."*
@@ -70,7 +89,9 @@ Options (scenarios are human-only; no agent tool can change them):
 --stdio              force stdio when stdin is a terminal
 ```
 
-Running `npm start` in a terminal starts only the viewer; your MCP client launches its own copy with stdio attached.
+Running `npm start` in a terminal starts only the viewer; your MCP client launches its own copy with stdio attached. Each copy has its own plant and its own activity feed, so watch the copy your client started (the URL in its stderr log).
+
+**Troubleshooting.** If the viewer runs but the activity panel stays empty and the header says "No MCP client yet", the client never finished initialize with that server process. Check the client's MCP status (for example `/mcp` in Codex), raise the startup timeout or use the faster start above, and make sure the page you opened is the URL from that process's log, not another copy.
 
 ### What the server exposes
 
@@ -91,7 +112,7 @@ Resources: `manual://operating-manual`, `rules://limits`, `docs://architecture`,
 
 **By design there is no tool to inject a disturbance, reset the plant or return the loop to AUTO**, and results never reveal the active scenario. The human controls scenarios on the page or with command-line flags.
 
-Security: the viewer and `/mcp` listen on 127.0.0.1 only, reject foreign Host headers and cross-site requests, and page controls need a per-process token. Give the LLM the MCP tools only, not a shell or fetch tool aimed at the viewer port.
+Security: the viewer and `/mcp` listen on 127.0.0.1 only and reject foreign Host headers and cross-site requests. Every `/api` request, including the state and the live stream, needs the per-process token that the page carries, so a plain HTTP GET cannot read the viewer's events (which include the human's scenario controls). Text from the LLM (arguments, rationale, client name) is length-capped on the server and escaped on the page. Give the LLM the MCP tools only, not a shell or fetch tool aimed at the viewer port: a process that loads the page also gets its token.
 
 Without MCP: paste [`docs/system-prompt.md`](docs/system-prompt.md) as the system prompt and [`docs/operating-manual.md`](docs/operating-manual.md) plus [`docs/rules.md`](docs/rules.md) as context into any chat model, with numbers read off the page.
 
@@ -158,7 +179,7 @@ This demo is the lightweight showcase. The full implementation of the context la
 ```bash
 npm install
 npm run build     # typecheck, inline engine + UI strings into index.html, bundle dist/server.js, regenerate docs/rules.md
-npm test          # node:test: engine, rules, PCA, gate, MCP handlers, viewer server, i18n, build freshness
+npm test          # node:test: engine, rules, PCA, gate, MCP handlers, activity feed, viewer server, i18n, build freshness
 npm run train:pca # regenerate src/engine/pca-model.json (then npm run build)
 ```
 
@@ -167,7 +188,7 @@ npm run train:pca # regenerate src/engine/pca-model.json (then npm run build)
 ```text
 src/engine/   plant model, rules, PCA, gate, topology, knowledge, simulation (shared)
 src/page/     page UI strings, English and Traditional Chinese
-src/server/   web viewer (127.0.0.1), MCP tools/resources/prompt, CLI entry
+src/server/   web viewer (127.0.0.1), MCP tools/resources/prompt, LLM activity feed, CLI entry
 web/          page template
 scripts/      build and PCA training
 docs/         system prompt, operating manual, architecture, generated rules
@@ -179,5 +200,5 @@ test/         node:test suites
 以 Tennessee Eastman 製程（TEP）示範工業工廠的 context layer：P&ID 拓撲、訊號綁定與已審核的工程知識都釘在確切的 snapshot 上；規則（只用已審核限值）、PCA 異常監測（只輸出分數與貢獻變數，不輸出故障標籤）與「先模擬再執行」的 gate 決定提議的調整能不能執行。網頁預設繁體中文，右上角可切換英文（或加 `?lang=en`），頁面會記住你的選擇。
 
 - 30 秒上手：注入 IDV(4) 擾動 → 觀察規則、PCA 與冷卻迴路的反應 → 對 XMV(10) 試算，看 gate 接受或拒絕及原因；也可以按「導覽執行」自動跑一遍。
-- 想讓自己的 LLM 參與：`npx -y github:shaun0457/plant-context-lab` 啟動本機 MCP server，再開 `127.0.0.1:8787` 觀看。LLM 只能提議，由 gate 決定；擾動注入只能由人操作。
+- 想讓自己的 LLM 參與：`npx -y github:shaun0457/plant-context-lab` 啟動本機 MCP server，再開伺服器在 stderr 印出的 viewer 網址（預設 `127.0.0.1:8787`）觀看。LLM 的每個 MCP 呼叫都會出現在頁面頂端的「LLM 活動」面板；標頭顯示「LLM 已連線」代表 client 已完成 initialize。LLM 只能提議，由 gate 決定；擾動注入只能由人操作。
 - **全部都是模擬，僅供教學，不可用於實際工廠操作。**
